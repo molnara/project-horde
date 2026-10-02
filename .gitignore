@@ -1,0 +1,46 @@
+# Codex machine-local credentials, sessions, and caches.
+# Required Spec Kit skills in .agents/skills/ remain tracked.
+.codex/
+.aws/
+.ssh/
+**/auth.json
+**/credentials.json
+**/credentials.toml
+
+# Secrets and local environment configuration.
+.env
+.env.*
+!.env.example
+!.env.sample
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Godot generated data and local export credentials.
+.godot/
+.import/
+export_credentials.cfg
+*.translation
+
+# Local tooling caches, build output, and temporary files.
+.cache/
+__pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+/build/
+/dist/
+/tmp/
+/temp/
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Operating system metadata.
+Thumbs.db
+Desktop.ini
+.DS_Store
