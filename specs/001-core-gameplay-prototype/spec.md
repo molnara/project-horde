@@ -1,6 +1,6 @@
 # Feature Specification: Core Gameplay Prototype
 
-**Feature Branch**: `master` (existing branch; no branch hook configured)
+**Feature Branch**: `001-core-gameplay-prototype` (existing dedicated Git feature branch; registered in `.specify/feature.json`)
 
 **Created**: 2026-10-02
 
@@ -9,6 +9,16 @@
 **Input**: A small, playable, single-player, third-person 3D survival arena demonstrating the foundational combat loop with original placeholders, movement, camera control, one enemy type, one automatic weapon, health, HUD, defeat, restart, and pause/resume.
 
 **Governing document**: [Project Horde Constitution v1.0.0](../../.specify/memory/constitution.md). All principles remain applicable; architecture and technical solutions belong to planning.
+
+## Clarifications
+
+### Session 2026-10-02
+
+- Q: What should count as a successful five-minute survival playtest for the first milestone? → A: One uninterrupted run reaching five active minutes with ongoing spawning, pursuit, automatic combat, and player vulnerability. Paused time does not count. This is prototype acceptance, not a fixed run duration or a guarantee that every attempt succeeds; play continues normally beyond five minutes until player death.
+- Q: What performance evidence should be required before accepting the first playable milestone? → A: Profile the actual five-minute playtest and document measured performance and observed bottlenecks, capturing average FPS, minimum observed FPS, frame-time behaviour, and approximate active enemy counts where practical. The constitutional 200-simultaneous-enemy / 60 FPS target remains a separate future benchmark, explicitly unverified until properly tested, and does not block first playable prototype acceptance.
+- Q: Should enemies physically block the player or one another during the prototype? → A: Enemies may overlap one another and the player without obstructing movement. Contact damage retains each enemy's attack interval and MUST NOT repeat every physics frame merely because overlap persists. Arena boundaries constrain all entities. Collision behaviour remains modular so later separation, blocking, knockback, and crowd behaviour can be added without rewriting core combat; those behaviours are outside this milestone.
+- Q: Should the prototype spawn one enemy at each fixed interval without a population cap, or limit how many enemies can be alive at once? → A: Spawn one enemy per configurable fixed interval, subject to a configurable maximum live-enemy population defaulting to 50. Skip scheduled spawns while full without queuing or catch-up bursts; resume at the next scheduled opportunity once below the cap. No difficulty scaling, waves, or additional enemy types. The cap is a gameplay/testing safeguard, not the constitutional target; a future 200-enemy benchmark remains independently testable.
+- Q: What should count as enemy contact for dealing damage to the player? → A: Contact occurs when horizontal XZ-plane distance between player and enemy positions is less than or equal to a configurable threshold; spawns start strictly outside it. Preserve immediate first-contact damage and independent per-enemy attack intervals. Leaving and re-entering range never resets or bypasses an active cooldown. Exact distance values belong to planning. No physical movement blocking or collision-volume-based damage detection in this milestone.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -23,9 +33,10 @@ As a player, I can navigate a bounded arena, rotate my view, and survive approac
 **Acceptance Scenarios**:
 
 1. **Given** a fresh run, **When** I use WASD and the mouse, **Then** movement follows camera orientation, the view follows me, and boundaries contain me (FR-001–FR-003).
-2. **Given** active play, **When** spawn intervals elapse, **Then** enemies appear and pursue my current position (FR-004).
+2. **Given** active play below the live-enemy cap, **When** spawn intervals elapse, **Then** one enemy appears per scheduled opportunity and pursues my current position; at the cap, the opportunity is skipped without queuing or catch-up spawns (FR-004).
 3. **Given** approaching enemies, **When** attacks become ready, **Then** the weapon damages the nearest eligible target, defeated enemies disappear, and enemy contact reduces my health (FR-005–FR-008).
 4. **Given** active play, **When** time passes or health changes, **Then** the HUD reflects both (FR-009).
+5. **Given** a fresh run with documented prototype tuning, **When** the product owner survives for five active minutes in one uninterrupted run, **Then** spawning, pursuit, automatic combat, and player vulnerability remain active throughout; reaching five minutes does not end or otherwise change the run, which continues normally until player death. Paused time does not count, and not every attempt must succeed.
 
 ---
 
@@ -61,9 +72,12 @@ As a player, I can interrupt combat and resume the same encounter without losing
 
 - No enemy in range: no attack or damage; other active gameplay continues.
 - Exactly at range: eligible; beyond range: ineligible.
+- Exactly at the contact-distance threshold: contact damage is eligible subject to that enemy's attack readiness; beyond it: no contact damage. A spawn at or inside the threshold is invalid.
 - Equidistant targets: only the earliest-spawned tied living enemy is attacked.
 - Target dies or leaves range: reassess targets at the attack opportunity; never damage a removed enemy.
 - Multiple enemies contact the player: each contributes its own scheduled damage; health stays at or above zero and Game Over occurs once.
+- Persistent overlap: enemies do not block the player or one another; each enemy deals contact damage only when its own attack timing permits, never on every physics frame merely because overlap persists. Arena boundaries still contain all entities.
+- Population at cap: skip each scheduled spawn without queuing. After an enemy dies, spawn only at the next scheduled opportunity with available capacity; never spawn immediately merely because capacity becomes available or accumulate missed spawns.
 - Lethal damage coincides with another event: after zero player health, no subsequent event changes the final result.
 - Pause between attacks/spawns: preserve remaining delays; no reset or missed-event accumulation.
 - Escape during Game Over: cannot resume the defeated run.
@@ -82,8 +96,8 @@ Timing uses active gameplay time, excluding Pause and Game Over. Verification us
   - **Acceptance**: Traverse the arena and its perimeter; the view follows and the player stays visible. Horizontal and vertical mouse movement change the respective viewing directions. Sustained vertical input reaches a limit without flipping or passing below the floor. Mouse input alone does not move the player.
 - **FR-003 — Arena**: One small flat 3D arena MUST have visible boundaries, contain players and enemies, and use simple original placeholder geometry. Player, enemies, and floor MUST be visually distinguishable.
   - **Acceptance**: Inspect and traverse the entire arena and perimeter; the floor is flat, boundaries are visible, and neither player nor enemies leave the playable area. A reviewer identifies player, enemies, and limits from the normal view.
-- **FR-004 — Enemy Spawning and Pursuit**: Exactly one enemy type MUST spawn periodically at a documented positive interval during active play. Living enemies MUST pursue the player's current position and be able to reach contact distance. Spawns MUST be inside the arena and outside player contact distance.
-  - **Acceptance**: Starting with no enemies, the first spawn occurs after one interval; observe at least three consecutive spawn events at that interval, all of the same type. Move elsewhere; enemies redirect and can reach the new position. No spawn immediately damages the player or appears outside the boundary.
+- **FR-004 — Enemy Spawning and Pursuit**: Exactly one enemy type MUST spawn one enemy per configurable, documented positive fixed interval during active play, subject to a configurable positive integer maximum live-enemy population defaulting to 50. At the cap, the scheduled spawn MUST be skipped without queuing missed spawns or catch-up bursts. Once below the cap, spawning MUST resume at the next scheduled opportunity with available capacity. Living enemies MUST pursue the player's current position and be able to reach contact distance. Spawns MUST be inside the arena and outside player contact distance. No difficulty scaling or spawn waves are included.
+  - **Acceptance**: Starting with no enemies and capacity for at least three, the first spawn occurs after one interval; observe three consecutive opportunities producing one enemy each at that interval, all of the same type. Move elsewhere; enemies redirect and can reach the new position. No spawn immediately damages the player or appears outside the boundary. With no kills, reach the configured cap, then observe at least three scheduled opportunities with no new enemies. Remove one enemy between opportunities; no immediate replacement occurs, and exactly one spawns at the next opportunity with capacity, without catch-up spawns. Confirm the default cap is 50 and changing interval or cap before a fresh run changes observed cadence or maximum population without changing spawning logic.
 - **FR-005 — Automatic Weapon**: Exactly one weapon MUST automatically attack one nearest living enemy within an inclusive configurable range, applying configured positive damage once per attack with visible feedback identifying the attack and affected enemy. Consecutive attacks MUST be separated by a configurable positive interval. Tied targets MUST resolve to earliest spawn order.
   - **Acceptance**: With two targets at unequal distances inside range, only the nearer receives the configured damage. With tied distances, only the earliest-spawned receives it. A target exactly at range is eligible; a target beyond it is not. With no eligible target, no attack or damage occurs. Continuous eligible targets are attacked at the configured interval. Changing range or interval before a new run changes observed eligibility or cadence.
   - **Acceptance**: A fresh weapon is ready; when an eligible target appears while ready, attack occurs by the next gameplay update. Following an attack, another cannot occur until the interval elapses. Eligibility is reassessed at each opportunity, excluding dead or departed targets.
@@ -91,8 +105,8 @@ Timing uses active gameplay time, excluding Pause and Game Over. Verification us
   - **Acceptance**: Fresh player and enemies have full health. Damage to one enemy leaves other enemies unchanged. Nonlethal and excessive damage reduce health correctly without negative values. Waiting without damage does not restore health.
 - **FR-007 — Enemy Death**: At zero health, an enemy MUST die and be removed from the encounter, unable to move, be targeted, receive damage, or damage the player.
   - **Acceptance**: Lethal weapon damage removes the enemy by the next gameplay update. At a later attack opportunity and at its former position, it is neither a target nor a damage source.
-- **FR-008 — Player Damage**: Living enemies MUST deal configured positive contact damage immediately on first contact and subsequently at a positive per-enemy contact-attack interval. Leaving contact MUST stop damage; re-entry MUST NOT bypass a remaining delay.
-  - **Acceptance**: First contact reduces health by the configured amount. Sustained contact produces further damage at the configured interval. Separation causes no contact damage. Re-entry before readiness causes no early damage. Two contacting enemies contribute their own eligible attacks.
+- **FR-008 — Player Damage**: Contact MUST be determined by horizontal XZ-plane distance between player and enemy positions, less than or equal to a configurable positive contact-distance threshold, with exact values documented during planning. Living enemies MUST deal configured positive contact damage immediately on first contact and subsequently at a positive per-enemy contact-attack interval. Leaving contact MUST stop damage; leaving and re-entering range MUST NOT reset or bypass a remaining delay. Damage detection MUST NOT depend on collision-volume overlap or physically block movement in this milestone.
+  - **Acceptance**: First contact reduces health by the configured amount. A ready enemy exactly at the configured threshold deals damage; beyond it, no contact damage occurs. Sustained contact produces further damage at the configured interval, not every physics frame merely because overlap persists. Separation causes no contact damage. Re-entry before readiness causes no early damage or cooldown reset. Two contacting enemies contribute their own eligible attacks. Changing contact distance before a new run changes observed eligibility; every spawn starts strictly outside the configured threshold.
 - **FR-009 — HUD**: A visible HUD MUST show current/maximum player health and elapsed survival time as minutes and seconds, starting at zero and advancing only during active play. It MUST remain visible in Pause and Game Over.
   - **Acceptance**: A fresh run shows full health and 00:00. After 65 active seconds, time reads 01:05 within one displayed second of measured time. Damage updates displayed health by the next gameplay update. Ten seconds paused or defeated leave health/time unchanged.
 - **FR-010 — Game Over**: Zero player health MUST end the run, visibly showing Game Over, final survival time, and an actionable Restart control. Movement, camera rotation, spawning, attacks, damage, and survival timing MUST stop. Escape MUST NOT resume defeat.
@@ -108,6 +122,9 @@ Timing uses active gameplay time, excluding Pause and Game Over. Verification us
 - No experience, upgrades, additional weapons/enemy types, procedural terrain, multiplayer, or save system. Prioritize the integrated playable slice over polish.
 - Gameplay tuning MUST be configurable independently of mutable per-run state. Missing or invalid definitions MUST produce actionable diagnostics rather than silently starting broken gameplay. Configuration mechanisms belong to planning.
 - Implementation verification MUST include proportionate automated checks where practical and reproducible manual playtests for controls, visuals, and game feel. Unexecuted checks remain outstanding; specification review establishes no gameplay or performance compliance.
+- First playable prototype acceptance requires SC-001–SC-004 and SC-006–SC-007. SC-005 is a separate future performance benchmark and MUST NOT block prototype acceptance; its compliance remains explicitly unverified until representative benchmark testing establishes it. Accepting the prototype does not establish constitutional performance compliance or revise the target.
+- Collision behaviour MUST remain modular and separate from core combat responsibilities, allowing later enemy separation, physical blocking, knockback, and more sophisticated crowd behaviour without rewriting core combat. These future behaviours are outside this milestone; no speculative crowd system is required.
+- The configurable live-enemy cap is a gameplay/testing safeguard, not a performance target or a revision of SC-005. It MUST NOT prevent independent testing of the separate 200-enemy benchmark in a future milestone. A benchmark scenario is not required in this milestone.
 - All constitutional architectural, validation, documentation, and workspace constraints remain binding for subsequent phases; this specification selects no technical solution.
 
 ### Key Entities *(include if feature involves data)*
@@ -117,7 +134,7 @@ Timing uses active gameplay time, excluding Pause and Game Over. Verification us
 - **Weapon**: Automatic attack capability with range, damage, interval, and readiness.
 - **Arena**: Flat playable area with visible containment boundaries and placeholder visuals.
 - **Run**: Survival attempt with Active, Paused, or Game Over state, elapsed active time, and current encounter.
-- **Gameplay Tuning**: Valid starting health, movement speeds, spawn interval, weapon range/damage/interval, and enemy contact damage/interval used consistently for a run.
+- **Gameplay Tuning**: Valid starting health, movement speeds, fixed spawn interval, maximum live-enemy population (positive integer; default 50), weapon range/damage/interval, and enemy contact distance/damage/interval used consistently for a run.
 
 ## Success Criteria *(mandatory)*
 
@@ -127,7 +144,9 @@ Timing uses active gameplay time, excluding Pause and Game Over. Verification us
 - **SC-002**: A reviewer completes three consecutive run → defeat → restart cycles in one application session; each restart restores fresh-run conditions without duplicate events.
 - **SC-003**: Ten seconds paused during combat produce zero health, position, view, or survival-time changes and zero spawns/attacks; resume preserves remaining delays.
 - **SC-004**: In an integrated playtest, the product owner demonstrates all movement directions, rotates the view, identifies health/time and boundaries, witnesses an automatic kill, takes damage, pauses/resumes, and restarts after defeat using documented controls without developer intervention.
-- **SC-005**: Target 60 FPS with 200 simultaneously active enemies exercising representative pursuit, combat, and damage on the constitution's reference hardware. Before verification, planning MUST specify resolution, renderer, graphics settings, build mode, scenario, warm-up, sampling duration, and frame-time statistics. Evidence MUST record those conditions, enemy count, FPS, frame-time distribution, stalls, and bottlenecks against the approximately 16.67 ms frame budget. Average FPS alone is insufficient. Target revisions require constitutional governance and product-owner approval.
+- **SC-005 — Future performance benchmark (compliance unverified)**: Target 60 FPS with 200 simultaneously active enemies exercising representative pursuit, combat, and damage on the constitution's reference hardware. This separate future benchmark is not a first playable prototype acceptance gate. Before verification, planning MUST specify resolution, renderer, graphics settings, build mode, scenario, warm-up, sampling duration, and frame-time statistics. Evidence MUST record those conditions, enemy count, FPS, frame-time distribution, stalls, and bottlenecks against the approximately 16.67 ms frame budget. Average FPS alone is insufficient. Target revisions require constitutional governance and product-owner approval.
+- **SC-006**: The product owner demonstrates one uninterrupted run reaching at least five active minutes using documented prototype tuning, with ongoing spawning, pursuit, automatic combat, and player vulnerability. Paused time is excluded. Play MUST continue normally beyond five minutes until player death, without a timed ending or victory condition. This is a prototype acceptance/playtest criterion, not a requirement that every attempt succeeds.
+- **SC-007**: Profile the actual SC-006 five-minute playtest and document measured performance and any observed bottlenecks. Capture average FPS, minimum observed FPS, frame-time behaviour (including observed stalls), and approximate active enemy counts where practical; document reasons and outstanding verification for unavailable measurements. Before profiling, planning MUST specify hardware, resolution, renderer, graphics settings, build mode, scenario, warm-up, sampling duration, and frame-time statistics; results MUST record those conditions and measurement methods. Paused time MUST be excluded from active-play measurements. This evidence records prototype performance without establishing SC-005 compliance or introducing a new numerical performance acceptance threshold.
 
 ## Assumptions
 
@@ -135,7 +154,8 @@ Timing uses active gameplay time, excluding Pause and Game Over. Verification us
 - A fresh run begins directly in the arena with no enemies and a ready weapon. Survival continues until death with no victory condition or fixed duration.
 - Direct weapon damage and enemy contact damage suffice. Projectiles, ammunition, reloads, critical hits, and damage-over-time effects are not required.
 - Horizontal mouse movement rotates the view in the same direction; upward movement looks upward. Sensitivity, view limits, arena dimensions, and positive tuning values are selected and documented during planning. A player-facing settings screen is not required.
-- Target distance is measured between player and enemy positions on the flat floor. Earliest spawn order is a stable tie-breaker.
+- Weapon-target and contact distance are measured horizontally in the XZ plane between player and enemy positions. Contact uses its own configurable threshold, inclusive at equality; spawns MUST start strictly outside that threshold. Earliest spawn order is a stable weapon-target tie-breaker.
 - Restart uses a clearly labeled selectable Game Over control. Restart from Pause is not required. Escape only pauses/resumes a living run.
 - The arena has no interior obstacles preventing pursuit. Placeholder geometry must not create unreachable encounter areas.
+- Enemies may overlap one another and the player without physically obstructing movement. Contact damage remains governed by FR-008, including each enemy's attack interval; all entities remain constrained by FR-003 arena boundaries. Verify movement through enemies, sustained overlap damage cadence, and containment at the perimeter.
 - No existing gameplay or external service is required. The approved constitution and subsequent plan supply development/verification constraints. All described gameplay is planned behavior.
