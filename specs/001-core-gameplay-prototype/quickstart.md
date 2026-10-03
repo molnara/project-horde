@@ -8,13 +8,15 @@
 - Persistent user-scope `GODOT_BIN` resolves to an existing Godot console executable, verified as Windows PE subsystem 3. Its `--headless --version` output was `4.7.2.stable.official.ed1daf0bf`, exit 0. Use the environment variable rather than a machine-specific path in tracked instructions; no installation is needed. Do not global-configure or download export templates as part of planning.
 - This running process has not inherited `GODOT_BIN`. Resolve process scope first, then persistent User and Machine scopes if absent. Sandbox isolation may hide registry-backed scope; report inaccessible/missing values explicitly, and use an authorized read outside isolation or an explicitly supplied path. Do not write persistent environment settings.
 - Before executing project checks, require implementation to have supplied `project.godot`, main scene, definition resources, tests and `tools/validate.ps1`; they do not exist yet. Before accessing optional files/environment variables, check existence and handle absence explicitly.
-- Launcher modes below are a planned interface. `-GodotBin` is required; `-Mode` accepts `All`, `Play`, `Profile`. Modes return nonzero on unavailable prerequisite or failed required check.
+- Launcher modes below are a planned interface. `-GodotBin` is an optional explicit override; when omitted, the launcher resolves the first nonempty `GODOT_BIN` value in Process → User → Machine order. Validate the selected executable using all existing path, console-subsystem, version and containment checks; an invalid explicit override is a diagnostic failure, not a reason to fall back silently. `-Mode` accepts `All`, `Play`, `Profile`. Modes return nonzero on unavailable prerequisite or failed required check.
 - Before engine/editor use, launcher confines process APPDATA/LOCALAPPDATA/TEMP/TMP and logs/raw output to ignored workspace `.cache/` paths; checks resolved absolute paths and verifies actual engine user-data/cache/editor locations. Restore existing or absent env values in `finally`. If containment is unverified, stop before launching the project and report blocked. Explicit approval is needed only for identified unavoidable writes outside the workspace.
 - Engine version must match approved 4.7.2 Standard. The launcher's initial help/version/path preflight must itself use the contained process environment. Do not assume a `--user-data-dir` flag exists.
 
 ## Commands after implementation
 
 Run from repository root. Resolve the existing console executable from `GODOT_BIN`; this does not change the persistent variable. The example requires access to the scope containing the value.
+
+The example below resolves and passes an explicit override. Omitting `-GodotBin` from the launcher invocation uses the same Process → User → Machine discovery inside the launcher; all validation, diagnostics, workspace containment and environment restoration requirements still apply.
 
 ```powershell
 $ProjectRoot = 'C:\GameDev\project-horde'

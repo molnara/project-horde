@@ -10,7 +10,7 @@ Types/defaults are defined in [data-model.md](../data-model.md). Main owns expli
 |---|---|---|
 | Definition validation | `validate(run_definition) -> Array[String]` | Empty means valid; otherwise actionable resource/field diagnostics; no mutation |
 | Run coordinator | `start_run(definition)`, `step(delta)`, `toggle_pause()`, `request_restart()` | Owns state/time/order/registry; emits `state_changed(state)`, `time_changed(active_time)` |
-| Arena | `clamp_position(position, radius) -> Vector3`, `choose_spawn(player_position, enemy_radius, contact_distance, rng) -> Vector3` | Inset containment and strictly noncontact spawn; no damage side effects |
+| Arena | `clamp_position(position, radius) -> Vector3`, `choose_spawn(player_position, enemy_radius, contact_distance, rng) -> Dictionary` | Inset containment and explicit selection success/failure result as defined below; no spawning, accounting or damage side effects |
 | Player movement | `step(delta, input_vector, camera_yaw, arena)` | Normalized planar motion; input release stops immediately; zero changes when run inactive |
 | Camera rig | `reset(definition, player)`, `apply_mouse(screen_motion)`, `follow(player_position)`, `clear_pending_input()` | Yaw/depression and bounded view; active-only mouse motion; injected player ref |
 | Enemy movement | `step(delta, player_position, arena)` | Direct bounded pursuit of current position; stop at coincident position; no physical blocking |
@@ -22,6 +22,19 @@ Types/defaults are defined in [data-model.md](../data-model.md). Main owns expli
 | Profile helper | coordinator calls `open_attempt(generation)`, `close_segment()`, `record_outcomes(...)`; Main wires/disposes it | Generation-isolated Profile-only evidence; separate survival/continuation/capture outcomes; no gameplay authority |
 
 Signatures are semantic contracts: GDScript types follow the model. Use synchronous health/death signals so eligibility changes immediately. UI listeners update by the next gameplay update. Feedback identifies attacker/target with a 0.12-active-second line and target color flash; pause freezes feedback and defeat clears it without applying damage.
+
+## Spawn-selection result contract
+
+`choose_spawn()` returns a built-in Dictionary with an explicit Boolean `success` discriminator. It selects positions only; it never instantiates enemies, advances spawn opportunities, increments counters or changes run acceptance.
+
+- Success: `success = true`, `position` is a finite valid Vector3 at the configured floor height, inside enemy-radius-inset bounds and strictly outside player contact distance, and `diagnostics` is an empty Array. Any valid coordinates, including Vector3.ZERO when eligible, are permitted; callers must inspect `success`, never infer failure from coordinates.
+- Failure: `success = false`, the `position` key is absent, and `diagnostics` is a nonempty Array of diagnostic Dictionaries. Each record contains `stage = "selection"`, `source` (arena resource path or selecting component), `field` (affected input/definition field), `observed` (actual value or selection outcome), `constraint` (required bound/eligibility condition), and `cause` (actionable explanation). No sentinel position or fallback that violates eligibility is returned.
+
+Keep the existing bounded selection algorithm: try 16 candidates, then the deterministic farthest inset corner. Return success only for a valid position; otherwise return failure with the relevant bounds, player position, enemy radius and contact distance in the diagnostic observations. This is a semantic payload contract, not a new component or dependency.
+
+The spawner owns scheduled opportunities, selection-result handling and enemy instantiation. On unsuccessful selection, it must not read `position` or instantiate/publish an enemy. On selection or instantiation/configuration failure, it consumes the scheduled opportunity once, enriches the diagnostic records with `run_generation`, `opportunity_index`, `scheduled_at` and actual completion time `t_end`, and reports one failed opportunity to the coordinator. The coordinator stores the per-run `spawn_failure_count`, increments it exactly once for that opportunity regardless of diagnostic-record count, and latches acceptance invalidity. The spawner reports actionable diagnostics and excludes/disposes any partially constructed instance before it can enter the live registry or affect combat/capacity. Simulation continues at the next ordinary scheduled opportunity without retries, queued work or catch-up spawning. A full-cap skip does not invoke selection or count as an unexpected failure. Retain the counter and diagnostic evidence even if the five-minute capture has already closed.
+
+Direct contract fixtures must distinguish a valid zero-coordinate success from failure with no position, validate diagnostic fields and arena side-effect freedom, and verify caller handling. Integration fault fixtures must assert exactly one consumed opportunity and counter increment even with multiple diagnostic records, no selection-failure instantiation or partial-instance publication, cleanup when applicable, ordinary subsequent cadence and invalid acceptance.
 
 ## Ordered active update
 
