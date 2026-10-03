@@ -11,6 +11,7 @@ No installation, persistent environment change or external marker is made.
 param(
     [string] $GodotBin,
     [ValidateSet('All', 'Play', 'Profile')][string] $Mode = 'All',
+    [switch] $InfrastructureFixtures,
     [ValidateRange(1, 86400)][int] $PreflightTimeoutSeconds = 30,
     [ValidateRange(1, 86400)][int] $ImportTimeoutSeconds = 180,
     [ValidateRange(1, 86400)][int] $ParseTimeoutSeconds = 30,
@@ -27,6 +28,7 @@ $savedEnvironment = @{}
 $sessionDir = $null
 $exitStatus = 1
 $utf8 = [Text.UTF8Encoding]::new($false)
+. (Join-Path $PSScriptRoot 'validation_diagnostics.ps1')
 
 function Assert-NoReparsePoint([string] $Path) {
     # Reject junction/symlink escapes in existing ancestors before any write.
@@ -68,14 +70,16 @@ function Write-ContainedText([string] $Path, [string] $Text) {
 }
 
 function Resolve-GodotExecutable {
-    if ($script:explicitGodotBin) {
-        if ([string]::IsNullOrWhiteSpace($GodotBin)) { throw 'BLOCKED: explicit -GodotBin is empty; no fallback is permitted.' }
+    param([bool] $Explicit = $script:explicitGodotBin, [string] $Override = $GodotBin,
+          [scriptblock] $ReadScope = { param($Scope) [Environment]::GetEnvironmentVariables($Scope) })
+    if ($Explicit) {
+        if ([string]::IsNullOrWhiteSpace($Override)) { throw 'BLOCKED: explicit -GodotBin is empty; no fallback is permitted.' }
         Write-Host 'Executable selection: explicit -GodotBin override.'
-        return $GodotBin
+        return $Override
     }
     foreach ($scope in @('Process', 'User', 'Machine')) {
         try {
-            $variables = [Environment]::GetEnvironmentVariables($scope)
+            $variables = & $ReadScope $scope
             if (-not $variables.Contains('GODOT_BIN') -or [string]::IsNullOrWhiteSpace([string]$variables['GODOT_BIN'])) {
                 Write-Host "GODOT_BIN $scope scope: absent/empty (registry isolation may hide persistent values)."
                 continue
@@ -179,14 +183,13 @@ function Invoke-GodotCheck {
         if (Test-Path -LiteralPath $logPath -PathType Leaf) { $engineLog = [IO.File]::ReadAllText($logPath) }
         $combined = $stdout + "`n" + $stderr + "`n" + $engineLog
         $plain = [regex]::Replace($combined, '\x1B\[[0-?]*[ -/]*[@-~]', '')
-        # Minimal severity guard. T011 supplies the complete fixture-tested classifier.
-        $hasError = $plain -match '(?im)^\s*(?:SCRIPT ERROR|PARSE ERROR|ERROR|FATAL ERROR):'
-        $warnings = @($plain -split '\r?\n' | Where-Object { $_ -match '^\s*WARNING:' } | Select-Object -Unique)
-        $outcome = if ($timedOut -or $child.ExitCode -ne 0 -or $hasError) { 'FAILED' } else { 'PASSED' }
-        $result = [pscustomobject]@{Name=$Name; Command=$command; ExitCode=$child.ExitCode; Outcome=$outcome; TimedOut=$timedOut; TimeoutSeconds=if ($Interactive) {$null} else {$TimeoutSeconds}; Stdout=$stdoutPath; Stderr=$stderrPath; EngineLog=$logPath; Warnings=$warnings; Output=$plain}
+        $diagnostics = Get-ValidationDiagnostics -Text ($stdout + "`n" + $stderr) -EngineLog $engineLog -AllowCaseDeclarations:($Name -eq 'suite')
+        $outcome = if ($timedOut -or $child.ExitCode -ne 0 -or $diagnostics.Failed) { 'FAILED' } else { 'PASSED' }
+        $result = [pscustomobject]@{Name=$Name; Command=$command; ChildId=$child.Id; ExitCode=$child.ExitCode; Outcome=$outcome; TimedOut=$timedOut; TimeoutSeconds=if ($Interactive) {$null} else {$TimeoutSeconds}; Stdout=$stdoutPath; Stderr=$stderrPath; EngineLog=$logPath; Warnings=$diagnostics.Warnings; Diagnostics=$diagnostics; Output=$plain}
         $results.Add($result)
         Write-Host "RESULT [$Name]: $outcome; exit=$($child.ExitCode); timeout=$timedOut; logs=$sessionDir"
-        foreach ($warning in $warnings) { Write-Host "Recorded $warning" }
+        foreach ($warning in $diagnostics.Warnings) { Write-Host "Recorded $warning" }
+        foreach ($record in $diagnostics.Ambiguous) { Write-Host "INVESTIGATE: ambiguous diagnostic: $record" }
         if ($outcome -ne 'PASSED') {
             Write-Host $plain
             if ($timedOut) { throw "FAILED: $Name exceeded its ${TimeoutSeconds}s limit; launched child terminated. Inspect retained logs, then explicitly override the limit to retry." }
@@ -322,6 +325,10 @@ func _enter_tree() -> void:
         } else { Add-BlockedCheck 'suite' 'tests/run_tests.gd is not supplied until T010 (Phase 2).' }
         # A missing suite does not prevent independent bootstrap startup evidence.
         [void](Invoke-GodotCheck 'startup' @('--headless', '--path', $workspace, '--quit-after', '120') $workspace $StartupTimeoutSeconds)
+        if ($InfrastructureFixtures) {
+            . (Join-Path $PSScriptRoot 'test-validation.ps1') -DefineOnly
+            Invoke-ValidationInfrastructureFixtures
+        }
     } else {
         if ($Mode -eq 'Profile' -and -not (Test-Path -LiteralPath (Join-Path $workspace 'scripts/run/profile_capture.gd') -PathType Leaf)) {
             throw 'BLOCKED: Profile capture is not implemented until US1; a bootstrap run cannot produce profile evidence.'
@@ -340,7 +347,14 @@ func _enter_tree() -> void:
     foreach ($name in $savedEnvironment.Keys) {
         if ($savedEnvironment[$name].Present) {
             [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name].Value, 'Process')
-        } else { [Environment]::SetEnvironmentVariable($name, $null, 'Process') }
+        } elseif (Test-Path -LiteralPath "Env:$name") { Remove-Item -LiteralPath "Env:$name" }
+    }
+    $restoredEnvironment = [Environment]::GetEnvironmentVariables('Process')
+    foreach ($name in $savedEnvironment.Keys) {
+        $restored = $restoredEnvironment.Contains($name) -eq $savedEnvironment[$name].Present -and
+                    $restoredEnvironment[$name] -ceq $savedEnvironment[$name].Value
+        $results.Add([pscustomobject]@{Name="environment-$name";Outcome=if ($restored) {'PASSED'} else {'FAILED'};Present=$restoredEnvironment.Contains($name)})
+        if (-not $restored) { Write-Host "FAILED: process environment restoration for $name."; $exitStatus = 1 }
     }
     if ($null -ne $sessionDir) {
         Write-ContainedText (Join-Path $sessionDir 'results.json') (ConvertTo-Json -InputObject @($results.ToArray()) -Depth 6)

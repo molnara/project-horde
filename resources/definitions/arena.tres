@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ArenaDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/arena_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+half_extents_xz = Vector2(20, 20)
+floor_y = 0.0
+boundary_visual_height = 0.15
+player_start_xz = Vector2(0, 0)
