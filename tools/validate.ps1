@@ -189,21 +189,28 @@ function Invoke-GodotCheck {
         try {
             if (-not $diagnostics.Failed) {
                 foreach ($receipt in $diagnostics.ProfileResults) {
-                    foreach ($path in @($receipt.evidence_path, ($receipt.evidence_path + '.outcomes.json'), $receipt.frame_evidence_path)) {
-                        [void](Assert-ContainedPath $path $cacheRoot)
-                        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "FAILED: required Profile evidence is missing: $path" }
-                    }
-                    if ((Get-Item -LiteralPath $receipt.frame_evidence_path).Length -ne $receipt.frame_sample_count * 8) {
-                        throw 'FAILED: Profile raw stream length disagrees with the completion result.'
-                    }
-                    $manifest = [IO.File]::ReadAllText($receipt.evidence_path) | ConvertFrom-Json
-                    if ($manifest.frame_stream.sample_count -ne $receipt.frame_sample_count -or $manifest.frame_stream.path -cne $receipt.frame_evidence_path -or
-                        $manifest.profile_capture_outcome -cne 'passed' -or @($manifest.capture_diagnostics).Count -ne 0) {
-                        throw 'FAILED: Profile manifest disagrees with the completion result.'
-                    }
-                    $outcomes = [IO.File]::ReadAllText($receipt.evidence_path + '.outcomes.json') | ConvertFrom-Json
-                    if ($outcomes.profile_capture_outcome -cne 'passed' -or @($outcomes.capture_diagnostics).Count -ne 0) {
-                        throw 'FAILED: persisted Profile outcome reports incomplete capture.'
+                    $attemptReceipts = @($receipt)
+                    if ($null -ne $receipt.PSObject.Properties['retained_attempts']) { $attemptReceipts += @($receipt.retained_attempts) }
+                    foreach ($attemptReceipt in $attemptReceipts) {
+                        if ($attemptReceipt.profile_capture_outcome -cne 'passed' -or @($attemptReceipt.capture_diagnostics).Count -ne 0) {
+                            throw 'FAILED: a Profile attempt has incomplete capture; fresh counters do not erase prior failures.'
+                        }
+                        foreach ($path in @($attemptReceipt.evidence_path, ($attemptReceipt.evidence_path + '.outcomes.json'), $attemptReceipt.frame_evidence_path)) {
+                            [void](Assert-ContainedPath $path $cacheRoot)
+                            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "FAILED: required Profile evidence is missing: $path" }
+                        }
+                        if ((Get-Item -LiteralPath $attemptReceipt.frame_evidence_path).Length -ne $attemptReceipt.frame_sample_count * 8) {
+                            throw 'FAILED: Profile raw stream length disagrees with the completion result.'
+                        }
+                        $manifest = [IO.File]::ReadAllText($attemptReceipt.evidence_path) | ConvertFrom-Json
+                        if ($manifest.frame_stream.sample_count -ne $attemptReceipt.frame_sample_count -or $manifest.frame_stream.path -cne $attemptReceipt.frame_evidence_path -or
+                            $manifest.profile_capture_outcome -cne 'passed' -or @($manifest.capture_diagnostics).Count -ne 0) {
+                            throw 'FAILED: Profile manifest disagrees with the completion result.'
+                        }
+                        $outcomes = [IO.File]::ReadAllText($attemptReceipt.evidence_path + '.outcomes.json') | ConvertFrom-Json
+                        if ($outcomes.profile_capture_outcome -cne 'passed' -or @($outcomes.capture_diagnostics).Count -ne 0) {
+                            throw 'FAILED: persisted Profile outcome reports incomplete capture.'
+                        }
                     }
                     Write-Host "Profile capture: $($receipt.profile_capture_outcome); survival: $($receipt.survival_window_outcome); continuation: $($receipt.continuation_outcome). Owner/performance acceptance requires ledger review."
                 }

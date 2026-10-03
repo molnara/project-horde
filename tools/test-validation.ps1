@@ -103,6 +103,139 @@ function Invoke-ValidationInfrastructureFixtures {
         Assert-Fixture (Get-ValidationDiagnostics -Text ($declared + "`nSCRIPT ERROR: genuine exception") -AllowCaseDeclarations).Failed 'expected fault never masks engine exception'
         Assert-Fixture (Get-ValidationDiagnostics -Text (@($begin, $fault.Replace('"source":"fixture"', '"source":"wrong"'), $end, $summary) -join "`n") -AllowCaseDeclarations).Failed 'fault matching requires declared source'
 
+        $captureApp = @{case='capture-fault';source='ProfileCapture';field='evidence_path';observed='fixture.json';constraint='required output written successfully';cause='intentional open fault'}
+        $captureBegin = 'HORDE_CASE_BEGIN=' + (ConvertTo-Json -Compress -InputObject @{case='capture-fault';seed=1;expected=@(@{source='ProfileCapture';constraint=$captureApp.constraint;count=1})})
+        $captureEnd = 'HORDE_CASE_END=' + (ConvertTo-Json -Compress -InputObject @{case='capture-fault';assertions=1;passed=$true;completed=$true})
+        $captureRecord = 'HORDE_APP_DIAGNOSTIC=' + (ConvertTo-Json -Compress -InputObject $captureApp)
+        $capturePayload = $captureApp.Clone()
+        $capturePayload.Remove('case')
+        $captureLine = 'Profile capture failure: ' + (ConvertTo-Json -Compress -InputObject $capturePayload)
+        $captureDeclared = @($captureBegin,$captureRecord,$captureEnd,$summary,$captureLine) -join "`n"
+        Assert-Fixture (-not (Get-ValidationDiagnostics -Text $captureDeclared -EngineLog $captureLine -AllowCaseDeclarations).Failed) 'exact declared capture fault accepted once across stream and log'
+        Assert-Fixture (Get-ValidationDiagnostics -Text $captureDeclared -EngineLog ($captureLine + "`n" + $captureLine.Replace('fixture.json','undeclared.json')) -AllowCaseDeclarations).Failed 'declared stream capture fault cannot mask log-only capture failure'
+        Assert-Fixture (Get-ValidationDiagnostics -Text ($captureDeclared + "`n" + $captureLine) -AllowCaseDeclarations).Failed 'extra printed capture fault rejected'
+        Assert-Fixture (Get-ValidationDiagnostics -Text ($captureDeclared.Replace('Profile capture failure: {', 'Profile capture failure: {"extra":true,')) -AllowCaseDeclarations).Failed 'capture payload with undeclared extra fields rejected'
+        Assert-Fixture (Get-ValidationDiagnostics -Text ($captureDeclared + "`nSCRIPT ERROR: genuine exception") -AllowCaseDeclarations).Failed 'declared capture fault cannot mask genuine engine errors'
+        foreach ($field in @('source','field','observed','constraint','cause')) {
+            $alteredPayload = $capturePayload.Clone()
+            $alteredPayload[$field] = 'wrong'
+            $alteredLine = 'Profile capture failure: ' + (ConvertTo-Json -Compress -InputObject $alteredPayload)
+            Assert-Fixture (Get-ValidationDiagnostics -Text ($captureDeclared.Replace($captureLine,$alteredLine)) -AllowCaseDeclarations).Failed "capture fault requires exact $field"
+        }
+
+        $controls = Invoke-FixtureScript 'fixture-restart-controls' @'
+extends SceneTree
+func _initialize() -> void:
+    call_deferred("exercise")
+func exercise() -> void:
+    var main = load("res://scenes/main.tscn").instantiate()
+    root.add_child(main)
+    var coordinator = main.coordinator
+    coordinator.set_physics_process(false)
+    for key in [KEY_ENTER, KEY_SPACE]:
+        coordinator.player.health.apply_damage(100)
+        var generation: int = coordinator.run_generation
+        var echo := InputEventKey.new()
+        echo.keycode = key
+        echo.pressed = true
+        echo.echo = true
+        main.get_viewport().push_input(echo)
+        assert(coordinator.run_generation == generation, "Held key echo cannot restart")
+        echo.echo = false
+        main.get_viewport().push_input(echo)
+        assert(main.coordinator == coordinator and coordinator.run_generation == generation + 1 and coordinator.state == "Active", "Real keyboard event restarts once")
+    coordinator.player.health.apply_damage(100)
+    var generation: int = coordinator.run_generation
+    var button = coordinator.hud.get_node("GameOver/Panel/Restart")
+    await process_frame
+    var mouse := InputEventMouseButton.new()
+    mouse.button_index = MOUSE_BUTTON_LEFT
+    mouse.position = button.get_global_rect().get_center()
+    mouse.global_position = mouse.position
+    mouse.pressed = true
+    main.get_viewport().push_input(mouse, true)
+    mouse.pressed = false
+    main.get_viewport().push_input(mouse, true)
+    assert(coordinator.run_generation == generation + 1 and coordinator.state == "Active", "Real mouse click restarts once")
+    coordinator.spawn_failure_count = 1
+    coordinator.acceptance_invalid = true
+    coordinator.spawn_diagnostics.append({"cause": "prior fault"})
+    var completed: Array = []
+    coordinator.state_changed.connect(func(state):
+        if state == "GameOver": coordinator.request_restart())
+    coordinator.time_changed.connect(func(time): completed.append(time))
+    coordinator.player.health.apply_damage(99)
+    var enemy = coordinator.create_enemy()
+    enemy.configure(coordinator.runtime_definition.enemy, 0)
+    coordinator.spawner.add_child(enemy)
+    coordinator.registry.add(enemy, 0)
+    coordinator.step(0.125)
+    assert(completed == [0.125], "Reentrant restart waits for lethal final commit")
+    await process_frame
+    assert(coordinator.state == "Active" and coordinator.active_time == 0 and coordinator.spawn_failure_count == 0, "Deferred guarded restart restores fresh state")
+    assert(coordinator.retained_attempts.back().active_time == 0.125 and coordinator.retained_attempts.back().spawn_failure_count == 1 and coordinator.retained_attempts.back().spawn_diagnostics.size() == 1, "Normal Play retains old failed attempt")
+    print("RESTART_CONTROLS_ASSERTIONS=8")
+    main.free()
+    quit(0)
+'@ $false 'RESTART_CONTROLS_ASSERTIONS=8'
+        Assert-Fixture ($controls.ExitCode -eq 0) 'real Enter Space mouse echo and reentrant lethal restart passed'
+
+        $profileRestartPath = Join-Path $fixtureRoot 'profile-restarts.gd'
+        Write-ContainedText $profileRestartPath @'
+extends SceneTree
+func _initialize() -> void:
+    call_deferred("exercise")
+func exercise() -> void:
+    var main = load("res://scenes/main.tscn").instantiate()
+    root.add_child(main)
+    var coordinator = main.coordinator
+    coordinator.set_physics_process(false)
+    assert(main.capture != null)
+    for cycle in 3:
+        var old_frame_callback: Callable = main.frame_callback
+        coordinator.player.health.apply_damage(100)
+        coordinator.request_restart()
+        assert(main.coordinator == coordinator and main.capture.retained_attempts.size() == cycle + 1)
+        var before: int = main.capture.frame_sample_count
+        old_frame_callback.call()
+        assert(main.capture.frame_sample_count == before, "Saved old Main frame callback cannot tag a frame with the new generation")
+    print("PROFILE_RESTART_ASSERTIONS=7")
+    main.free()
+    quit(0)
+'@
+        $profileRestart = Invoke-GodotCheck 'profile-startup' @('--headless','--path',$workspace,'--script',$profileRestartPath,'--','--profile') $workspace 30
+        Assert-Fixture ($profileRestart.ExitCode -eq 0 -and $profileRestart.Output.Contains('PROFILE_RESTART_ASSERTIONS=7') -and $profileRestart.Diagnostics.ProfileResults.Count -eq 1) 'three production Profile restarts emit one validated application receipt'
+        Assert-Fixture ($profileRestart.Diagnostics.ProfileResults[0].retained_attempts.Count -eq 3) 'every retired Profile stream manifest and sidecar validated'
+
+        $invalidScript = Join-Path $fixtureRoot 'invalid-restart-app.gd'
+        Write-ContainedText $invalidScript @'
+extends "res://scripts/run/main.gd"
+func _ready() -> void:
+    run_definition = run_definition.duplicate()
+    run_definition.player = run_definition.player.duplicate()
+    super._ready()
+    call_deferred("exercise")
+func exercise() -> void:
+    coordinator.set_physics_process(false)
+    coordinator.player.health.apply_damage(100)
+    run_definition.player.max_health = 0
+    coordinator.request_restart()
+    assert(failure_status == 1 and coordinator.state == "ConfigurationError" and coordinator.player == null and not coordinator.simulation_enabled)
+    coordinator.request_restart()
+    assert(coordinator.run_generation == 2 and failure_status == 1)
+    print("INVALID_RESTART_STATUS=1; ASSERTIONS=2")
+'@
+        $invalidScene = Join-Path $fixtureRoot 'invalid-restart-app.tscn'
+        $invalidResource = 'res://' + $invalidScript.Substring($workspace.Length + 1).Replace('\','/')
+        Write-ContainedText $invalidScene ("[gd_scene load_steps=2 format=3]`n[ext_resource type=`"Script`" path=`"$invalidResource`" id=`"1`"]`n[node name=`"InvalidRestartApp`" type=`"Node3D`"]`nscript = ExtResource(`"1`")`n")
+        $invalidResultIndex = $script:results.Count
+        $invalidRejection = $null
+        try { [void](Invoke-GodotCheck 'fixture-invalid-restart-app' @('--headless','--path',$workspace,$invalidScene,'--quit-after','120') $workspace 30) }
+        catch { $invalidRejection = $_.Exception.Message }
+        Assert-Fixture ($null -ne $invalidRejection -and $script:results.Count -eq $invalidResultIndex + 1) 'invalid restart application fails contained check'
+        $invalidResult = $script:results[$invalidResultIndex]
+        Assert-Fixture ($invalidResult.ExitCode -eq 1 -and $invalidResult.Output.Contains('INVALID_RESTART_STATUS=1; ASSERTIONS=2')) 'actual invalid restart retains failure status and exits one'
+
         $harmless = Invoke-FixtureScript 'fixture-info' @'
 extends SceneTree
 func _initialize() -> void:

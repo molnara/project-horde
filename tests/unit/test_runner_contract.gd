@@ -15,14 +15,13 @@ func prerequisites(ctx) -> void:
 	ctx.check(Manifest.missing_prerequisites(["outside-workspace.gd"]) == ["outside-workspace.gd"], "non-project prerequisite rejected")
 	var entries := Manifest.entries()
 	var selected := Manifest.select_scope(entries, true)
-	ctx.check(selected.size() == 13 and entries.size() == 51, "explicit foundation scope preserves all registered required cases")
+	ctx.check(selected.size() == 13 and entries.size() == 64, "explicit foundation scope preserves all registered required cases")
 	var staged := Manifest.staged_entries()
-	ctx.check(staged.size() == 13, "explicit Phase 4 inventory reports all deferred cases")
-	for entry in staged:
-		ctx.check(not entries.any(func(registered): return registered.id == entry.id), "deferred case is not registered for execution: " + entry.id)
-		ctx.check(not entry.ready_after.is_empty(), "deferred case has a documented implementation gate")
-		if entry.id.begins_with("restart_evidence."):
-			ctx.check(entry.ready_after.has("T039") and entry.ready_after.has("T040"), "T035 registration waits for both T039 and T040")
+	ctx.check(staged.is_empty(), "no Phase 4 cases deferred after T036–T040")
+	var phase4 := entries.filter(func(entry): return entry.id.begins_with("defeat.") or entry.id.begins_with("restart_evidence."))
+	ctx.check(phase4.size() == 16, "all sixteen authored Phase 4 cases registered")
+	for entry in phase4:
+		ctx.check(not Manifest.select_scope(entries, true).any(func(scoped): return scoped.id == entry.id), "foundation scope excludes gameplay case: " + entry.id)
 	var inventory: Array[Dictionary] = entries.duplicate()
 	inventory.append_array(staged)
 	var discovered_inventory: Array[Dictionary] = []
@@ -31,7 +30,7 @@ func prerequisites(ctx) -> void:
 	ctx.check(Manifest.reconcile(inventory, discovered_inventory).is_empty(), "complete staged/registered inventory reconciles")
 	discovered_inventory.pop_back()
 	ctx.check(not Manifest.reconcile(inventory, discovered_inventory).is_empty(), "missing staged case fails discovery reconciliation")
-	ctx.check(not Manifest.reconcile(entries, [{"id": staged[0].id, "script": staged[0].script}]).is_empty(), "staging does not waive unregistered-case checks")
+	ctx.check(not Manifest.reconcile(entries, [{"id": "unknown.case", "script": "res://tests/integration/test_restart_evidence.gd"}]).is_empty(), "complete registration does not waive unregistered-case checks")
 	ctx.check(Manifest.select_scope(entries, false).size() == entries.size(), "default includes every gameplay case")
 	var gameplay := {"id": "movement.example", "script": "res://tests/unit/test_movement_arena.gd", "maps": ["FR-001"], "seed": 1, "expected": []}
 	ctx.check(not Manifest.reconcile([gameplay], [{"id": gameplay.id, "script": gameplay.script}], [], true).is_empty(), "pending prerequisite cannot satisfy execution reconciliation")

@@ -1,10 +1,10 @@
-# Core gameplay test handoff — Phase 4 Batch 1
+# Core gameplay test handoff — Phase 4 complete
 
 T014–T017 authored the tests before implementation. T018–T032 now supply the
 production components and technical verification. The original 48 registered
 cases remain required: 13 foundation/fixture and 35 gameplay cases (6 movement,
-7 combat, 13 survival-loop, 9 profile/continuation). Batch 1 adds three executable
-defeat regressions, for 51 registered cases, plus 13 explicitly deferred cases.
+7 combat, 13 survival-loop, 9 profile/continuation). Batch 2 registers all nine
+defeat/restart and seven restart-evidence cases: 64 required cases, zero deferred.
 Actual commands/results are in the [verification ledger](../docs/verification/core-gameplay.md).
 A pending case is not executed, passed or silently skipped. If a prerequisite
 is missing, it is printed per ID as
@@ -24,7 +24,7 @@ An optional `-GodotBin` absolute console path is supported by both launchers.
 `Foundation` is an explicit limited suite, not gameplay acceptance. It still
 discovers/reconciles the entire manifest before selecting its 13 cases. The
 infrastructure wrapper uses that scope so its diagnostic/timeout/environment
-fixtures can run before gameplay exists. Default `All` requires all 51 registered cases,
+fixtures can run before gameplay exists. Default `All` requires all 64 registered cases,
 returns nonzero for any pending or failed case, and stops dependent startup checks.
 Both commands exercise real main-scene startup; when the capture helper exists,
 they also run a short headless `--profile` startup/shutdown. The resulting sparse
@@ -68,42 +68,38 @@ Each ID below has a real assertion body, a fixed reported seed, a script path
 and requirement mappings in `case_manifest.gd`. Some cases have several boundary
 fixtures. The runner discovers every designated unit/integration script.
 
-## Batch 1 authored coverage and registration gates
+## Phase 4 authored coverage and registration
 
-`Manifest.entries()` contains only the 51 executable cases. `staged_entries()`
-is an authored inventory, not execution registration. The runner loads every
-fixture, checks every declared method, and reconciles discovery against both
-inventories before selecting executable cases. Unknown, duplicate, missing or
-malformed cases still fail. Required cases still require successful execution.
-Every staged ID prints `HORDE_CASE_DEFERRED` with its task gate and the explicit
-status `authored, unregistered, unrun`. Suite results separately report
-`registered=51`, `authored=64`, `deferred=13`; deferred cases do not count as passes,
-pending executions or Foundation scope exclusions. No automatic method-existence
-skip or expected-failure assertion is used.
+`Manifest.entries()` contains all 64 executable cases. `staged_entries()` is
+empty after T036–T040 implementation. The runner loads every fixture, checks every
+declared method and reconciles discovery before selecting cases. Unknown,
+duplicate, missing, malformed or unexecuted required cases still fail. Actual All
+results: 64/64 cases, 4,703 assertions; all 16 Phase 4 cases pass (984 assertions).
+No T034/T035 assertion was changed. The owner subsequently confirmed Phase 4
+acceptance passed; T041 and all Phase 4 tasks are complete (see the ledger).
 
 | Case ID | Requirements covered | Current status / prerequisite |
 |---|---|---|
-| `defeat.lethal_commit` | FR-010: one health death/state transition, abort later contacts, final t_end/tick/time signal once, repeated lethal notifications | Executable Phase 3B regression |
-| `defeat.freeze_escape` | FR-009/010: 600 inactive 60 Hz steps, WASD/mouse/Escape/echo, unchanged state/positions/view/health/time/ticks/IDs/deadlines/enemy health/feedback/outcomes, no spawn/attack/commit events; UI tree unpaused | Executable Phase 3B regression; ten-second equivalent, not a real-time playtest |
-| `defeat.final_hud` | FR-009/010: visible zero health and final 01:05 by lethal update | Executable Phase 3B regression; does not assert future overlay |
-| `defeat.game_over_control` | FR-010/011: visible Game Over/final time, exactly one labeled actionable focused Restart, hidden in Active, presentation signal reaches real restart | Deferred T036–T039 |
-| `defeat.three_cycles` | FR-011/SC-002: dirty movement/view/health/time/IDs/cooldowns/population/feedback/outcomes, complete fresh state across three cycles, new ID zero/contact-ready/full-health enemies, full spawn delay and one event, unchanged definitions; normal Play has no sampler | Deferred T036–T039 |
-| `defeat.guarded_requests` | FR-011: Active/Paused invalid requests/signals, immediate reentrant teardown guard, repeated activations, one generation/coordinator | Deferred T036–T039; Paused is injected as an invalid precondition, not US3 implementation |
-| `defeat.stale_callbacks_removal` | FR-011: synchronous detach/registry cleanup, old signals and saved real connected Callables after restart, deferred disposal by next update | Deferred T036–T039 |
-| `defeat.invalid_restart` | FR-011/configuration edge: discard old encounter, increment generation, block fresh invalid health, actionable visible diagnostics, no revival/retry/simulation | Deferred T036–T039 |
-| `defeat.failure_isolation` | FR-011/spawn edge: two fault records count as one old failed opportunity; fresh counter/invalidity/diagnostics/selector reset, normal cadence | Deferred T036–T039 |
-| `restart_evidence.seal_before_teardown` | T035: actual raw/count buffers closed, files and committed outcomes checked during spawner tree exit, retained once before new generation | Deferred T039–T040 |
-| `restart_evidence.stale_generations` | T035: old frame/step/failure/continuation callbacks cannot modify new buffers, metadata, audit or retained attempt; new callback works | Deferred T039–T040 |
-| `restart_evidence.valid_open` | T035: valid edited definitions applied before new evidence, unique path/serial, fresh buffers/counters/outcomes/conditions, old invalidity/failure evidence retained | Deferred T039–T040 |
-| `restart_evidence.invalid_no_open` | T035: invalid fresh definitions publish no encounter/new buffer/serial; sealed old files/metadata survive; late frame cannot reopen capture | Deferred T039–T040 |
-| `restart_evidence.shutdown_fault` | T035: real required-sidecar file-open failure in Main shutdown, outstanding capture and diagnostics, partial artifacts retained, unfinished survival never accepted | Deferred T039–T040; launcher diagnostic matching also needs T041 integration (below) |
-| `restart_evidence.write_fault` | T035: real endpoint manifest file-open failure retained in old metadata/sidecar across restart; clean fresh diagnostics never rewrite old failure | Deferred T039–T040; launcher diagnostic matching also needs T041 integration (below) |
-| `restart_evidence.post300_death` | SC-006/007: actual coordinator 300 crossing alive then lethal 300.125 step; endpoint manifest/time/ticks preserved; missing continuation stays outstanding, no full acceptance; old outcomes survive restart | Deferred T039–T040 |
+| `defeat.lethal_commit` | FR-010: one health death/state transition, abort later contacts, final t_end/tick/time signal once, repeated lethal notifications | PASSED in Batch 2 |
+| `defeat.freeze_escape` | FR-009/010: 600 inactive 60 Hz steps, WASD/mouse/Escape/echo, unchanged state/positions/view/health/time/ticks/IDs/deadlines/enemy health/feedback/outcomes, no spawn/attack/commit events; UI tree unpaused | PASSED in Batch 2; ten-second equivalent, not a real-time playtest |
+| `defeat.final_hud` | FR-009/010: visible zero health and final 01:05 by lethal update | PASSED; Game Over control verified by the following case |
+| `defeat.game_over_control` | FR-010/011: visible Game Over/final time, exactly one labeled actionable focused Restart, hidden in Active, presentation signal reaches real restart | PASSED in Batch 2 |
+| `defeat.three_cycles` | FR-011/SC-002: dirty movement/view/health/time/IDs/cooldowns/population/feedback/outcomes, complete fresh state across three cycles, new ID zero/contact-ready/full-health enemies, full spawn delay and one event, unchanged definitions; normal Play has no sampler | PASSED in Batch 2 |
+| `defeat.guarded_requests` | FR-011: Active/Paused invalid requests/signals, immediate reentrant teardown guard, repeated activations, one generation/coordinator | PASSED in Batch 2; Paused is injected as an invalid precondition, not US3 implementation |
+| `defeat.stale_callbacks_removal` | FR-011: synchronous detach/registry cleanup, old signals and saved real connected Callables after restart, deferred disposal by next update | PASSED in Batch 2 |
+| `defeat.invalid_restart` | FR-011/configuration edge: discard old encounter, increment generation, block fresh invalid health, actionable visible diagnostics, no revival/retry/simulation | PASSED in Batch 2 |
+| `defeat.failure_isolation` | FR-011/spawn edge: two fault records count as one old failed opportunity; fresh counter/invalidity/diagnostics/selector reset, normal cadence | PASSED in Batch 2 |
+| `restart_evidence.seal_before_teardown` | T035: actual raw/count buffers closed, files and committed outcomes checked during spawner tree exit, retained once before new generation | PASSED in Batch 2 |
+| `restart_evidence.stale_generations` | T035: old frame/step/failure/continuation callbacks cannot modify new buffers, metadata, audit or retained attempt; new callback works | PASSED in Batch 2 |
+| `restart_evidence.valid_open` | T035: valid edited definitions applied before new evidence, unique path/serial, fresh buffers/counters/outcomes/conditions, old invalidity/failure evidence retained | PASSED in Batch 2 |
+| `restart_evidence.invalid_no_open` | T035: invalid fresh definitions publish no encounter/new buffer/serial; sealed old files/metadata survive; late frame cannot reopen capture | PASSED in Batch 2 |
+| `restart_evidence.shutdown_fault` | T035: real required-sidecar file-open failure in Main shutdown, outstanding capture and diagnostics, partial artifacts retained, unfinished survival never accepted | PASSED in Batch 2; exact launcher diagnostic matching passed |
+| `restart_evidence.write_fault` | T035: real endpoint manifest file-open failure retained in old metadata/sidecar across restart; clean fresh diagnostics never rewrite old failure | PASSED in Batch 2; exact launcher diagnostic matching passed |
+| `restart_evidence.post300_death` | SC-006/007: actual coordinator 300 crossing alive then lethal 300.125 step; endpoint manifest/time/ticks preserved; missing continuation stays outstanding, no full acceptance; old outcomes survive restart | PASSED in Batch 2 |
 
-No T035 case is registered yet, including `shutdown_fault`, whose underlying
-helper/Main shutdown behavior already exists. Existing `profile.generations`,
+All T035 cases execute the actual restart wiring. Existing `profile.generations`,
 `profile.lethal_endpoint`, `profile.bounded_late_failure` and `profile.continuation`
-remain executed helper/endpoint coverage; they cannot prove new restart wiring.
+remain required and passing.
 
 Fixtures reuse native Context/F, isolated definitions, seeds 4702034/4702035,
 real scenes and callbacks. Only automatic physics driving is disabled. Slow
@@ -118,23 +114,23 @@ inside the HUD). The synchronous fresh-run fixture seam assumes a stable
 coordinator, a reused Main-owned capture helper, and fresh state on return from
 `request_restart()`. The spec explicitly requires synchronous old removal and an
 immediate guard, but does not fix fresh-construction scheduling or helper identity.
-If Batch 2 adopts deferred construction or replaces either owner, adapt the
-fixture wiring/await boundary while preserving all behavioral assertions.
+Batch 2 uses that synchronous seam. Only a restart requested inside the lethal
+step waits for its final commit; its guard still latches immediately.
 
-Two integration details need attention in Batch 2/T041. Clearing signal
-connections alone cannot reject already queued old Callables on a retained
-coordinator/HUD; fixtures save and invoke the real connected callbacks. Also,
-`validation_diagnostics.ps1` currently treats every `Profile capture failure:`
-line as fatal even when Context declares the exact ProfileCapture fault. T041
-must match these expected fault records by case/source/constraint/count (and
-matching printed payload); ordinary capture failures and genuine engine errors
-must remain fatal. Batch 1 leaves the classifier and capture behavior unchanged.
+Production callbacks bind the originating generation and disconnect on disposal;
+saved queued Callables are rejected too. The launcher correlates each intentional
+printed capture fault with one exact case-tagged native diagnostic and checks
+source/constraint/count plus all five payload fields. Extra records, unmatched
+log-only faults, ordinary capture failures and genuine engine errors remain fatal.
+Infrastructure fixtures test these rules, actual keyboard/mouse activation,
+reentrant lethal restart, normal Play failure retention, three production Profile
+restarts with saved old frame Callables, and invalid restart in a real application
+scene with exit 1. Profile shutdown emits one application receipt and the launcher
+checks current and retired manifests/raw streams/outcome sidecars independently.
 
-At T041, after T036–T040 are implemented, move ready staged entries into
-`entries()`, remove their staging declarations, and update the explicit inventory
-counts in `runner.prerequisites`. Then run contained All with all US2 assertions
-required; no assertion relaxation or silent exclusion is permitted. T035 must
-wait for both T039 and T040. The T041 checkpoint and owner acceptance remain open.
+The T041 automated registration/validation portion ran within the owner's Batch 2
+authorization. Owner visual/control acceptance subsequently passed, completing
+T041; the ledger records the owner's confirmation separately from automated tests.
 
 ## Original Phase 3B coverage
 
@@ -248,8 +244,12 @@ The main scene now runs the US1 loop. Repeat the
 all WASD directions/opposed/released/diagonal before and after yaw rotation,
 pitch extremes/perimeter traversal, overlap without blocking, readable HUD,
 automatic target line/flash, independent contact damage and lethal stop.
-Pause/restart journeys belong to their later phases. US1 defeat stops the loop;
-close/relaunch for another attempt. Use Alt+F4 to close while the mouse is captured.
-Pause and Restart controls are not yet supplied. The uninterrupted normal
-300-second survival and real rendered profile remain separate owner acceptance
-work; these deterministic fixtures cannot establish either.
+For T041, take normal lethal contact damage, check Game Over/zero health/final
+time and mouse release, and attempt WASD/mouse/Escape for ten real seconds.
+Complete three defeat/restart cycles using click, Enter and Space; also try rapid
+repeated activation. Check full health, initial position/view, 00:00, empty old
+population, mouse recapture and a full first-spawn delay after each restart.
+Use Alt+F4 to close while the mouse is captured. Pause is a later phase. Controls,
+visuals/game feel and qualifying survival/rendered profiling require owner evidence;
+these deterministic fixtures cannot establish them. Invalid data requires
+correction and relaunch; no in-application retry is supplied.

@@ -34,6 +34,9 @@ var summary: Dictionary = {}
 var sampler_overhead_usec: int = 0
 var attempt_serial: int = 0
 var configured: bool = false
+var attempt_retained: bool = false
+var shutdown_written: bool = false
+var receipt_emitted: bool = false
 
 func configure(absolute_workspace_output_directory: String) -> void:
 	var cache_root := ProjectSettings.globalize_path("res://.cache/").replace("\\", "/")
@@ -46,9 +49,11 @@ func configure(absolute_workspace_output_directory: String) -> void:
 
 func open_attempt(generation: int, wall_seconds: float) -> void:
 	if run_generation != 0:
-		shutdown(wall_seconds)
-		retained_attempts.append(_metadata())
+		retain_attempt(wall_seconds)
 	run_generation = generation
+	attempt_retained = false
+	shutdown_written = false
+	receipt_emitted = false
 	attempt_serial += 1
 	t0 = wall_seconds
 	t1 = wall_seconds
@@ -109,7 +114,7 @@ func record_frame(generation: int, wall_seconds: float, engine_frame: int = -1) 
 	sampler_overhead_usec += Time.get_ticks_usec() - begin
 
 func record_step(generation: int, committed_time: float, ticks: int, wall_seconds: float, count: int, alive: bool) -> void:
-	if generation != run_generation:
+	if generation != run_generation or attempt_retained:
 		return
 	if not buffer_open:
 		# Unlimited continuation must never accumulate raw samples or overwrite t1.
@@ -126,14 +131,14 @@ func record_step(generation: int, committed_time: float, ticks: int, wall_second
 		_close(wall_seconds)
 
 func record_spawn_failure(generation: int, record: Dictionary) -> void:
-	if generation != run_generation:
+	if generation != run_generation or attempt_retained:
 		return
 	spawn_failure_count += 1
 	acceptance_invalid = true
 	failure_diagnostics.append(record.duplicate(true))
 
 func record_continuation(generation: int, observations: Dictionary) -> void:
-	if generation != run_generation:
+	if generation != run_generation or attempt_retained:
 		return
 	continuation_evidence = observations.duplicate(true)
 	if survival_window_outcome == "passed" and observations.has_all(["time_advanced", "movement", "view", "spawn_opportunity", "unchanged_tuning_vulnerability"]):
@@ -144,14 +149,27 @@ func qualifies_attempt() -> bool:
 	# still be reviewed in the verification ledger. Sparse timing is insufficient.
 	return survival_window_outcome == "passed" and continuation_outcome == "passed" and profile_capture_outcome == "passed" and not acceptance_invalid and summary.get("full_intervals_available", false) and summary.get("enemy_min") != null and not conditions.is_empty()
 
-func shutdown(wall_seconds: float) -> void:
+func shutdown(wall_seconds: float, emit_result: bool = true) -> void:
 	if run_generation == 0:
 		return
-	if buffer_open:
-		_close(wall_seconds)
-	if not evidence_path.is_empty():
-		_write_json(evidence_path + ".outcomes.json", _metadata())
-	print("HORDE_PROFILE_RESULT=" + JSON.stringify({"profile_capture_outcome": profile_capture_outcome, "evidence_path": evidence_path, "frame_evidence_path": frame_evidence_path, "frame_sample_count": frame_sample_count, "capture_diagnostics": capture_diagnostics, "survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome, "acceptance_invalid": acceptance_invalid}))
+	if not shutdown_written:
+		if buffer_open:
+			_close(wall_seconds)
+		if not evidence_path.is_empty():
+			_write_json(evidence_path + ".outcomes.json", _metadata())
+		shutdown_written = true
+	if emit_result and not receipt_emitted:
+		receipt_emitted = true
+		# One application completion receipt; earlier attempts remain independently
+		# inspectable and the launcher checks every required artifact.
+		print("HORDE_PROFILE_RESULT=" + JSON.stringify({"profile_capture_outcome": profile_capture_outcome, "evidence_path": evidence_path, "frame_evidence_path": frame_evidence_path, "frame_sample_count": frame_sample_count, "capture_diagnostics": capture_diagnostics, "survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome, "acceptance_invalid": acceptance_invalid, "retained_attempts": retained_attempts}))
+
+func retain_attempt(wall_seconds: float) -> void:
+	if run_generation == 0 or attempt_retained:
+		return
+	shutdown(wall_seconds, false)
+	retained_attempts.append(_metadata())
+	attempt_retained = true
 
 func _flush_frames() -> void:
 	if frame_output == null or frame_timestamps.is_empty():
@@ -221,4 +239,4 @@ func _capture_fault(field: String, observed: Variant, constraint: String, cause:
 	printerr("Profile capture failure: " + JSON.stringify(record))
 
 func _metadata() -> Dictionary:
-	return {"run_generation": run_generation, "t0": t0, "t1": t1, "completed_simulation_duration": completed_simulation_duration, "completed_step_count": completed_step_count, "survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome, "continuation_evidence": continuation_evidence.duplicate(true), "profile_capture_outcome": profile_capture_outcome, "acceptance_invalid": acceptance_invalid, "spawn_failure_count": spawn_failure_count, "failure_diagnostics": failure_diagnostics.duplicate(true), "capture_diagnostics": capture_diagnostics.duplicate(true), "evidence_path": evidence_path, "summary": summary.duplicate(true)}
+	return {"run_generation": run_generation, "t0": t0, "t1": t1, "completed_simulation_duration": completed_simulation_duration, "completed_step_count": completed_step_count, "survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome, "continuation_evidence": continuation_evidence.duplicate(true), "profile_capture_outcome": profile_capture_outcome, "acceptance_invalid": acceptance_invalid, "spawn_failure_count": spawn_failure_count, "failure_diagnostics": failure_diagnostics.duplicate(true), "capture_diagnostics": capture_diagnostics.duplicate(true), "evidence_path": evidence_path, "frame_evidence_path": frame_evidence_path, "frame_sample_count": frame_sample_count, "summary": summary.duplicate(true)}

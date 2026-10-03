@@ -15,8 +15,7 @@ function Get-ValidationDiagnostics {
     # Severity records from either copy count, but duplicate stream/log copies
     # do not multiply application diagnostic expectations.
     foreach ($line in (($plain + "`n" + $logPlain) -split '\r?\n' | Select-Object -Unique)) {
-        if ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR):' -or
-            $line -match '^\s*Profile capture failure:') { $errors.Add($line) }
+        if ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR):') { $errors.Add($line) }
         elseif ($line -match '^\s*WARNING:') { $warnings.Add($line) }
         elseif ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR|WARNING)\b' -or
                 $line -match '^\s*(?:Failed (?:loading|to load) resource|Parse Error|Exception|Unhandled exception)\s*[:(]') {
@@ -84,6 +83,42 @@ function Get-ValidationDiagnostics {
                 }
             }
         } catch { $errors.Add("Invalid $kind record: $($_.Exception.Message) Original: $line") }
+    }
+    # stderr is collected separately from stdout, so correlate each printed
+    # capture payload with one fully validated, case-tagged application record.
+    # Preserve multiplicity and log-only faults without counting duplicate copies.
+    $captureLines = [Collections.Generic.List[string]]::new()
+    $streamCounts = @{}
+    $logCounts = @{}
+    foreach ($line in ($plain -split '\r?\n' | Where-Object { $_ -match '^\s*Profile capture failure:' })) {
+        $captureLines.Add($line)
+        $streamCounts[$line] = 1 + [int]$streamCounts[$line]
+    }
+    foreach ($line in ($logPlain -split '\r?\n' | Where-Object { $_ -match '^\s*Profile capture failure:' })) {
+        $logCounts[$line] = 1 + [int]$logCounts[$line]
+    }
+    foreach ($line in $logCounts.Keys) {
+        for ($i=[int]$streamCounts[$line]; $i -lt $logCounts[$line]; $i++) { $captureLines.Add($line) }
+    }
+    $usedCaptureRecords = @{}
+    foreach ($line in $captureLines) {
+        try {
+            if (-not $AllowCaseDeclarations) { throw 'Capture failure outside declared suite.' }
+            $fault = ($line -replace '^\s*Profile capture failure:\s*', '') | ConvertFrom-Json -ErrorAction Stop
+            if (@($fault.PSObject.Properties).Count -ne 5) { throw 'Capture payload must contain exactly the five declared diagnostic fields.' }
+            $matching = @()
+            for ($i=0; $i -lt $expectedFaults.Count; $i++) {
+                if ($usedCaptureRecords.ContainsKey($i)) { continue }
+                $candidate = $expectedFaults[$i]
+                $same = $candidate.source -ceq 'ProfileCapture' -and $cases[[string]$candidate.case].Ended
+                foreach ($field in @('source', 'field', 'observed', 'constraint', 'cause')) {
+                    if ($null -eq $fault.PSObject.Properties[$field] -or $fault.$field -cne $candidate.$field) { $same = $false }
+                }
+                if ($same) { $matching += $i }
+            }
+            if ($matching.Count -ne 1) { throw 'Capture payload lacks one exact declared case diagnostic.' }
+            $usedCaptureRecords[$matching[0]] = $true
+        } catch { $errors.Add("$line ($($_.Exception.Message))") }
     }
     if ($AllowCaseDeclarations) {
         if ($null -eq $summary -or $summary.executed -ne $cases.Count) { $errors.Add('Missing or inconsistent native-suite completion evidence.') }

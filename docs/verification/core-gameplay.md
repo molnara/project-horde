@@ -1,6 +1,16 @@
 # Core gameplay verification ledger
 
-Current checkpoint: Phase 3B T033 closure, 2026-10-03.
+Current checkpoint: Phase 4 owner acceptance / T041 closure, 2026-10-03.
+All 64 required native cases pass with 4,703 assertions; all 16 authored Phase 4
+integration cases pass with 984 assertions and zero deferrals. Final contained
+validation also passes 35 script parses, both startups and 143 infrastructure
+assertions. The owner reports Phase 4 acceptance testing passed; T034–T041 are
+complete and SC-002 is passed. See the final **Phase 4 T041 owner acceptance
+closure** section for manual results and the Batch 2 section for automated
+evidence. Earlier unrun/deferred statuses below are historical. Phase 5 and full
+feature/performance acceptance remain separate. No Git commit or push was made.
+
+Previous Phase 3B checkpoint, retained independently:
 The corrected owner capture is complete and internally consistent; its shutdown
 sidecar independently verifies normal continuation beyond 300 simulation seconds.
 The owner confirms warm-up and basic controls/boundaries/kill feedback/HUD, and
@@ -10,11 +20,14 @@ evidence. SC-007's capture is now verified, while acceptance still awaits missin
 source provenance. All six T033 owner checks passed: the owner confirms paced
 damage from 1–2 enemies and immediate lethal damage from roughly 10+ at 100 HP,
 consistent with independent enemy attacks. T033 and Phase 3B are complete.
-T034 begins Phase 4 and remains unstarted; full feature acceptance is outstanding.
+Phase 4 T034–T041 is now complete; full feature
+acceptance is outstanding.
 Constitution v1.0.0 and the approved feature documents govern this
 ledger. The Phase 2 and Phase 3A sections below preserve historical observations;
-the final **Phase 3B T033 closure** supersedes readiness, pending-case and
-per-clause statuses. Historical empty-bootstrap results are not gameplay evidence.
+the **Phase 3B T033 closure** supersedes earlier US1 statuses, and the final
+**Phase 4 T041 owner acceptance closure** section supersedes earlier US2
+readiness/deferral and owner-unrun statuses.
+Historical empty-bootstrap results are not gameplay evidence.
 
 ## Reproduce the foundation checks
 
@@ -1444,3 +1457,189 @@ can establish their acceptance.
 Their deferred behavioral assertions have not passed; T036–T041 remain unchecked,
 US2/SC-002 acceptance is open, and no Batch 2 implementation was started. Stop
 after Batch 1; further implementation requires the owner's authorization.
+
+## Phase 4 Batch 2 — T036–T040 implementation and automated evidence (2026-10-03)
+
+The owner authorized this batch, including promotion of dependency-ready tests
+and contained automated validation. T036–T040 are implemented and checked in
+`tasks.md`. T041 remains unchecked: its automated portion was authorized here,
+but its owner controls/visual/game-feel acceptance has not run. Stop at Batch 2.
+No specifications, constitution, checklist markers or T034/T035 assertions were
+changed. Initial working tree was clean. No commit or push was made.
+
+### Implementation and lifecycle decisions
+
+- T036: GameOver latches once, clears pending camera motion and hit feedback,
+  short-circuits later contacts, and commits the lethal step's t_end/tick/HUD
+  exactly once. Subsequent coordinator steps and inactive mouse/Escape intents
+  cannot change gameplay; the UI tree keeps processing. Out-of-step death uses
+  the already committed clock, with no extra simulated duration.
+- T037: HUD presents Game Over, final survival time and one focused Restart
+  button. Health/time remain above the dim overlay. Click, non-echo Enter/keypad
+  Enter and Space emit the presentation-only restart intent. The control is
+  absent in Active; both UI disabling and the coordinator guard latch immediately.
+- T038: Main and coordinator retain their identities. Each valid restart creates
+  fresh arena/player/health/camera/registry/spawner/weapon/feedback/HUD nodes and
+  copied validated definitions. The registry is cleared and nodes leave the tree
+  synchronously before request_restart returns; queue_free disposes them after
+  signal dispatch. Generation increments once after old teardown, before fresh
+  validation. All encounter listeners bind their originating generation, including
+  health/death/spawn/feedback/restart and Main's production frame listener. Saved
+  queued Callables therefore remain harmless after disconnection. A reentrant
+  request inside the lethal step defers construction until that final commit;
+  its guard latches immediately and no duplicate request can enter.
+- T039: Invalid restart still discards the defeated encounter, consumes the next
+  generation, publishes only a diagnostic HUD and disables simulation. Main
+  retains failure_status=1; a real headless application exits 1. Native intentional
+  fault fixtures keep running to assert the diagnostics. Interactive correction
+  requires editing the definition and relaunching; no retry UI is added.
+- T040: Main reuses one Profile-only capture helper. Before teardown it seals
+  raw buffers, flushes final tails, writes outcomes and retains old metadata once.
+  Valid fresh definitions/ready nodes precede new paths/buffers/conditions; invalid
+  restart opens nothing. Old generations and retired attempts cannot mutate
+  evidence. Post-300 death preserves the original endpoint manifest/timing and
+  valid survival, with missing continuation still outstanding. Fresh counters do
+  not erase failed-attempt records: Profile retains metadata/files and normal
+  Play retains coordinator attempt metadata without adding a sampler.
+- Profile retirement does not print an application-completion receipt. Shutdown
+  prints one receipt containing retained attempts; the launcher verifies every
+  current/retired raw byte count, manifest and outcomes sidecar. A previous capture
+  fault remains a failure even if fresh capture succeeds. Defeats remain normal
+  unsuccessful survival attempts, distinct from incomplete capture.
+- The existing native manifest/discovery/execution contract stays strict. All
+  thirteen staged entries were promoted after T036–T040 readiness. Harness
+  registration assertions now require 64 registered/16 Phase 4/zero staged cases;
+  foundation-only explicitly excludes all 51 gameplay cases. No behavioral
+  acceptance test was weakened or made optional.
+- Required launcher integration matches printed intentional ProfileCapture faults
+  to exactly one declared case/source/constraint/count and all five payload
+  fields. Stream/log copies are reconciled without multiplying counts; extra or
+  log-only faults remain fatal. Ordinary capture faults and engine exceptions
+  remain failures. The additional infrastructure cases exercise these boundaries.
+
+### Commands actually executed and outcomes
+
+```powershell
+./.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
+./tools/validate.ps1 -Mode All -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+./tools/test-validation.ps1 -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+git diff --check
+```
+
+| Execution | Actual result / evidence under workspace `.cache/validation/` |
+|---|---|
+| Spec Kit prerequisites/checklists | PASSED, exit 0; active feature resolved; requirements 16 checked/0 unchecked, technical 36/0; no extensions.yml/hooks present |
+| Initial sandbox All | FAILED, launcher exit 1 at path probe despite child exit 0: Windows root certificate store access failed. Import/parse/suite/startups UNRUN. `20261003T134421769-d13ae3ab06bc4fd198dfc479ee1fc51f` |
+| First approved All rerun | FAILED at launcher suite classification, exit 1; all 35 parses and native 64/64 / 4,703 assertions passed, but intentional capture faults were matched before parsing declared case records. Corrected classifier ordering; dependent startups UNRUN. `20261003T134438708-c0a847e9e6654bc28b56d0ac5838f32b` |
+| Corrected All | PASSED, exit 0; containment/import/35 parses, 64/64 / 4,703 assertions, normal and short headless Profile startups. `20261003T134912421-6f2e88d326fe4e1ab157c9d50bcd3dd3` |
+| Infrastructure wrapper | PASSED, exit 0; import/35 parses, Foundation 13/13 / 575 assertions, 51 explicit scope exclusions, zero deferrals, both startups, 142 infrastructure assertions plus all five wrapper environment-restoration checks. `20261003T134941957-25590b92c77c4f89a48f04b821ec1445` |
+| Wrapper after launcher receipt-loop cleanup | PASSED, exit 0; same 13/13 / 575 Foundation assertions and 142 infrastructure assertions, all five wrapper environment-restoration checks. `20261003T135254695-19efa52b4ac449f7bbf0ead993e6b9b9` |
+| Final All + infrastructure (including log-only fault regression) | PASSED, exit 0; actual Godot 4.7.2 Standard `ed1daf0bf`, verified workspace paths/import/35 parses, **64/64 cases / 4,703 assertions**, 64 authored/registered, **zero deferred/pending/excluded**, both startups and **143 infrastructure assertions**. `20261003T135407690-84051e53f4dd4280a226382c2d7b7f4d` |
+| Whitespace/scope/source-artifact audit | PASSED, exit 0; `git diff --check`; only authorized source/docs modified, generated output ignored; unchanged authored Phase 4 fixtures/specification/constitution/checklists |
+
+Approved reruns used the same contained launcher outside the sandbox certificate
+restriction. No certificate suppression, installation, global configuration or
+external writes were added. All output remains in the ignored project cache.
+
+Infrastructure intentionally executes failing children for real engine exceptions,
+parse/resource faults, assertions, incomplete capture, runner reconciliation and
+an owned-child timeout. Each expected failure is asserted and retained in
+`infrastructure-child-results.json`; these are not unresolved validation failures.
+The new `fixture-invalid-restart-app` launches an actual scene without --script,
+asserts retained ConfigurationError/status/no encounter/no retry and exits **1**.
+The wrapper explicitly expects that result. Additional real GDScript fixtures
+execute **8 controls/reentrant/normal-Play-retention assertions**, **7 production
+Profile restart/saved-frame-Callable assertions**, and **2 invalid-app assertions**
+(17 total, separate from the 4,703 native-suite/143 infrastructure counts).
+No rendered smoke, manual playtest or fresh qualifying owner profile ran here.
+A failed partial tasks.md patch had no side effects and was replaced by targeted
+edits; it was an editing operation, not a test result.
+
+### All sixteen authored Phase 4 cases — registered and passing
+
+| Required case | Assertions | Result |
+|---|---:|---|
+| defeat.lethal_commit | 19 | PASSED |
+| defeat.freeze_escape | 614 | PASSED (600 inactive ticks, ten-second equivalent) |
+| defeat.final_hud | 9 | PASSED |
+| defeat.game_over_control | 15 | PASSED |
+| defeat.three_cycles | 104 | PASSED |
+| defeat.guarded_requests | 14 | PASSED |
+| defeat.stale_callbacks_removal | 16 | PASSED |
+| defeat.invalid_restart | 20 | PASSED (one declared PlayerDefinition fault) |
+| defeat.failure_isolation | 13 | PASSED (two records, one failed opportunity) |
+| restart_evidence.seal_before_teardown | 32 | PASSED |
+| restart_evidence.stale_generations | 23 | PASSED |
+| restart_evidence.valid_open | 19 | PASSED |
+| restart_evidence.invalid_no_open | 19 | PASSED (one declared PlayerDefinition fault) |
+| restart_evidence.shutdown_fault | 16 | PASSED (one exact declared capture fault) |
+| restart_evidence.write_fault | 23 | PASSED (one exact declared capture fault) |
+| restart_evidence.post300_death | 28 | PASSED |
+| **Total** | **984** | **16/16, zero deferred** |
+
+### Batch 2 clause status and owner handoff (historical checkpoint)
+
+FR-010.a–d and FR-011.a–e: automated behavior PASSED through the above real scenes
+and callbacks plus real input/application fixtures. Visual legibility, physical
+keyboard/mouse feel, release/recapture and normal-play pacing remain owner UNRUN.
+SC-002 remains outstanding until the owner completes three normal defeat/restart
+cycles. The earlier Phase 3B evidence remains intact; these fixtures do not renew
+SC-006/007 owner profiling or resolve its recorded historical source provenance.
+US3 pause/resume and later acceptance phases are UNRUN and outside Batch 2.
+No new unresolved implementation issue requires an owner design decision.
+
+Recommended T041 owner steps, after separate authorization:
+
+1. Launch `./tools/validate.ps1 -Mode Play` through the contained launcher. Move
+   and rotate normally, take lethal contact damage, and check zero health,
+   readable Game Over/final time, focused Restart and a released mouse.
+2. Wait ten real seconds trying WASD, mouse rotation and Escape/held Escape.
+   Check unchanged player/enemies/view/health/time and no spawns/attacks/feedback.
+3. Complete three normal defeat/restart cycles using mouse click, Enter and
+   Space. Try rapid repeated/held activation. Each cycle must produce one run,
+   full health, initial position/view, 00:00, no old enemies or feedback, a ready
+   weapon, recaptured mouse and one full first-spawn interval before normal cadence.
+4. If reviewing Profile mode separately, preserve the JSON manifest, raw stream
+   and outcomes sidecar for each generation and the single shutdown receipt.
+   Check failed attempts remain separate; shutdown should preserve unfinished
+   evidence. No splicing or fresh acceptance claim is implied by this check.
+
+T041 is deliberately not marked complete; no final owner acceptance was performed.
+
+## Phase 4 T041 owner acceptance closure (2026-10-03)
+
+**Evidence source:** the product owner's confirmation in this session:
+“Phase 4 owner acceptance testing passed.” The owner explicitly requested T041
+completion. This confirms the previously supplied Phase 4 acceptance procedure;
+the manual results below are owner-reported, not playtests executed by Codex.
+No additional per-cycle timestamps, measured durations or profiling artifacts
+were supplied or inferred.
+
+| Manual acceptance check | Requirement | Owner-reported result |
+|---|---|---|
+| Normal lethal contact shows zero health, readable Game Over/final time and actionable focused Restart; mouse releases | FR-009/010 | PASSED |
+| Ten-second defeated-state check with WASD, mouse and Escape: gameplay/view/health/time remain frozen; Escape cannot resume | FR-010 | PASSED |
+| Three consecutive defeat/restart cycles in one application using mouse, Enter and Space | FR-011 / SC-002 | PASSED |
+| Each restart restores full health, initial position/view, 00:00, no old enemies/feedback, ready weapon, mouse capture and a full initial spawn delay | FR-011 | PASSED |
+| Repeated/held activation leaves one encounter with normal cadence and no carried-over damage or duplicate events | FR-011 | PASSED |
+
+**Completion:** all eight Phase 4 tasks **T034–T041 are complete**. T041 combines
+the previously executed registration/automated validation with this owner manual
+acceptance. FR-010/FR-011 and SC-002 are accepted for this phase. This section
+supersedes the historical Batch 1/Batch 2 owner-unrun and T041-incomplete statuses.
+
+The existing technical evidence remains **64/64 native cases / 4,703 assertions**,
+including **16/16 Phase 4 cases / 984 assertions**, zero deferrals, 35 script
+parses, both startups and 143 infrastructure assertions. This closure changes
+only the ledger, task status and test README; no gameplay code changed and no
+Godot suite was rerun. Phase 5 and full feature/performance acceptance remain
+outside this request; existing profiling/source-provenance limitations are
+unchanged. No new unresolved Phase 4 issue was reported by the owner.
+
+Final repository checks: `git status --short`, `git diff --check`,
+`git diff --cached --check` and staged-path inspection. The diff checks passed;
+all 13 Phase 4 source/documentation changes are unstaged, with no staged files
+and therefore no staged generated profiling/validation artifacts. Workspace
+`.cache/` and `.godot/` output remains ignored. Phase 4 is ready for commit upon
+explicit authorization; no staging, commit or push was performed.

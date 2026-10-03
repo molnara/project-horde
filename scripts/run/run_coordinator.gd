@@ -11,6 +11,7 @@ const Feedback = preload("res://scripts/combat/attack_feedback.gd")
 
 signal state_changed(state: String)
 signal time_changed(time: float)
+signal restart_requested(generation: int)
 var state: String = "ConfigurationError"
 var simulation_enabled: bool = false
 var active_time: float = 0.0
@@ -37,14 +38,30 @@ var continuation_evidence: Dictionary = {}
 var stepping: bool = false
 var configured_camera_distance: float
 var configured_camera_fov: float
+var restart_in_progress: bool = false
+var encounter_connections: Array[Dictionary] = []
+var retained_attempts: Array[Dictionary] = []
 
 func start_run(definition: Variant) -> void:
-	assert(hud == null, "US1 starts exactly one encounter; restart belongs to US2")
+	assert(hud == null, "Dispose the previous encounter before constructing a fresh one")
+	simulation_enabled = false
+	state = "ConfigurationError"
+	active_time = 0.0
+	completed_step_count = 0
+	next_spawn_id = 0
+	spawn_failure_count = 0
+	acceptance_invalid = false
+	spawn_diagnostics.clear()
+	continuation_evidence.clear()
+	survival_window_outcome = "outstanding"
+	continuation_outcome = "outstanding"
 	hud = HudScene.instantiate()
 	add_child(hud)
+	_connect_encounter(hud.restart_requested, request_restart.bind(run_generation))
 	configuration_diagnostics = DefinitionValidator.validate(definition)
 	if not configuration_diagnostics.is_empty():
 		hud.present_configuration_error(configuration_diagnostics)
+		state_changed.emit(state)
 		return
 	runtime_definition = definition.duplicate()
 	for field in ["arena", "player", "enemy", "weapon"]:
@@ -71,20 +88,86 @@ func start_run(definition: Variant) -> void:
 	feedback = Feedback.new()
 	add_child(feedback)
 	feedback.configure(runtime_definition.weapon)
-	weapon.attack_feedback.connect(feedback.show_attack)
-	weapon.attack_feedback.connect(_weapon_feedback)
+	_connect_encounter(weapon.attack_feedback, _weapon_feedback.bind(run_generation))
 	spawner = Spawner.new()
 	add_child(spawner)
 	spawner.configure(runtime_definition, arena, registry, create_enemy, run_generation)
-	spawner.opportunity_failed.connect(_spawn_failed)
-	spawner.opportunity_consumed.connect(_spawn_consumed)
-	player.health.health_changed.connect(hud.present_health)
-	player.health.died.connect(_player_died)
+	_connect_encounter(spawner.opportunity_failed, _spawn_failed.bind(run_generation))
+	_connect_encounter(spawner.opportunity_consumed, _spawn_consumed.bind(run_generation))
+	_connect_encounter(player.health.health_changed, _health_changed.bind(run_generation))
+	_connect_encounter(player.health.died, _player_died.bind(run_generation))
 	hud.present_health(player.health.current_health, player.health.max_health)
 	hud.present_time(active_time)
 	state = "Active"
 	simulation_enabled = true
+	hud.present_state(state)
 	state_changed.emit(state)
+
+func _connect_encounter(event: Signal, callback: Callable) -> void:
+	event.connect(callback)
+	encounter_connections.append({"signal": event, "callback": callback})
+
+func _current_callback(generation: int) -> bool:
+	return generation == run_generation and simulation_enabled and not restart_in_progress
+
+func _health_changed(current: int, maximum: int, generation: int) -> void:
+	if _current_callback(generation) and state == "Active":
+		hud.present_health(current, maximum)
+
+func request_restart(generation: int = -1) -> void:
+	if state != "GameOver" or restart_in_progress or (generation != -1 and generation != run_generation):
+		return
+	# Latch before notifying Main, including reentrant signals during tree exit.
+	restart_in_progress = true
+	simulation_enabled = false
+	hud.set_restart_enabled(false)
+	if stepping:
+		# Finish the lethal commit before any observer can replace its encounter.
+		_emit_restart.call_deferred(run_generation)
+	else:
+		_emit_restart(run_generation)
+
+func _emit_restart(generation: int) -> void:
+	if generation == run_generation and restart_in_progress and not stepping:
+		restart_requested.emit(generation)
+
+func dispose_encounter() -> void:
+	simulation_enabled = false
+	for connection in encounter_connections:
+		var event: Signal = connection.signal
+		if not event.is_null() and event.is_connected(connection.callback):
+			event.disconnect(connection.callback)
+	encounter_connections.clear()
+	if registry != null:
+		for enemy in registry.members.keys():
+			registry.remove(enemy)
+	if camera != null:
+		camera.clear_pending_input()
+	if feedback != null:
+		feedback.clear()
+	# Remove synchronously, free after signal dispatch finishes. Weapon/health and
+	# all enemies belong to player/spawner respectively.
+	for node in [spawner, player, camera, registry, feedback, arena, hud]:
+		if node != null:
+			remove_child(node)
+			node.queue_free()
+	arena = null
+	player = null
+	camera = null
+	registry = null
+	spawner = null
+	weapon = null
+	feedback = null
+	hud = null
+	runtime_definition = null
+
+func retain_attempt() -> void:
+	# Normal Play also preserves failed attempts without allocating a sampler.
+	retained_attempts.append({"run_generation": run_generation, "active_time": active_time,
+		"completed_step_count": completed_step_count, "spawn_failure_count": spawn_failure_count,
+		"acceptance_invalid": acceptance_invalid, "spawn_diagnostics": spawn_diagnostics.duplicate(true),
+		"survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome,
+		"continuation_evidence": continuation_evidence.duplicate(true)})
 
 func create_enemy() -> Node3D:
 	return EnemyScene.instantiate()
@@ -130,26 +213,40 @@ func step(delta: float) -> void:
 		profile_capture.record_continuation(run_generation, continuation_evidence)
 	stepping = false
 
-func _player_died() -> void:
-	if state != "Active":
+func _player_died(generation: int = -1) -> void:
+	if state != "Active" or (generation != -1 and not _current_callback(generation)):
 		return
 	state = "GameOver"
 	camera.clear_pending_input()
 	feedback.clear()
+	if not stepping:
+		# Out-of-step lethal damage has no additional simulated duration to commit.
+		hud.present_time(active_time)
+		hud.present_state(state)
+		_record_continuation(player.position, camera.yaw, camera.depression)
+		if profile_capture != null:
+			profile_capture.record_step(run_generation, active_time, completed_step_count, Time.get_ticks_usec() / 1000000.0, registry.living_in_spawn_order().size(), false)
 	state_changed.emit(state)
 
-func _spawn_failed(records: Array) -> void:
+func _spawn_failed(records: Array, generation: int = -1) -> void:
+	if state != "Active" or (generation != -1 and not _current_callback(generation)):
+		return
 	spawn_failure_count += 1
 	acceptance_invalid = true
 	spawn_diagnostics.append_array(records)
 	if profile_capture != null:
 		profile_capture.record_spawn_failure(run_generation, {"records": records})
 
-func _spawn_consumed(t_end: float, outcome: String) -> void:
+func _spawn_consumed(t_end: float, outcome: String, generation: int = -1) -> void:
+	if state != "Active" or (generation != -1 and not _current_callback(generation)):
+		return
 	if t_end > 300 and outcome in ["spawned", "cap_skip"]:
 		continuation_evidence["spawn_opportunity"] = t_end
 
-func _weapon_feedback(t_end: float, _position: Vector3, _target: Node3D) -> void:
+func _weapon_feedback(t_end: float, attack_position: Vector3, target: Node3D, generation: int = -1) -> void:
+	if state != "Active" or (generation != -1 and not _current_callback(generation)):
+		return
+	feedback.show_attack(t_end, attack_position, target)
 	if t_end > 300:
 		continuation_evidence["weapon_attack"] = t_end
 
