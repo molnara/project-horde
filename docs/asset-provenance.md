@@ -1,29 +1,34 @@
 # Asset provenance
 
-Phase 1 contains only an empty `Node3D` bootstrap in `scenes/main.tscn`.
-There are no imported meshes, textures, fonts, audio, or third-party assets.
-The following original placeholder design is approved for later gameplay tasks;
-it does not claim those visuals are implemented.
+Phase 3B implements the following original placeholders. No imported meshes,
+textures, custom fonts, audio or third-party artwork are included. The HUD uses
+Godot's built-in default font. Colors and geometry are authored in this project.
 
-| Planned visual | Source and ownership | Intended appearance |
+| Implemented visual | Source and ownership | Appearance |
 |---|---|---|
-| Player | Godot built-in primitive mesh and project-authored material | Cyan; radius 0.4 m, height 1.6 m |
-| Sole enemy type | Godot built-in primitive mesh and project-authored material | Orange-red; radius 0.4 m, height 1.2 m |
-| Arena floor | Godot built-in primitive mesh and project-authored material | Muted floor contrasting with both actors; flat 40 × 40 m |
-| Arena limits | Godot built-in primitive meshes and project-authored material | Contrasting low boundary strips, 0.15 m high |
-| Attack feedback | Project-authored simple line geometry and material change | Short line to the affected target and hit flash |
+| Player | Built-in CylinderMesh in `scenes/player.tscn`, configured by `scripts/actors/player.gd`; project material | Cyan; default radius 0.4 m, height 1.6 m |
+| Sole enemy type | Built-in CylinderMesh in `scenes/enemy.tscn`, configured by `scripts/actors/enemy.gd`; private project material per instance | Orange-red; default radius 0.4 m, height 1.2 m |
+| Arena floor | Built-in PlaneMesh in `scenes/arena.tscn`, configured by `scripts/arena/arena.gd` | Muted contrasting flat floor; default 40 × 40 m |
+| Arena limits | Four built-in BoxMesh strips in the arena scene | Contrasting low limits; default 0.15 m high |
+| Attack feedback | Built-in thin CylinderMesh named `Line` and private target material changes in `scripts/combat/attack_feedback.gd` | Yellow line and white hit flash until absolute expiry |
+| Lighting/background | One shadow-free DirectionalLight3D and flat-color Environment in `scenes/main.tscn` | Original neutral lighting and dark background |
+| HUD | Label controls using the engine's bundled default font in `scenes/hud.tscn` | White health/time with shadow; orange configuration diagnostics |
 
-These placeholders require no external source files or asset licenses. Godot's
-built-in facilities are provided by the engine under its MIT license; see the
-[Godot license](https://godotengine.org/license/). No copied creative content from
+The primitive placeholders require no external source files. Godot's built-in
+facilities use its [MIT license](https://godotengine.org/license/). The engine's
+bundled font assets have their own licenses: upstream records Noto Sans
+(Google, 2012) under SIL OFL 1.1 in its
+[copyright inventory](https://github.com/godotengine/godot/blob/master/COPYRIGHT.txt#L276).
+The HUD inherits the engine default font without importing or redistributing a
+separate font file. Keep the engine's bundled notices when distributing it.
+No copied creative content from
 Megabonk or third-party artwork is used or planned for this slice.
 
-Actor visuals will live in their reusable scene subtrees; arena geometry will
-live in the arena scene. Meshes/materials can be replaced without changing the
+Actor visuals live under `Visual` in their reusable scenes; arena geometry lives
+in the arena scene. Meshes/materials can be replaced without changing the
 movement, containment, health, targeting or damage interfaces. Visual dimensions
 and colors must continue to meet the approved definition and visibility contracts.
 Feedback presents actual combat events and never applies damage itself.
 
-Reconcile this ledger with actual sources when those scenes are implemented
-(T050). Any future third-party asset requires recorded source, author, compatible
+Final cross-feature reconciliation remains T050. Any future third-party asset requires recorded source, author, compatible
 license and use; production art remains outside this prototype.

@@ -7,7 +7,7 @@ Intentional child failures stay in infrastructure-child-results.json. A fixture
 passes only when its asserted failure, diagnostic, cleanup and exit are observed.
 #>
 [CmdletBinding()]
-param([Alias('GodotBin')][string] $FixtureGodotBin, [switch] $DefineOnly)
+param([Alias('GodotBin')][string] $FixtureGodotBin, [switch] $DefineOnly, [switch] $RenderedProfileSmoke)
 
 function Invoke-ValidationInfrastructureFixtures {
     $parentResults = $script:results
@@ -82,6 +82,14 @@ function Invoke-ValidationInfrastructureFixtures {
         $warning = Get-ValidationDiagnostics -Text 'WARNING: fixture warning'
         Assert-Fixture (-not $warning.Failed -and $warning.Warnings.Count -eq 1) 'warnings recorded separately'
         Assert-Fixture (Get-ValidationDiagnostics -Text 'normal' -EngineLog 'ERROR: log-only failure').Failed 'engine-log-only error detected'
+        $captureFault = 'Profile capture failure: {"cause":"Frame safety ceiling reached; capture is incomplete."}'
+        Assert-Fixture (Get-ValidationDiagnostics -Text $captureFault).Failed 'application capture fault detected'
+        Assert-Fixture (Get-ValidationDiagnostics -Text 'normal' -EngineLog $captureFault).Failed 'log-only capture fault detected'
+        Assert-Fixture (Get-ValidationDiagnostics -Text 'normal' -RequireProfileResult).Failed 'missing Profile receipt cannot pass'
+        $receipt = 'HORDE_PROFILE_RESULT=' + (ConvertTo-Json -Compress -InputObject @{profile_capture_outcome='passed';capture_diagnostics=@();evidence_path='fixture.json';frame_evidence_path='fixture.bin';frame_sample_count=0;acceptance_invalid=$false})
+        Assert-Fixture (-not (Get-ValidationDiagnostics -Text $receipt -RequireProfileResult).Failed) 'explicit successful capture receipt classified'
+        Assert-Fixture (Get-ValidationDiagnostics -Text ($receipt.Replace('"passed"','"outstanding"')) -RequireProfileResult).Failed 'incomplete Profile receipt fails'
+        Assert-Fixture (Get-ValidationDiagnostics -Text ($receipt + "`n" + $receipt) -RequireProfileResult).Failed 'duplicate Profile receipt fails'
         $app = @{case='fault';source='fixture';field='cap';observed='0';constraint='positive integer';cause='intentional'}
         $begin = 'HORDE_CASE_BEGIN=' + (ConvertTo-Json -Compress -InputObject @{case='fault';seed=1;expected=@(@{source='fixture';constraint='positive integer';count=1})})
         $fault = 'HORDE_APP_DIAGNOSTIC=' + (ConvertTo-Json -Compress -InputObject $app)
@@ -116,6 +124,67 @@ func _initialize() -> void:
     quit(0)
 '@ $true 'ERROR: HORDE fixture genuine zero-exit error'
         Assert-Fixture ($zeroError.ExitCode -eq 0 -and $zeroError.Diagnostics.Errors.Count -gt 0) 'real error exit zero still fails'
+        [void](New-ContainedDirectory (Join-Path $cacheRoot 'profile-fixtures'))
+        $captureFailure = Invoke-FixtureScript 'fixture-capture-failure' @'
+extends SceneTree
+const Capture = preload("res://scripts/run/profile_capture.gd")
+func _initialize() -> void:
+    var capture := Capture.new()
+    root.add_child(capture)
+    var blocker := ProjectSettings.globalize_path("res://.cache/profile-fixtures/output-blocker")
+    var output := FileAccess.open(blocker, FileAccess.WRITE)
+    output.store_string("Intentional file prevents child directory creation")
+    output.close()
+    capture.configure(blocker + "/child")
+    capture.open_attempt(1, 0.0)
+    capture.record_step(1, 300.0, 18000, 300.0, 1, true)
+    capture.shutdown(301.0)
+    quit(0)
+'@ $true 'Profile capture failure:'
+        Assert-Fixture ($captureFailure.ExitCode -eq 0 -and $captureFailure.Diagnostics.Errors.Count -gt 0) 'actual output fault at exit zero fails launcher'
+        $truncatedCapture = Invoke-FixtureScript 'fixture-truncated-capture' @'
+extends SceneTree
+const Capture = preload("res://scripts/run/profile_capture.gd")
+func _initialize() -> void:
+    var capture := Capture.new()
+    root.add_child(capture)
+    capture.configure(ProjectSettings.globalize_path("res://.cache/profile-fixtures/truncated"))
+    capture.open_attempt(1, 0.0)
+    capture.record_frame(1, 0.25)
+    capture.record_frame(1, 0.5)
+    capture._flush_frames()
+    capture.frame_output.close()
+    capture.frame_output = null
+    var output := FileAccess.open(capture.frame_evidence_path, FileAccess.WRITE)
+    output.store_double(0.25)
+    output.close()
+    capture.record_step(1, 300.0, 18000, 300.0, 1, true)
+    capture.shutdown(301.0)
+    quit(0)
+'@ $true 'Frame stream length does not match every recorded callback.'
+        Assert-Fixture ($truncatedCapture.ExitCode -eq 0) 'truncated raw evidence fails despite clean exit'
+        $sidecarFailure = Invoke-FixtureScript 'fixture-sidecar-failure' @'
+extends SceneTree
+const Capture = preload("res://scripts/run/profile_capture.gd")
+func _initialize() -> void:
+    var capture := Capture.new()
+    root.add_child(capture)
+    capture.configure(ProjectSettings.globalize_path("res://.cache/profile-fixtures/sidecar-failure"))
+    capture.open_attempt(1, 0.0)
+    capture.record_frame(1, 0.25)
+    capture.record_step(1, 300.0, 18000, 300.0, 1, true)
+    DirAccess.make_dir_recursive_absolute(capture.evidence_path + ".outcomes.json")
+    capture.shutdown(301.0)
+    quit(0)
+'@ $true 'Profile capture failure:'
+        Assert-Fixture ($sidecarFailure.ExitCode -eq 0 -and $sidecarFailure.Output.Contains('"profile_capture_outcome":"outstanding"')) 'sidecar output failure changes final receipt to incomplete'
+        if ($RenderedProfileSmoke) {
+            $rendered = Invoke-GodotCheck 'profile-startup' @('--path', $workspace, '--quit-after', '6000', '--', '--profile') $workspace 30
+            Assert-Fixture ($rendered.Diagnostics.ProfileResults[0].frame_sample_count -gt 0) 'real rendered Main callbacks captured'
+            $manifest = [IO.File]::ReadAllText($rendered.Diagnostics.ProfileResults[0].evidence_path) | ConvertFrom-Json
+            Assert-Fixture ($manifest.summary.frame_callback_audit.repeated_engine_frame_ids -eq 0 -and $manifest.summary.frame_callback_audit.skipped_engine_frame_ids -eq 0) 'one real callback per successive engine draw'
+            Assert-Fixture ($manifest.summary.frame_callback_audit.last_engine_frame - $manifest.summary.frame_callback_audit.first_engine_frame + 1 -eq $manifest.frame_stream.sample_count) 'engine draw IDs independently reconcile raw sample count'
+        }
         $monitor = Invoke-FixtureScript 'fixture-error-monitor' @'
 extends SceneTree
 const Monitor = preload("res://tests/support/error_monitor.gd")
@@ -229,7 +298,7 @@ if (-not $DefineOnly) {
         if ($before.Contains('TEMP')) { throw 'FAILED: fixture could not create an absent TEMP.' }
         # Infrastructure remains independently runnable while authored gameplay
         # cases wait for Phase 3B. Full-suite acceptance still uses default All.
-        $arguments = @{Mode='All';InfrastructureFixtures=$true;SuiteScope='Foundation'}
+        $arguments = @{Mode='All';InfrastructureFixtures=$true;SuiteScope='Foundation';RenderedProfileSmoke=$RenderedProfileSmoke}
         if ($PSBoundParameters.ContainsKey('FixtureGodotBin')) { $arguments.GodotBin = $FixtureGodotBin }
         & (Join-Path $PSScriptRoot 'validate.ps1') @arguments
         $fixtureExit = $LASTEXITCODE

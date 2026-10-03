@@ -1,10 +1,12 @@
-# Phase 3A test handoff
+# Core gameplay test handoff — Phase 3B
 
-T014–T017 author tests; they do not implement T018 or any later component.
-The required manifest now contains 48 cases: 13 executable foundation/fixture
-cases and 35 gameplay cases pending production prerequisites. All seven new
-scripts can import and parse now. A pending case is not executed, passed or
-silently skipped. Missing prerequisites are printed per ID as
+T014–T017 authored the tests before implementation. T018–T032 now supply the
+production components and technical verification. All 48 registered cases
+execute: 13 foundation/fixture and 35 gameplay cases (6 movement, 7 combat,
+13 survival-loop, 9 profile/continuation). No manifest entry was removed or
+changed. Actual commands/results are in the [verification ledger](../docs/verification/core-gameplay.md).
+A pending case is not executed, passed or silently skipped. If a prerequisite
+is missing, it is printed per ID as
 `HORDE_CASE_PENDING` and still fail required execution reconciliation.
 Presence is checked on every run; no permanent skip marker must be removed.
 A present but broken component produces a real assertion/engine failure.
@@ -22,9 +24,42 @@ An optional `-GodotBin` absolute console path is supported by both launchers.
 discovers/reconciles the entire manifest before selecting its 13 cases. The
 infrastructure wrapper uses that scope so its diagnostic/timeout/environment
 fixtures can run before gameplay exists. Default `All` requires all 48 cases,
-returns nonzero with pending gameplay, and stops dependent startup checks.
-Bootstrap startup is independently exercised by the foundation command.
+returns nonzero for any pending or failed case, and stops dependent startup checks.
+Both commands exercise real main-scene startup; when the capture helper exists,
+they also run a short headless `--profile` startup/shutdown. The resulting sparse
+capture is diagnostic evidence, not rendered profiling or survival acceptance.
 There is no engine-diagnostic suppression or reduced gameplay expectation.
+
+Phase 3B profiling repair: `profile.bounded_late_failure` now persists and rereads
+all 1,050,001 synthetic callbacks exactly, including every chunk boundary/tail,
+one injected stall and an endpoint gap. Statistics cases compare streamed
+results against the original array reference for boundaries, sparse captures,
+distributions and enemy counts. The unchanged 48-case inventory remains intact.
+Infrastructure fixtures cover missing/incomplete/duplicate receipts, actual
+output-directory failure, truncated raw evidence and failed outcomes output;
+each actual capture fault fails the launcher despite engine exit zero.
+
+For a brief independent rendered callback audit, run:
+
+```powershell
+& ./tools/test-validation.ps1 -RenderedProfileSmoke
+```
+
+The optional smoke starts graphical Main for 6,000 engine iterations and checks
+one raw callback per successive engine draw ID. It proves capture wiring, not
+five-minute survival, visual acceptance or SC-007 completion. Default tests stay
+headless. All generated files remain in the ignored workspace cache.
+
+Profile output now consists of a JSON manifest/summary, `.json.frames.bin` raw
+stream, and `.json.outcomes.json` shutdown outcomes. Preserve all three. Read the
+manifest's `frame_stream` descriptor: raw data contains little-endian float64
+wall seconds in original callback order, exactly eight bytes per sample; no JSON
+`frame_timestamps` array is emitted. The sampler holds at most 4,096 timestamps
+and flushes every chunk without decimation or overwrite. Exact source-clock
+microsecond frequency counts keep percentile calculations independent of raw
+callback volume. Chunk I/O is included in sampler overhead and wall-time stalls.
+Profile launcher success means complete application capture, with survival and
+continuation reported separately; it never grants owner/performance acceptance.
 
 ## Coverage and prerequisites
 
@@ -32,7 +67,10 @@ Each ID below has a real assertion body, a fixed reported seed, a script path
 and requirement mappings in `case_manifest.gd`. Some cases have several boundary
 fixtures. The runner discovers every designated unit/integration script.
 
-| Task / cases | Assertions against real behavior | Pending until |
+All prerequisites in the following table are implemented. The last column
+identifies their owning tasks; it does not indicate a remaining pending case.
+
+| Task / cases | Assertions against real behavior | Component tasks |
 |---|---|---|
 | T014 `movement.directions` | W/S/A/D, opposing axes, release, straight/diagonal displacement at yaw 0/90, fixed floor Y | T019–T022 scenes |
 | T014 `movement.mouse_follow` | right/up motion, same-step yaw, pitch-independent speed, depression bounds, synchronous follow, distance/FOV, above-floor camera | T019–T022 scenes |
@@ -66,14 +104,11 @@ failure without a position, null/partial factories, cleanup and independent
 case metadata. Passing these checks proves the test inputs and runner behavior,
 not any missing gameplay algorithm.
 
-## Construction and observation seam for Phase 3B
+## Implemented construction and observation seam
 
-The approved contracts specify semantics, with GDScript construction details
-left to implementation. These fixtures choose the following narrow provisional
-seam. It is test wiring, not production code or an amendment to the contracts.
-When components ship, reconcile constructor/property/node names in the fixture
-adapter if their equivalent production interface differs; retain every behavioral
-assertion. Never implement gameplay/statistics inside the adapter to satisfy a test.
+The approved contracts specify semantics. Production implements the following
+construction and observation seam, so the fixture adapter needed no changes.
+It remains wiring only; it contains no substitute gameplay/statistics algorithm.
 
 - Arena/player scenes use `configure(subordinate_definition)`; enemy uses
   `configure(enemy_definition, spawn_id)` and exposes independent `health`.
@@ -120,6 +155,15 @@ assertion. Never implement gameplay/statistics inside the adapter to satisfy a t
   injects this actual helper into the real coordinator. This controlled test
   injection does not imply a normal-Play sampler or qualifying owner profile.
 
+Binary arithmetic constructs actual before/after deadline neighbours. The selected
+engine received the former decimal `0.9999999999999999` contact input as exactly
+1.0; added assertions now verify inputs really bracket their deadlines. The
+long-step scheduling fixture uses positive slow pursuit so extra actors cannot
+add unrelated contact hits during its eight-second step. All existing assertions
+are retained. Added observations check written endpoint outcomes, coordinator
+tuning snapshots after source edits, and actual continuation metadata with
+non-binary camera geometry. No manifest, case ID, seed or requirement mapping changed.
+
 Only geometrical/statistical comparisons allow floating representation tolerance.
 Eligibility/deadline fixtures use exact comparisons with representable adjacent
 values. Seeded RNG tests and scripted center/edge inputs contain no production
@@ -128,11 +172,13 @@ callbacks and disposes owned scenes even after an assertion failure.
 
 ## Outstanding manual verification
 
-There is no playable scene yet. After Phase 3B implementation, repeat the
+The main scene now runs the US1 loop. Repeat the
 [quickstart owner scenarios](../specs/001-core-gameplay-prototype/quickstart.md):
 all WASD directions/opposed/released/diagonal before and after yaw rotation,
 pitch extremes/perimeter traversal, overlap without blocking, readable HUD,
 automatic target line/flash, independent contact damage and lethal stop.
-Pause/restart journeys belong to their later phases. The uninterrupted normal
+Pause/restart journeys belong to their later phases. US1 defeat stops the loop;
+close/relaunch for another attempt. Use Alt+F4 to close while the mouse is captured.
+Pause and Restart controls are not yet supplied. The uninterrupted normal
 300-second survival and real rendered profile remain separate owner acceptance
 work; these deterministic fixtures cannot establish either.

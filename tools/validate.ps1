@@ -12,6 +12,7 @@ param(
     [string] $GodotBin,
     [ValidateSet('All', 'Play', 'Profile')][string] $Mode = 'All',
     [switch] $InfrastructureFixtures,
+    [switch] $RenderedProfileSmoke,
     [ValidateSet('All', 'Foundation')][string] $SuiteScope = 'All',
     [ValidateRange(1, 86400)][int] $PreflightTimeoutSeconds = 30,
     [ValidateRange(1, 86400)][int] $ImportTimeoutSeconds = 180,
@@ -184,7 +185,33 @@ function Invoke-GodotCheck {
         if (Test-Path -LiteralPath $logPath -PathType Leaf) { $engineLog = [IO.File]::ReadAllText($logPath) }
         $combined = $stdout + "`n" + $stderr + "`n" + $engineLog
         $plain = [regex]::Replace($combined, '\x1B\[[0-?]*[ -/]*[@-~]', '')
-        $diagnostics = Get-ValidationDiagnostics -Text ($stdout + "`n" + $stderr) -EngineLog $engineLog -AllowCaseDeclarations:($Name -eq 'suite')
+        $diagnostics = Get-ValidationDiagnostics -Text ($stdout + "`n" + $stderr) -EngineLog $engineLog -AllowCaseDeclarations:($Name -eq 'suite') -RequireProfileResult:($Name -in @('profile', 'profile-startup'))
+        try {
+            if (-not $diagnostics.Failed) {
+                foreach ($receipt in $diagnostics.ProfileResults) {
+                    foreach ($path in @($receipt.evidence_path, ($receipt.evidence_path + '.outcomes.json'), $receipt.frame_evidence_path)) {
+                        [void](Assert-ContainedPath $path $cacheRoot)
+                        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "FAILED: required Profile evidence is missing: $path" }
+                    }
+                    if ((Get-Item -LiteralPath $receipt.frame_evidence_path).Length -ne $receipt.frame_sample_count * 8) {
+                        throw 'FAILED: Profile raw stream length disagrees with the completion result.'
+                    }
+                    $manifest = [IO.File]::ReadAllText($receipt.evidence_path) | ConvertFrom-Json
+                    if ($manifest.frame_stream.sample_count -ne $receipt.frame_sample_count -or $manifest.frame_stream.path -cne $receipt.frame_evidence_path -or
+                        $manifest.profile_capture_outcome -cne 'passed' -or @($manifest.capture_diagnostics).Count -ne 0) {
+                        throw 'FAILED: Profile manifest disagrees with the completion result.'
+                    }
+                    $outcomes = [IO.File]::ReadAllText($receipt.evidence_path + '.outcomes.json') | ConvertFrom-Json
+                    if ($outcomes.profile_capture_outcome -cne 'passed' -or @($outcomes.capture_diagnostics).Count -ne 0) {
+                        throw 'FAILED: persisted Profile outcome reports incomplete capture.'
+                    }
+                    Write-Host "Profile capture: $($receipt.profile_capture_outcome); survival: $($receipt.survival_window_outcome); continuation: $($receipt.continuation_outcome). Owner/performance acceptance requires ledger review."
+                }
+            }
+        } catch {
+            $diagnostics.Errors += $_.Exception.Message
+            $diagnostics.Failed = $true
+        }
         $outcome = if ($timedOut -or $child.ExitCode -ne 0 -or $diagnostics.Failed) { 'FAILED' } else { 'PASSED' }
         $result = [pscustomobject]@{Name=$Name; Command=$command; ChildId=$child.Id; ExitCode=$child.ExitCode; Outcome=$outcome; TimedOut=$timedOut; TimeoutSeconds=if ($Interactive) {$null} else {$TimeoutSeconds}; Stdout=$stdoutPath; Stderr=$stderrPath; EngineLog=$logPath; Warnings=$diagnostics.Warnings; Diagnostics=$diagnostics; Output=$plain}
         $results.Add($result)
@@ -194,7 +221,7 @@ function Invoke-GodotCheck {
         if ($outcome -ne 'PASSED') {
             Write-Host $plain
             if ($timedOut) { throw "FAILED: $Name exceeded its ${TimeoutSeconds}s limit; launched child terminated. Inspect retained logs, then explicitly override the limit to retry." }
-            throw "FAILED: $Name exited $($child.ExitCode) or reported an engine error; dependent checks were not run. Inspect $logPath and captured streams."
+            throw "FAILED: $Name exited $($child.ExitCode) or reported an engine/application error or incomplete capture; dependent checks were not run. Inspect $logPath and captured streams."
         }
         return $result
     } finally {
@@ -329,8 +356,13 @@ func _enter_tree() -> void:
         } else { Add-BlockedCheck 'suite' 'tests/run_tests.gd is not supplied until T010 (Phase 2).' }
         # A missing suite does not prevent independent bootstrap startup evidence.
         [void](Invoke-GodotCheck 'startup' @('--headless', '--path', $workspace, '--quit-after', '120') $workspace $StartupTimeoutSeconds)
+		# Once US1 capture exists, exercise Main's real Profile-only lifecycle too.
+		# Short headless evidence is diagnostic; it cannot qualify owner profiling.
+		if (Test-Path -LiteralPath (Join-Path $workspace 'scripts/run/profile_capture.gd') -PathType Leaf) {
+			[void](Invoke-GodotCheck 'profile-startup' @('--headless', '--path', $workspace, '--quit-after', '120', '--', '--profile') $workspace $StartupTimeoutSeconds)
+		}
         if ($InfrastructureFixtures) {
-            . (Join-Path $PSScriptRoot 'test-validation.ps1') -DefineOnly
+            . (Join-Path $PSScriptRoot 'test-validation.ps1') -DefineOnly -RenderedProfileSmoke:$RenderedProfileSmoke
             Invoke-ValidationInfrastructureFixtures
         }
     } else {

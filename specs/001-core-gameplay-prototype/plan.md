@@ -147,7 +147,34 @@ Use full intervals for minimum instantaneous FPS (reciprocal maximum interval), 
 
 Sample live-registry enemy counts at one-second completed-simulation opportunities, carrying both simulation and wall timestamps; report observed min/max/mean. Diagnostic paused runs use separate segments excluding inactive time; the qualifying owner run is uninterrupted. Label samples as CPU-observed frame-loop timing, not GPU presentation/timing; report available CPU/physics/render monitors, instrumentation overhead and unavailable metrics. Warm-up is 30 active seconds in a separate attempt; record all preselected conditions, actual tuning, source revision and deviations. No numerical prototype FPS threshold or future benchmark compliance is inferred.
 
-Buffer/write raw evidence under ignored `.cache/` after sampling, summarize conditions/method/results in `docs/verification/prototype-profile.md`, and retain unsuccessful attempts. A separate profiler diagnosis run may investigate bottlenecks. SC-005 still requires its future representative 200-enemy scenario/build/settings/warm-up/sampling plan; no benchmark implementation or result is claimed.
+Buffer/write raw evidence under ignored `.cache/` using the lossless bounded chunk strategy below; summarize conditions/method/results in `docs/verification/prototype-profile.md`, and retain unsuccessful attempts. A separate profiler diagnosis run may investigate bottlenecks. SC-005 still requires its future representative 200-enemy scenario/build/settings/warm-up/sampling plan; no benchmark implementation or result is claimed.
+
+**Phase 3B profiling correction — 2026-10-03:** The owner run exhausted the
+one-million-entry buffer at about 3,389 callbacks/sec under the required uncapped
+settings. Bound working memory rather than total evidence: spool every ordered
+float64 wall timestamp in 4,096-entry chunks (32 KiB timestamp payload plus a
+32 KiB temporary byte encoding) into an attempt-specific `.frames.bin` inside
+ignored `.cache/`. Flush the final tail at the unchanged completed-simulation
+endpoint, then write the JSON manifest/summary and shutdown outcomes. Chunk I/O
+runs during capture; include it in sampler overhead and measured wall intervals.
+This deliberately corrects the former all-writes-after-sampling implementation
+choice without changing any acceptance gate, scenario, FPS setting or sample
+selection. Disk use scales at eight bytes per callback (about 8.1 MB for 300 s at
+the owner's observed rate). Write/read/flush/count faults preserve partial
+evidence, diagnose incomplete capture and fail validation, never qualify it.
+
+Compute endpoint statistics by sequentially reading raw timestamps. Use exact
+source-clock microsecond interval frequency counts and empirical nearest-rank
+percentiles; no decimation, rolling overwrite, millisecond bins or approximate
+quantiles. Raw float64 timestamps remain unchanged. With positive integer
+microsecond intervals totaling U microseconds, k distinct values require at least
+k(k+1)/2 <= U, bounding histogram growth by measured duration rather than callback
+volume (under 24,495 distinct intervals in 300 wall seconds). Preserve all
+whole-window, boundary-gap, stall and sparse-evidence semantics. Audit callback
+counts against successive `Engine.get_frames_drawn()` IDs; retain and report any
+repeat/gap. The launcher requires a successful application completion receipt,
+manifest, raw-stream byte count and outcomes sidecar. Short startup capture
+success remains distinct from owner survival and SC-007 acceptance.
 
 ## Approved technical review decisions — 2026-10-02
 
@@ -169,7 +196,7 @@ These resolve the owner policy questions without revising constitution v1.0.0, i
 
 Main creates/wires one capture helper only in Profile mode and owns its disposal; the coordinator explicitly opens/closes generation-tagged attempts. Normal Play has no frame sampler, but retains the per-run spawn-failure counter. Keep the helper independent of gameplay behavior and reject stale-generation samples/callbacks.
 
-At 300 completed simulation seconds, close the five-minute frame/count buffer and write it after sampling under ignored workspace `.cache/`; keep only attempt/continuation/failure metadata afterward so unlimited survival does not create an unlimited frame buffer. Close diagnostic segments on pause and reopen the origin on resume without bridging inactive wall time. Defeat closes any unfinished segment. Before restart teardown, retain/seal the old attempt and its actual outcomes; open fresh buffers only after new definitions validate. On shutdown, Main writes remaining evidence then disposes the helper. Required-output write/capture failures leave profiling outstanding and are reported, never silently successful.
+During capture, spool every frame timestamp losslessly in bounded 4,096-entry float64 chunks under ignored workspace `.cache/`, counting chunk I/O as sampler overhead. At 300 completed simulation seconds, close the five-minute frame/count stream, flush its final tail and write the JSON manifest/summary after sampling; keep only attempt/continuation/failure metadata afterward so unlimited survival does not create an unlimited frame buffer. Compute exact source-microsecond interval frequencies from the complete raw stream without dropping samples; see plan.md, Phase 3B profiling correction. Required stream/manifest/outcomes failures leave profiling outstanding and fail the launcher even at engine exit zero. Close diagnostic segments on pause and reopen the origin on resume without bridging inactive wall time. Defeat closes any unfinished segment. Before restart teardown, retain/seal the old attempt and its actual outcomes; open fresh buffers only after new definitions validate. On shutdown, Main writes remaining evidence then disposes the helper. Required-output write/capture failures leave profiling outstanding and are reported, never silently successful.
 
 Record separately: survival-window outcome, continuation outcome, profile-capture outcome, and acceptance invalidity from unexpected spawn failures. Reaching 300 seconds is not full attempt acceptance. A 300-second window completed alive with normal tuning can retain successful survival evidence if later death prevents continuation observations. Full attempt acceptance requires that survival evidence, all required continuation evidence, successfully captured required profiling evidence, and zero unexpected spawn failures throughout the attempt, including continuation. Any unavailable required verification remains outstanding; recording its absence alone does not satisfy it. Later spawn failures update the attempt's invalidity even if its five-minute buffer is already closed. Feature acceptance additionally requires all prototype gates, not just this attempt. No worker, singleton, save system or new UI is introduced.
 

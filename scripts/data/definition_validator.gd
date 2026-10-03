@@ -45,7 +45,7 @@ static func validate(run_definition: Variant) -> Array[String]:
 	}
 	for name in resources:
 		var resource: Resource = resources[name]
-		var resource_source := source_of(resource, str(name) + " definition")
+		var resource_source := source_of(resource, str(resource.get_script().get_global_name()))
 		for field in integer_fields[name]:
 			if not is_positive_integer(resource.get(field)):
 				add_error(errors, resource_source, field, resource.get(field), "positive integer")

@@ -28,6 +28,15 @@ func fresh(ctx) -> void:
 	ctx.check(run.camera.yaw == 0 and run.camera.depression == 35 and run.player.position == Vector3.ZERO, "initial view and position")
 	ctx.check(run.profile_capture == null, "normal Play creates no profile sampler")
 	ctx.check(F.snapshot(d) == before, "startup does not mutate definition assets")
+	d.player.movement_speed = 1.0
+	d.enemy.contact_damage = 99
+	d.weapon.damage = 99
+	d.spawn_interval = 0.125
+	d.camera_distance = 12.0
+	d.arena.floor_y = 10.0
+	F.invoke(ctx, run, "step", [0.25])
+	ctx.check(run.player.movement_speed == 6.0 and run.spawner.enemy_definition.contact_damage == 10 and run.weapon.damage == 10, "existing encounter retains independent actor/combat tuning after shared edits")
+	ctx.check(run.spawner.next_spawn_at == 1.5 and population(ctx, run) == 0 and run.arena.floor_y == 0.0 and run.camera.get_node("Yaw/Pitch/Camera3D").position.z == 8.0, "existing encounter retains cadence/arena/view snapshots after shared edits")
 	ctx.done()
 
 func cadence_cap(ctx) -> void:
@@ -72,14 +81,17 @@ func default_custom_cap(ctx) -> void:
 
 func deadlines(ctx) -> void:
 	# Representable deltas bracket t_end; no timer HUD rounding or epsilon.
-	for end in [0.49999999999999994, 0.5, 0.5000000000000001]:
+	var before := 0.5 - pow(2.0, -54.0)
+	var after := 0.5 + pow(2.0, -53.0)
+	ctx.check(before < 0.5 and after > 0.5, "binary neighbours actually bracket completion deadline")
+	for end in [before, 0.5, after]:
 		var d = quiet_definition(ctx)
 		d.spawn_interval = 0.5
 		var run = F.run(ctx, d)
 		F.invoke(ctx, run, "step", [end])
 		ctx.check(population(ctx, run) == (0 if end < 0.5 else 1), "spawn compares t_end before/at/after deadline")
 		ctx.check(run.active_time == end and run.completed_step_count == 1, "one final completed-time commit")
-	for end in [0.49999999999999994, 0.5, 0.5000000000000001]:
+	for end in [before, 0.5, after]:
 		var d = ctx.definitions()
 		d.spawn_interval = 100.0
 		var run = F.run(ctx, d)
@@ -98,6 +110,9 @@ func subtick_long_step(ctx) -> void:
 	d.weapon.attack_interval = 0.001
 	d.enemy.contact_interval = 0.001
 	d.enemy.max_health = 1000
+	# Isolate scheduling: normal-speed spawned actors otherwise reach contact
+	# during the eight-second pursuit step and correctly add independent hits.
+	d.enemy.movement_speed = 0.000001
 	var run = F.run(ctx, d)
 	var enemy = F.enemy(ctx, d, 0, Vector3.ZERO)
 	F.invoke(ctx, run.registry, "add", [enemy, 0])

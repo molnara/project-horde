@@ -10,7 +10,21 @@ func cases() -> Array[Dictionary]:
 
 func summarize(ctx, t0: float, t1: float, timestamps: Array, counts: Array = []) -> Dictionary:
 	var statistics = F.instance(ctx, "res://scripts/run/profile_statistics.gd")
-	return F.invoke(ctx, statistics, "summarize", [t0, t1, timestamps, counts])
+	var reference: Dictionary = F.invoke(ctx, statistics, "summarize", [t0, t1, timestamps, counts])
+	var directory := ProjectSettings.globalize_path("res://.cache/profile-fixtures")
+	ctx.check(DirAccess.make_dir_recursive_absolute(directory) == OK, "stream reference directory available")
+	var path := directory.path_join("statistics-" + ctx.case_id + ".bin")
+	var output := FileAccess.open(path, FileAccess.WRITE)
+	output.store_buffer(PackedFloat64Array(timestamps).to_byte_array())
+	output.close()
+	var streamed: Dictionary = F.invoke(ctx, statistics, "summarize_file", [t0, t1, path, timestamps.size(), counts])
+	ctx.check(not streamed.has("capture_error"), "complete reference stream readable")
+	for field in reference:
+		if reference[field] is float and streamed[field] != null:
+			close_float(ctx, streamed[field], reference[field], "stream/reference " + field)
+		else:
+			ctx.check(streamed[field] == reference[field], "stream/reference " + field)
+	return streamed
 
 func close_float(ctx, actual: float, expected: float, message: String) -> void:
 	ctx.check(is_equal_approx(actual, expected), message + ": " + str(actual))
@@ -97,7 +111,7 @@ func generations(ctx) -> void:
 	ctx.check(object.spawn_failure_count == 0 and not object.acceptance_invalid, "stale failure cannot invalidate new attempt")
 	ctx.check(object.retained_attempts.size() == 1 and object.retained_attempts[0].run_generation == 1, "old attempt evidence retained before reset")
 	F.invoke(ctx, object, "record_frame", [2, 20.5])
-	ctx.check(object.frame_timestamps == [20.5], "new generation captures normally")
+	ctx.check(Array(object.frame_timestamps) == [20.5], "new generation captures normally")
 	ctx.done()
 
 func endpoint(ctx) -> void:
@@ -111,6 +125,9 @@ func endpoint(ctx) -> void:
 	ctx.check(object.survival_window_outcome == "passed" and object.continuation_outcome != "passed", "survival completion alone never implies full continuation/acceptance")
 	ctx.check(object.frame_timestamps.is_empty() and object.enemy_samples.is_empty(), "raw endpoint buffers flushed/released")
 	ctx.check(object.profile_capture_outcome == "passed" and FileAccess.file_exists(object.evidence_path), "required evidence actually written inside workspace")
+	var written: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(object.evidence_path))
+	ctx.check(written.profile_capture_outcome == "passed" and written.completed_simulation_duration == 300.0 and written.completed_step_count == 2, "written evidence contains actual successful capture outcome and committed endpoint")
+	ctx.check(not object.qualifies_attempt(), "written sparse capture alone never qualifies a complete attempt")
 	ctx.done()
 
 func lethal_endpoint(ctx) -> void:
@@ -137,6 +154,32 @@ func lethal_endpoint(ctx) -> void:
 	ctx.done()
 
 func bounded_late_failure(ctx) -> void:
+	# Regression: more callbacks than the owner failure, over a complete synthetic
+	# 300-second window. This exercises real disk chunks, not owner survival.
+	var stress = capture(ctx)
+	stress.open_attempt(4, 10.0)
+	const SAMPLE_COUNT := 1050001
+	for index in SAMPLE_COUNT:
+		stress.record_frame(4, 10.0 + index / 4000.0 + (0.04 if index >= 500000 else 0.0))
+	ctx.check(stress.frame_sample_count == SAMPLE_COUNT and stress.frame_timestamps.size() < stress.FRAME_CHUNK_SIZE, "over one million callbacks retained with bounded tail")
+	stress.record_step(4, 300.0, 18000, 310.0, 50, true)
+	ctx.check(stress.profile_capture_outcome == "passed" and stress.capture_diagnostics.is_empty(), "full high-rate capture succeeds without ceiling or sample loss")
+	var input := FileAccess.open(stress.frame_evidence_path, FileAccess.READ)
+	ctx.check(input.get_length() == SAMPLE_COUNT * 8, "every float64 callback persisted including chunk tail")
+	var exact := true
+	for index in SAMPLE_COUNT:
+		if input.get_double() != 10.0 + index / 4000.0 + (0.04 if index >= 500000 else 0.0):
+			exact = false
+	input.close()
+	ctx.check(exact, "all raw timestamps reproduce exactly in original order across chunk boundaries")
+	ctx.check(stress.summary.callback_count == SAMPLE_COUNT - 1 and stress.summary.interval_count == SAMPLE_COUNT - 1, "origin exclusion and every cross-chunk interval preserved")
+	close_float(ctx, stress.summary.whole_window_fps, 3500.0, "high-rate whole-window FPS")
+	close_float(ctx, stress.summary.p99_ms, 0.25, "exact nearest-rank high-rate p99")
+	close_float(ctx, stress.summary.max_ms, 40.25, "injected stall survives chunking")
+	ctx.check(stress.summary.stalls_over_33_33 == 1 and stress.summary.histogram_distinct_intervals == 2, "exact stall counts and compact frequency table")
+	close_float(ctx, stress.summary.final_partial_seconds, 37.46, "endpoint gap preserved")
+	stress.shutdown(320.0)
+	ctx.check(FileAccess.file_exists(stress.evidence_path + ".outcomes.json"), "complete persisted outcome sidecar")
 	var object = capture(ctx)
 	F.invoke(ctx, object, "open_attempt", [3, 0.0])
 	F.invoke(ctx, object, "record_step", [3, 300.125, 1, 400.0, 3, true])
@@ -151,6 +194,10 @@ func bounded_late_failure(ctx) -> void:
 
 func continuation(ctx) -> void:
 	var d = ctx.definitions()
+	# Non-binary camera values exercise engine geometry rounding without
+	# falsely diagnosing a tuning change in a valid fresh configuration.
+	d.camera_distance = 8.1
+	d.camera_fov = 70.1
 	d.enemy.max_health = 1000
 	d.weapon.attack_interval = 0.5
 	d.enemy.contact_interval = 0.5
@@ -179,6 +226,8 @@ func continuation(ctx) -> void:
 	ctx.check(run.active_time == 301.5 and population(ctx, run) == 3, "next ordinary scheduled spawn after endpoint")
 	ctx.check(enemy.health.current_health <= 980 and run.player.health.current_health <= 80, "eligible weapon/contact scheduling persists beyond endpoint")
 	ctx.check(F.snapshot(d) == before and run.player.health.max_health == 100, "tuning/vulnerability unchanged across 300")
+	ctx.check(run.survival_window_outcome == "passed" and run.continuation_outcome == "passed" and not run.acceptance_invalid, "separate continuation outcomes require actual time/view/movement/spawn/tuning evidence")
+	ctx.check(run.continuation_evidence.has_all(["weapon_attack", "contact_damage"]), "eligible post-endpoint attacks/contact carry actual simulation timestamps")
 	ctx.done()
 
 func population(ctx, run) -> int:

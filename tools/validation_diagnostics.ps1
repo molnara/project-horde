@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 
 function Get-ValidationDiagnostics {
     [CmdletBinding()]
-    param([AllowEmptyString()][string] $Text, [AllowEmptyString()][string] $EngineLog = '', [switch] $AllowCaseDeclarations)
+    param([AllowEmptyString()][string] $Text, [AllowEmptyString()][string] $EngineLog = '', [switch] $AllowCaseDeclarations, [switch] $RequireProfileResult)
     $plain = [regex]::Replace($Text, '\x1B\[[0-?]*[ -/]*[@-~]', '')
     $logPlain = [regex]::Replace($EngineLog, '\x1B\[[0-?]*[ -/]*[@-~]', '')
     $errors = [Collections.Generic.List[string]]::new()
@@ -11,10 +11,12 @@ function Get-ValidationDiagnostics {
     $expectedFaults = [Collections.Generic.List[object]]::new()
     $cases = @{}
     $summary = $null
+    $profileResults = @()
     # Severity records from either copy count, but duplicate stream/log copies
     # do not multiply application diagnostic expectations.
     foreach ($line in (($plain + "`n" + $logPlain) -split '\r?\n' | Select-Object -Unique)) {
-        if ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR):') { $errors.Add($line) }
+        if ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR):' -or
+            $line -match '^\s*Profile capture failure:') { $errors.Add($line) }
         elseif ($line -match '^\s*WARNING:') { $warnings.Add($line) }
         elseif ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR|WARNING)\b' -or
                 $line -match '^\s*(?:Failed (?:loading|to load) resource|Parse Error|Exception|Unhandled exception)\s*[:(]') {
@@ -22,6 +24,17 @@ function Get-ValidationDiagnostics {
         }
     }
     foreach ($line in ($plain -split '\r?\n')) {
+        if ($RequireProfileResult -and $line.StartsWith('HORDE_PROFILE_RESULT=')) {
+            try {
+                $receipt = $line.Substring('HORDE_PROFILE_RESULT='.Length) | ConvertFrom-Json -ErrorAction Stop
+                $profileResults += $receipt
+                if ($receipt.profile_capture_outcome -cne 'passed' -or @($receipt.capture_diagnostics).Count -ne 0 -or
+                    [string]::IsNullOrWhiteSpace($receipt.evidence_path) -or [string]::IsNullOrWhiteSpace($receipt.frame_evidence_path) -or
+                    $receipt.frame_sample_count -lt 0 -or $receipt.acceptance_invalid -cne $false) {
+                    throw 'Incomplete/invalid application capture; inspect evidence and diagnostics.'
+                }
+            } catch { $errors.Add("Invalid Profile result: $($_.Exception.Message)") }
+        }
         if ($line -notmatch '^HORDE_(CASE_BEGIN|APP_DIAGNOSTIC|CASE_END|SUITE_END|ASSERTION_FAILED|SUITE_FAILURE)=') { continue }
         $kind = $Matches[1]
         if ($kind -in @('ASSERTION_FAILED', 'SUITE_FAILURE')) { $errors.Add($line); continue }
@@ -76,9 +89,11 @@ function Get-ValidationDiagnostics {
         if ($null -eq $summary -or $summary.executed -ne $cases.Count) { $errors.Add('Missing or inconsistent native-suite completion evidence.') }
         foreach ($caseId in $cases.Keys) { if (-not $cases[$caseId].Ended) { $errors.Add("Unfinished case: $caseId") } }
     }
+    if ($RequireProfileResult -and $profileResults.Count -ne 1) { $errors.Add('Missing or duplicate application Profile completion result.') }
     return [pscustomobject]@{
         Errors=@($errors.ToArray()); Warnings=@($warnings.ToArray()); Ambiguous=@($ambiguous.ToArray())
         ExpectedApplicationFaults=@($expectedFaults.ToArray())
+        ProfileResults=@($profileResults)
         Failed=($errors.Count -gt 0 -or $ambiguous.Count -gt 0)
     }
 }
