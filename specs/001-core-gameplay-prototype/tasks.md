@@ -2,7 +2,7 @@
 
 **Input**: Approved design documents in `specs/001-core-gameplay-prototype/`: `spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/gameplay-components.md`, `contracts/player-interface.md`, and `quickstart.md`.
 
-**Prerequisites**: Constitution v1.0.0 and owner-approved A–G baseline. Phase 1 setup is verified in `docs/phase1-validation.md`; Phase 2 foundation and Phase 3A test authoring (T014–T017) are verified in `docs/verification/core-gameplay.md`. Phase 3B implementation/technical verification (T018–T032) and T033 owner visual/controls/game-feel acceptance are complete; the ledger records all six owner checks, including the clarified contact-damage result. Phase 4 onward is untouched. This US1 checkpoint does not establish full feature or performance acceptance.
+**Prerequisites**: Constitution v1.0.0 and owner-approved A–G baseline. Phase 1 setup is verified in `docs/phase1-validation.md`; Phase 2 foundation and Phase 3A test authoring (T014–T017) are verified in `docs/verification/core-gameplay.md`. Phase 3B implementation/technical verification (T018–T032) and T033 owner visual/controls/game-feel acceptance are complete; the ledger records all six owner checks, including the clarified contact-damage result. Phase 4 Batch 1 test authoring (T034–T035) is complete; three current defeat regressions execute and thirteen Phase 4 cases remain explicitly unregistered/unrun. T036 onward is untouched. This checkpoint does not establish US2, full feature or performance acceptance.
 
 **Tests**: The specification explicitly requires automated gameplay/data validation, headless engine checks, manual acceptance, and actual profiling. Use native GDScript assertions and PowerShell only. Write story fixtures before their implementation; record initial failures or missing prerequisites honestly, then require passing execution at the story checkpoint. No external test framework or blanket TDD policy is introduced.
 
@@ -80,7 +80,8 @@ is verified. All six T033 owner checks passed, including paced damage from 1–2
 enemies and expected immediate lethal damage from roughly 10+ enemies at 100 HP.
 Phase 3B (T018–T033) is complete. Historical source-snapshot limitations and
 full SC-006/SC-007 acceptance remain separately documented in the ledger.
-T034 and later phases remain unstarted; closure does not initiate them.
+That closure did not initiate Phase 4. The subsequently authorized Batch 1
+completed T034–T035 test authoring only; T036 and later work remain unstarted.
 
 **Checkpoint**: Demonstrate and technically validate the P1 playable slice before US2. Five-minute owner survival and actual profiling can be performed once this slice is ready, but remain pending until recorded in T053–T055; they are never implied by fixtures or scene startup.
 
@@ -92,8 +93,8 @@ T034 and later phases remain unstarted; closure does not initiate them.
 
 ### Tests for User Story 2
 
-- [ ] T034 [P] [US2] Write actual scene/coordinator cases in `tests/integration/test_defeat_restart.gd` for one lethal transition/final t_end commit, ten-second-equivalent defeated freeze/no Escape resume, final HUD/overlay, full reset of every runtime field and three cycles, repeated/invalid restart signals/old callbacks, synchronous removal, discarded old encounter on invalid restart data and fresh-run failure-counter isolation (FR-010/011).
-- [ ] T035 [P] [US2] Write evidence lifecycle cases in `tests/integration/test_restart_evidence.gd` for sealing old buffers/outcomes before teardown, rejecting old generation callbacks, opening only after valid fresh definitions, capture shutdown/write failure diagnostics and survival-window preservation after post-300 death; register only after T039–T040 implementation is ready.
+- [X] T034 [P] [US2] Write actual scene/coordinator cases in `tests/integration/test_defeat_restart.gd` for one lethal transition/final t_end commit, ten-second-equivalent defeated freeze/no Escape resume, final HUD/overlay, full reset of every runtime field and three cycles, repeated/invalid restart signals/old callbacks, synchronous removal, discarded old encounter on invalid restart data and fresh-run failure-counter isolation (FR-010/011). Authoring complete; three Phase 3B regressions execute, six US2 cases await T036–T039 and T041 registration/verification.
+- [X] T035 [P] [US2] Write evidence lifecycle cases in `tests/integration/test_restart_evidence.gd` for sealing old buffers/outcomes before teardown, rejecting old generation callbacks, opening only after valid fresh definitions, capture shutdown/write failure diagnostics and survival-window preservation after post-300 death; register only after T039–T040 implementation is ready. Authoring complete; all seven cases remain in the non-executable staged inventory until T039–T040, with T041 required for registration/verification and exact declared capture-fault diagnostic matching.
 
 ### Implementation for User Story 2
 

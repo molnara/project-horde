@@ -26,6 +26,29 @@ static func entries() -> Array[Dictionary]:
 		result.append({"id": "survival." + id, "script": "res://tests/integration/test_survival_loop.gd", "maps": ["T016", "FR-001", "FR-004", "FR-005", "FR-006", "FR-007", "FR-008", "FR-009", "A-G/B", "A-G/C", "survival/" + id], "seed": 4702016, "expected": expected})
 	for id in ["boundaries", "sparse", "distribution", "generations", "count_samples", "endpoint", "lethal_endpoint", "bounded_late_failure", "continuation"]:
 		result.append({"id": "profile." + id, "script": "res://tests/unit/test_profile_capture.gd", "maps": ["T017", "SC-006", "SC-007", "A-G/A", "A-G/E", "A-G/F", "profile/" + id], "seed": 4702017, "expected": []})
+	for id in ["lethal_commit", "freeze_escape", "final_hud"]:
+		result.append({"id": "defeat." + id, "script": "res://tests/integration/test_defeat_restart.gd", "maps": ["T034", "FR-009", "FR-010", "defeat/" + id], "seed": 4702034, "expected": []})
+	return result
+
+static func staged_entries() -> Array[Dictionary]:
+	# Authored inventory ONLY, never returned by entries()/selected for execution.
+	# T041 promotes these into entries after the listed implementations are ready.
+	# This keeps full discovery reconciliation strict without claiming US2 passes.
+	var result: Array[Dictionary] = []
+	for id in ["game_over_control", "three_cycles", "guarded_requests", "stale_callbacks_removal", "invalid_restart", "failure_isolation"]:
+		var expected: Array = []
+		if id == "invalid_restart":
+			expected = [{"source": "PlayerDefinition", "constraint": "positive integer", "count": 1}]
+		elif id == "failure_isolation":
+			expected = [{"source": "fixture/arena", "constraint": "strictly outside contact distance", "count": 2}]
+		result.append({"id": "defeat." + id, "script": "res://tests/integration/test_defeat_restart.gd", "maps": ["T034", "FR-010", "FR-011", "SC-002", "defeat/" + id], "seed": 4702034, "expected": expected, "ready_after": ["T036", "T037", "T038", "T039"]})
+	for id in ["seal_before_teardown", "stale_generations", "valid_open", "invalid_no_open", "shutdown_fault", "write_fault", "post300_death"]:
+		var expected: Array = []
+		if id == "invalid_no_open":
+			expected = [{"source": "PlayerDefinition", "constraint": "positive integer", "count": 1}]
+		elif id in ["shutdown_fault", "write_fault"]:
+			expected = [{"source": "ProfileCapture", "constraint": "required output written successfully", "count": 1}]
+		result.append({"id": "restart_evidence." + id, "script": "res://tests/integration/test_restart_evidence.gd", "maps": ["T035", "FR-011", "SC-006", "SC-007", "evidence/" + id], "seed": 4702035, "expected": expected, "ready_after": ["T039", "T040"]})
 	return result
 
 static func missing_prerequisites(paths: Array) -> Array[String]:
