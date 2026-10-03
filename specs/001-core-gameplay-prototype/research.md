@@ -2,7 +2,7 @@
 
 **Date**: 2026-10-02 | **Scope**: Phase 0 design research, not implementation evidence.
 
-Research was delegated into engine/composition/validation and gameplay scheduling/profiling investigations, then consolidated against the spec and constitution. This records prior research; the technical review below distinguishes subsequent approved policies from pending technical proposals. Defaults remain initial tuning requiring playtesting. Official stable documentation was consulted during prior planning; verify the selected binary's behavior and CLI help before use.
+Research was delegated into engine/composition/validation and gameplay scheduling/profiling investigations, then consolidated against the spec and constitution. This records prior research and the subsequently owner-approved A–G design baseline; approval is not implementation evidence. Defaults remain initial tuning requiring playtesting. Official stable documentation was consulted during prior planning; verify the selected binary's behavior and CLI help before use.
 
 ## 1. Stack and dependencies
 
@@ -46,7 +46,7 @@ Research was delegated into engine/composition/validation and gameplay schedulin
 
 ## 5. Active-time scheduling and lifecycle
 
-**Decision**: One 60 Hz coordinator update: state input → derive step scheduling time → move player/enemies → scheduled spawn → weapon → enemy contacts in spawn order → commit completed simulation time and present. Immediately latch Game Over on zero player health and short-circuit later gameplay. Completed, unpaused physics time determines survival; no unexecuted stall time is credited. Absolute simulation-time deadlines govern weapon/contact attacks; only a successful attack advances its deadline to now + interval. No target/contact leaves a ready attacker ready. Camera/feedback phase placement is a pending proposal, not settled by this abbreviated sequence.
+**Decision**: One 60 Hz coordinator update: state intent → derive t_end from t_begin + actually simulated delta → queued mouse yaw/pitch → player movement → camera follow → enemy pursuit → scheduled spawn → weapon → contacts in spawn order → commit completed time → feedback/HUD/evidence presentation. All spawn, weapon and contact deadline comparisons use completion time t_end after movement, not beginning time t_begin. Lethal contact fixes final t_end and aborts later gameplay, then commits the step once. No wall stall credits unsimulated survival. Only actual attacks advance deadlines to t_end + interval; absent eligibility preserves readiness. Absolute feedback expiry avoids same-step double aging. Inactive UI processes without gameplay or camera progression.
 
 **Rationale**: Preserves delays on pause and separation. Stable spawn IDs resolve equal distances and multiple contact order. Remove dead enemies from the registry synchronously before deferred node deletion. Defeat stops camera and simulation; Restart only from Game Over replaces the encounter once, resetting input/view, IDs, health, clock and deadlines.
 
@@ -54,11 +54,11 @@ Research was delegated into engine/composition/validation and gameplay schedulin
 
 ## 6. Spawning and target selection
 
-**Decision**: First spawn at one full interval, one enemy per scheduled opportunity when below cap. Cap-full opportunities are consumed. On an exceptional update crossing multiple deadlines, service at most one opportunity and advance to the first cadence deadline strictly after current active time; no burst/backlog. Use up to 16 uniform samples inside inset arena bounds, then a farthest inset corner fallback strictly outside contact range. Validate geometry/contact relationships first.
+**Decision**: First spawn at one full interval, one enemy per scheduled opportunity when below cap; evaluate indexed cadence against step completion time t_end. Cap-full opportunities are consumed. On an exceptional update crossing multiple deadlines, service at most one opportunity and advance to the first cadence deadline strictly after current active time; no burst/backlog. Use up to 16 uniform samples inside inset arena bounds, then a farthest inset corner fallback strictly outside contact range. Validate geometry/contact relationships first.
 
 **Rationale**: Bounded sampling cannot hang. A rectangular arena always has an inset corner at least its inset half-diagonal from any valid player position; require contact distance smaller than that half-diagonal. O(N) living-registry targeting by `(squared XZ distance, spawn_id)` is sufficient at default cap 50. Cap remains configurable for a later separate 200 benchmark.
 
-**Alternatives considered**: Unbounded retries can hang; immediate replacement/catch-up spawning violates cap behavior; pooling/spatial indexing lacks measured need. Normal cadence tests use updates shorter than the interval; stall tests explicitly exercise the no-burst policy.
+**Alternatives considered**: Unbounded retries can hang; immediate replacement/catch-up spawning violates cap behavior; pooling/spatial indexing lacks measured need. Normal cadence tests use updates shorter than the interval; simulated long-step fixtures exercise no-burst handling. A wall stall alone does not advance simulation. Approved sub-tick intervals are limited to one action per executed step without early triggers; report effective cadence.
 
 ## 7. Initial tuning
 
@@ -90,7 +90,7 @@ Research was delegated into engine/composition/validation and gameplay schedulin
 
 ## 9. Profiling
 
-**Decision**: Fix SC-007 conditions in plan/quickstart before running; measure the owner's actual uninterrupted five-minute run with normal vulnerability and cap 50. Buffer monotonic frame-loop intervals, sample enemy counts, and write output after sampling. Separate diagnostic profiler runs from acceptance sampling.
+**Decision**: Fix SC-007 conditions in plan/quickstart; use the owner's uninterrupted 300-completed-simulation-second window with normal vulnerability/tuning. Main owns Profile-only, generation-isolated capture. Whole-window FPS is observed callbacks / actual wall duration, including boundary stalls; separately report full-interval FPS/distributions, coverage and partial gaps. Close the frame buffer at the sampling endpoint or earlier defeat, write after sampling, retain attempt/failure/continuation metadata and separate diagnostic profiler runs. Survival-window, continuation and required capture outcomes are distinct; reaching 300 alone never grants full acceptance.
 
 **Rationale**: Average FPS alone conceals stalls. Frame-time distribution and reciprocal worst interval convey observed extremes, while methods/overhead delimit claims. No headless performance result or 50-enemy run establishes SC-005.
 
@@ -100,10 +100,14 @@ Research was delegated into engine/composition/validation and gameplay schedulin
 
 ### Technical review follow-up — 2026-10-02
 
-The product owner approved the simulation-time survival clock, continue-but-invalidate spawn failure policy, and relaunch-only configuration recovery. Profiling uses separately recorded actual wall-clock duration/FPS and retains active stalls. These decisions supersede earlier unresolved policy questions. [Plan §Proposed resolutions for remaining technical gaps](plan.md#proposed-resolutions-for-remaining-technical-gaps) contains pending proposals for diagnostic lifecycle, camera/feedback phases, tick quantization, bounded pursuit/reachability validation, sample boundaries, continuation evidence, and suite/timeouts. These are not adopted decisions or executed research; technical checklist items remain open where their resolution still depends on proposal review.
+The owner approved all [adopted A–G resolutions](plan.md#adopted-technical-resolutions--ag) with refinements on final acceptance, consistent completion-time deadlines, preservation of valid survival evidence after later death, and genuine-error versus harmless-log classification. Their operative behavior is in the model/contracts/quickstart. None revises constitution v1.0.0 or expands the first milestone.
+
+Bound pursuit by min(speed * delta, remaining distance), retaining analytic containment. Validate contact-distance squared >= 2 * max(enemy-radius minus player-radius, 0) squared alongside the existing strict spawn bound, so custom definitions cannot make boundary contact unreachable. This is a feasibility check of existing FR-004, not a crowd/collision system.
+
+Native tests reconcile an explicit manifest against discovered/executed case IDs, use fixed reported fixture seeds and independent runtime state, and fail on real assertions/engine errors or incomplete/empty/timed-out checks. Normal informational output does not fail. Declared expected application diagnostics are asserted in fault fixtures without hiding unexpected engine exceptions. Default noninteractive timeouts and documented override/retry rules are in the quickstart. Error-format parsing and timeout handling still require their planned implementation fixtures.
 
 - Engine location/version check passed. Re-resolve `GODOT_BIN` in each validation session; verify filesystem confinement before project/editor execution. The version-only invocation establishes no project/cache-path confinement or gameplay acceptance.
 - Implement planned launcher/tests/instrumentation; current docs do not claim they exist.
 - Floating deadline/range boundaries and lethal-event order require focused automated fixtures.
 - Manual visibility, five-minute survivability and measured bottlenecks remain unverified.
-- The three product-policy clarifications are resolved. Remaining technical proposals require review; no scope/governance change is proposed. No gameplay or validation implementation is authorized by this documentation follow-up.
+- Product/architectural review is resolved with A–G refinements documented; no outstanding owner clarification or scope/governance change is required. Implementation, acceptance evidence and confinement proof remain later work; this operation does not generate tasks or implement tooling/gameplay.

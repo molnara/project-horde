@@ -16,7 +16,7 @@ Capture mouse on Active; release in Paused/GameOver. Ignore keyboard echo so hol
 
 ## View and scene
 
-Camera tracks player without smoothing; yaw rotates continuously, pitch bounds prevent inversion/floor crossing. Defaults: 8 m offset, target height 1.2 m, initial depression 35°, yaw 0°, sensitivity 0.12° per screen pixel, FOV 70°. Camera orientation never adds vertical player motion. Player remains visible during traversal/perimeter checks.
+One coordinator consumes queued Active mouse motion before same-step WASD, moves the player with the updated yaw, then follows the new position. UI continues processing in Paused/GameOver without advancing gameplay/camera. Camera tracks player without smoothing; yaw rotates continuously, pitch bounds prevent inversion/floor crossing. Defaults: 8 m offset, target height 1.2 m, initial depression 35°, yaw 0°, sensitivity 0.12° per screen pixel, FOV 70°. Camera orientation never adds vertical player motion. Player remains visible during traversal/perimeter checks.
 
 Arena is one flat 40×40 m plane, with low visible boundary strips; cyan player, orange/red enemies, muted contrasting floor. All entity centers respect radius-inset limits while actors freely overlap. No interior obstacle, tall wall or ceiling may occlude normal view or block pursuit. Meshes/materials are original built-in primitives with provenance recorded in `docs/asset-provenance.md` during implementation.
 
@@ -32,3 +32,7 @@ Automatic attacks show a short visible line to the affected enemy and its hit fl
 - Configuration recovery requires correcting the definition and relaunching; no in-application retry control is required. The HUD survival clock measures completed, unpaused physics simulation time, not wall-clock time lost in stalls.
 
 Verify from normal 1920×1080 view: player/enemies/limits recognizable, HUD readable, affected enemy identifiable, and every overlay/button usable. Headless tests do not establish these outcomes.
+
+## Continuation and evidence semantics
+
+Reaching 300 simulation seconds creates no gameplay ending or victory indication. The owner playtest separately records survival-window completion, post-endpoint responsiveness/spawn opportunities and profiling evidence. If later death prevents continuation observations, valid survival evidence is preserved while those observations remain outstanding. There is no extra retry/configuration UI, sampler in normal Play, or required forced post-endpoint attack when no target is eligible. See [quickstart](../quickstart.md) for evidence procedure; no partial evidence is labeled full acceptance.
