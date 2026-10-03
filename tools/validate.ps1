@@ -211,6 +211,32 @@ function Invoke-GodotCheck {
                         if ($outcomes.profile_capture_outcome -cne 'passed' -or @($outcomes.capture_diagnostics).Count -ne 0) {
                             throw 'FAILED: persisted Profile outcome reports incomplete capture.'
                         }
+                        if ($null -ne $attemptReceipt.PSObject.Properties['segments']) {
+                            # Every sealed segment remains required evidence, including
+                            # streams closed before the latest receipt/sidecar path.
+                            foreach ($segment in @($attemptReceipt.segments)) {
+                                foreach ($path in @($segment.evidence_path, $segment.frame_stream.path)) {
+                                    [void](Assert-ContainedPath $path $cacheRoot)
+                                    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "FAILED: required segmented Profile evidence is missing: $path" }
+                                }
+                                if ((Get-Item -LiteralPath $segment.frame_stream.path).Length -ne $segment.frame_stream.sample_count * 8) {
+                                    throw 'FAILED: segmented Profile raw stream length disagrees with its descriptor.'
+                                }
+                                $segmentManifest = [IO.File]::ReadAllText($segment.evidence_path) | ConvertFrom-Json
+                                if ($segmentManifest.frame_stream.path -cne $segment.frame_stream.path -or
+                                    $segmentManifest.frame_stream.sample_count -ne $segment.frame_stream.sample_count -or
+                                    $segmentManifest.t0 -ne $segment.t0 -or $segmentManifest.t1 -ne $segment.t1 -or
+                                    $segmentManifest.profile_capture_outcome -cne 'passed' -or @($segmentManifest.capture_diagnostics).Count -ne 0) {
+                                    throw 'FAILED: segmented Profile manifest disagrees with its descriptor.'
+                                }
+                            }
+                            if ($outcomes.interrupted -ne $attemptReceipt.interrupted -or
+                                $outcomes.active_capture_duration -ne $attemptReceipt.active_capture_duration -or
+                                (ConvertTo-Json -InputObject @($outcomes.segments) -Depth 20 -Compress) -cne
+                                (ConvertTo-Json -InputObject @($attemptReceipt.segments) -Depth 20 -Compress)) {
+                                throw 'FAILED: Profile sidecar lost segmentation/interruption provenance.'
+                            }
+                        }
                     }
                     Write-Host "Profile capture: $($receipt.profile_capture_outcome); survival: $($receipt.survival_window_outcome); continuation: $($receipt.continuation_outcome). Owner/performance acceptance requires ledger review."
                 }
@@ -400,7 +426,7 @@ func _enter_tree() -> void:
         if (-not $restored) { Write-Host "FAILED: process environment restoration for $name."; $exitStatus = 1 }
     }
     if ($null -ne $sessionDir) {
-        Write-ContainedText (Join-Path $sessionDir 'results.json') (ConvertTo-Json -InputObject @($results.ToArray()) -Depth 6)
+        Write-ContainedText (Join-Path $sessionDir 'results.json') (ConvertTo-Json -InputObject @($results.ToArray()) -Depth 20)
         Write-Host "Validation evidence: $sessionDir"
     }
 }

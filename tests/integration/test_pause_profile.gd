@@ -1,7 +1,7 @@
 extends RefCounted
-## T043: every case is authored, unregistered and unrun until T047.
+## T043/T047: all profiling segmentation cases are required and executable.
 ## Real Main/capture integration plus deterministic wall timestamps on the real
-## helper. Observation/API seam is provisional; see tests/README.md.
+## helper. Production API/metadata contract is documented in tests/README.md.
 const F = preload("res://tests/support/gameplay_fixture.gd")
 const Pause = preload("res://tests/integration/test_pause_resume.gd")
 const Evidence = preload("res://tests/integration/test_restart_evidence.gd")
@@ -56,8 +56,7 @@ func capture_at(ctx, generation: int = 7, origin: float = 0.0):
 	return capture
 
 func close_at(ctx, capture, wall: float) -> void:
-	# Semantic close_segment from the approved contract; concrete generation/time
-	# arguments and open_segment resume counterpart are a wiring-only test seam.
+	# Production segment API rejects stale generations and preserves the attempt.
 	F.invoke(ctx, capture, "close_segment", [capture.run_generation, wall])
 
 func resume_at(ctx, capture, wall: float) -> void:
@@ -231,13 +230,20 @@ func retained_diagnostics(ctx) -> void:
 	for segment in records:
 		ctx.check(raw_count(ctx, segment) == 3 and not segment.has("frame_timestamps"), "lossless raw artifacts retained without raw copies in metadata")
 	var sidecar := evidence.payload(ctx, capture.evidence_path + ".outcomes.json")
-	ctx.check(sidecar.get("segments") == old.get("segments") and sidecar.get("failure_diagnostics") == [failure] and sidecar.get("active_capture_duration") == 2.0, "disk diagnostics preserve boundaries/duration/failure, independent of qualification")
+	# Godot JSON parses all numbers as floats, and nested Dictionary equality is
+	# type-sensitive. Compare every persisted field against its JSON representation
+	# without dropping fields or adding a numeric tolerance.
+	ctx.check(sidecar.get("segments") == JSON.parse_string(JSON.stringify(old.get("segments"))), "disk diagnostics preserve every segment boundary/summary/raw descriptor")
+	ctx.check(sidecar.get("failure_diagnostics") == JSON.parse_string(JSON.stringify([failure])), "disk diagnostics preserve every earlier failure field")
+	ctx.check(sidecar.get("active_capture_duration") == 2.0, "disk diagnostics preserve active duration independent of qualification")
 	F.invoke(ctx, capture, "open_attempt", [8, 20.0])
 	ctx.check(capture.retained_attempts.size() == 1 and capture.retained_attempts[0] == old, "fresh attempt retains all previous interrupted diagnostics exactly once")
 	ctx.check(metadata(ctx, capture).get("interrupted") == false and segments(ctx, capture).is_empty(), "fresh generation resets only its own interruption and segments")
 	var fresh := metadata(ctx, capture)
 	F.invoke(ctx, capture, "record_frame", [7, 21.0])
 	F.invoke(ctx, capture, "record_step", [7, 300.0, 18000, 21.0, 99, true])
+	F.invoke(ctx, capture, "close_segment", [7, 21.0])
+	F.invoke(ctx, capture, "open_segment", [7, 22.0])
 	ctx.check(metadata(ctx, capture) == fresh and capture.retained_attempts[0] == old, "stale interrupted-generation samples cannot rewrite fresh or retained evidence")
 	F.invoke(ctx, capture, "shutdown", [20.0, false])
 	ctx.done()
@@ -262,4 +268,17 @@ func post_endpoint_pause(ctx) -> void:
 			ctx.check(not capture.buffer_open and capture.t1 == t1 and capture.frame_sample_count == count and evidence.payload(ctx, capture.evidence_path) == endpoint, "post-endpoint pause/resume never reopens or rewrites five-minute raw window")
 			ctx.check(capture.survival_window_outcome == "passed" and run.survival_window_outcome == "passed", "later interruption preserves previously collected survival observation")
 			ctx.check(metadata(ctx, capture).get("interrupted") == true and not capture.qualifies_attempt(), "later interruption remains explicit and cannot grant full uninterrupted attempt acceptance")
+	# Isolate post-endpoint interruption from missing continuation or sparse data.
+	var control = capture_at(ctx)
+	frames(ctx, control, [0.0, 0.25, 0.5])
+	F.invoke(ctx, control, "record_step", [7, 300.0, 18000, 1.0, 2, true])
+	F.invoke(ctx, control, "record_continuation", [7, continuation()])
+	ctx.check(control.qualifies_attempt(), "complete clean technical control qualifies before later interruption; not owner proof")
+	var sealed := evidence.payload(ctx, control.evidence_path)
+	close_at(ctx, control, 11.0)
+	resume_at(ctx, control, 21.0)
+	ctx.check(not control.qualifies_attempt() and control.survival_window_outcome == "passed" and control.continuation_outcome == "passed" and control.profile_capture_outcome == "passed", "post-300 interruption alone disqualifies otherwise-complete evidence and preserves all collected outcomes")
+	ctx.check(not control.buffer_open and control.t1 == 1.0 and metadata(ctx, control).get("active_capture_duration") == 1.0 and evidence.payload(ctx, control.evidence_path) == sealed, "post-300 pause gap never changes sealed window or active capture duration")
+	F.invoke(ctx, control, "shutdown", [21.0, false])
+	ctx.check(evidence.payload(ctx, control.evidence_path + ".outcomes.json").get("interrupted") == true, "post-300 interruption persists even with previously successful observations")
 	ctx.done()

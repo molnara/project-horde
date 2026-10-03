@@ -5,6 +5,7 @@ var presented_state: String = "ConfigurationError"
 
 func _ready() -> void:
 	move_child($GameOver, 0)
+	move_child($Paused, 0)
 	$GameOver/Panel/Restart.pressed.connect(_request_restart)
 
 func _input(event: InputEvent) -> void:
@@ -32,6 +33,7 @@ func present_state(state: String) -> void:
 	presented_state = state
 	$Status.text = ""
 	$GameOver.visible = state == "GameOver"
+	$Paused.visible = state == "Paused"
 	if entering:
 		set_restart_enabled(true)
 		$GameOver/Panel/Restart.grab_focus()

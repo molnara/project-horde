@@ -41,6 +41,9 @@ var configured_camera_fov: float
 var restart_in_progress: bool = false
 var encounter_connections: Array[Dictionary] = []
 var retained_attempts: Array[Dictionary] = []
+var pause_intents: int = 0
+var escape_held: bool = false
+var interrupted: bool = false
 
 func start_run(definition: Variant) -> void:
 	assert(hud == null, "Dispose the previous encounter before constructing a fresh one")
@@ -51,6 +54,8 @@ func start_run(definition: Variant) -> void:
 	next_spawn_id = 0
 	spawn_failure_count = 0
 	acceptance_invalid = false
+	pause_intents = 0
+	interrupted = false
 	spawn_diagnostics.clear()
 	continuation_evidence.clear()
 	survival_window_outcome = "outstanding"
@@ -108,7 +113,41 @@ func _connect_encounter(event: Signal, callback: Callable) -> void:
 	encounter_connections.append({"signal": event, "callback": callback})
 
 func _current_callback(generation: int) -> bool:
-	return generation == run_generation and simulation_enabled and not restart_in_progress
+	return generation == run_generation and simulation_enabled and state == "Active" and not restart_in_progress
+
+func _input(event: InputEvent) -> void:
+	if not event is InputEventKey or event.keycode != KEY_ESCAPE:
+		return
+	if not event.pressed:
+		escape_held = false
+	elif not event.echo and not escape_held:
+		escape_held = true
+		if simulation_enabled and state in ["Active", "Paused"]:
+			pause_intents += 1
+	get_viewport().set_input_as_handled()
+
+func toggle_pause() -> void:
+	if not simulation_enabled or restart_in_progress or state not in ["Active", "Paused"]:
+		return
+	if stepping:
+		pause_intents += 1
+		return
+	pause_intents = 0
+	state = "Paused" if state == "Active" else "Active"
+	if state == "Paused":
+		interrupted = true
+	camera.set_input_active(state == "Active")
+	# Held inactive actions must be pressed afresh; never replay them on resume.
+	for action in ["move_forward", "move_backward", "move_left", "move_right"]:
+		Input.action_release(action)
+	if profile_capture != null:
+		var wall := Time.get_ticks_usec() / 1000000.0
+		if state == "Paused":
+			profile_capture.close_segment(run_generation, wall)
+		else:
+			profile_capture.open_segment(run_generation, wall)
+	hud.present_state(state)
+	state_changed.emit(state)
 
 func _health_changed(current: int, maximum: int, generation: int) -> void:
 	if _current_callback(generation) and state == "Active":
@@ -166,6 +205,7 @@ func retain_attempt() -> void:
 	retained_attempts.append({"run_generation": run_generation, "active_time": active_time,
 		"completed_step_count": completed_step_count, "spawn_failure_count": spawn_failure_count,
 		"acceptance_invalid": acceptance_invalid, "spawn_diagnostics": spawn_diagnostics.duplicate(true),
+		"interrupted": interrupted,
 		"survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome,
 		"continuation_evidence": continuation_evidence.duplicate(true)})
 
@@ -176,6 +216,12 @@ func _physics_process(delta: float) -> void:
 	step(delta)
 
 func step(delta: float) -> void:
+	# Input transitions are serviced before any mouse, movement or event phase.
+	if pause_intents > 0 and not stepping:
+		var intents := pause_intents
+		pause_intents = 0
+		for _intent in intents:
+			toggle_pause()
 	if not simulation_enabled or state != "Active" or stepping:
 		return
 	assert(is_finite(delta) and delta > 0, "Delivered simulation delta must be positive finite")
@@ -217,7 +263,8 @@ func _player_died(generation: int = -1) -> void:
 	if state != "Active" or (generation != -1 and not _current_callback(generation)):
 		return
 	state = "GameOver"
-	camera.clear_pending_input()
+	pause_intents = 0
+	camera.set_input_active(false)
 	feedback.clear()
 	if not stepping:
 		# Out-of-step lethal damage has no additional simulated duration to commit.

@@ -37,6 +37,10 @@ var configured: bool = false
 var attempt_retained: bool = false
 var shutdown_written: bool = false
 var receipt_emitted: bool = false
+var segments: Array[Dictionary] = []
+var interrupted: bool = false
+var active_capture_duration: float = 0.0
+var capture_window_finished: bool = false
 
 func configure(absolute_workspace_output_directory: String) -> void:
 	var cache_root := ProjectSettings.globalize_path("res://.cache/").replace("\\", "/")
@@ -54,6 +58,10 @@ func open_attempt(generation: int, wall_seconds: float) -> void:
 	attempt_retained = false
 	shutdown_written = false
 	receipt_emitted = false
+	segments.clear()
+	interrupted = false
+	active_capture_duration = 0.0
+	capture_window_finished = false
 	attempt_serial += 1
 	t0 = wall_seconds
 	t1 = wall_seconds
@@ -78,6 +86,9 @@ func open_attempt(generation: int, wall_seconds: float) -> void:
 	frame_evidence_path = ""
 	frame_callback_audit = {"first_engine_frame": -1, "last_engine_frame": -1, "repeated_engine_frame_ids": 0, "skipped_engine_frame_ids": 0}
 	buffer_open = true
+	_open_stream()
+
+func _open_stream() -> void:
 	if configured:
 		var error := DirAccess.make_dir_recursive_absolute(output_directory)
 		if error == OK:
@@ -90,6 +101,29 @@ func open_attempt(generation: int, wall_seconds: float) -> void:
 			_capture_fault("output_directory", error, "writable workspace output", "Could not create the capture directory.")
 	else:
 		_capture_fault("output_directory", output_directory, "configured workspace output", "Capture output was not configured safely.")
+
+func close_segment(generation: int, wall_seconds: float) -> void:
+	if generation != run_generation or attempt_retained or run_generation == 0:
+		return
+	# Post-endpoint pause interrupts the owner attempt too. Preserve sealed raw
+	# evidence; shutdown persists later interruption provenance in the sidecar.
+	interrupted = true
+	if buffer_open:
+		_close(wall_seconds)
+
+func open_segment(generation: int, wall_seconds: float) -> void:
+	if generation != run_generation or attempt_retained or run_generation == 0 or buffer_open or capture_window_finished:
+		return
+	# Resume without resetting outcomes, diagnostics, generation or count cadence.
+	t0 = wall_seconds
+	t1 = wall_seconds
+	frame_sample_count = 0
+	last_frame_timestamp = -INF
+	frame_callback_audit = {"first_engine_frame": -1, "last_engine_frame": -1, "repeated_engine_frame_ids": 0, "skipped_engine_frame_ids": 0}
+	summary.clear()
+	buffer_open = true
+	profile_capture_outcome = "outstanding"
+	_open_stream()
 
 func record_frame(generation: int, wall_seconds: float, engine_frame: int = -1) -> void:
 	if generation != run_generation or not buffer_open:
@@ -128,6 +162,7 @@ func record_step(generation: int, committed_time: float, ticks: int, wall_second
 	sampler_overhead_usec += Time.get_ticks_usec() - begin
 	if committed_time >= 300 or not alive:
 		survival_window_outcome = "passed" if committed_time >= 300 and alive else "failed"
+		capture_window_finished = true
 		_close(wall_seconds)
 
 func record_spawn_failure(generation: int, record: Dictionary) -> void:
@@ -147,12 +182,13 @@ func record_continuation(generation: int, observations: Dictionary) -> void:
 func qualifies_attempt() -> bool:
 	# Technical evidence candidate only; actual conditions/owner acceptance must
 	# still be reviewed in the verification ledger. Sparse timing is insufficient.
-	return survival_window_outcome == "passed" and continuation_outcome == "passed" and profile_capture_outcome == "passed" and not acceptance_invalid and summary.get("full_intervals_available", false) and summary.get("enemy_min") != null and not conditions.is_empty()
+	return not interrupted and survival_window_outcome == "passed" and continuation_outcome == "passed" and profile_capture_outcome == "passed" and not acceptance_invalid and summary.get("full_intervals_available", false) and summary.get("enemy_min") != null and not conditions.is_empty()
 
 func shutdown(wall_seconds: float, emit_result: bool = true) -> void:
 	if run_generation == 0:
 		return
 	if not shutdown_written:
+		capture_window_finished = true
 		if buffer_open:
 			_close(wall_seconds)
 		if not evidence_path.is_empty():
@@ -162,7 +198,9 @@ func shutdown(wall_seconds: float, emit_result: bool = true) -> void:
 		receipt_emitted = true
 		# One application completion receipt; earlier attempts remain independently
 		# inspectable and the launcher checks every required artifact.
-		print("HORDE_PROFILE_RESULT=" + JSON.stringify({"profile_capture_outcome": profile_capture_outcome, "evidence_path": evidence_path, "frame_evidence_path": frame_evidence_path, "frame_sample_count": frame_sample_count, "capture_diagnostics": capture_diagnostics, "survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome, "acceptance_invalid": acceptance_invalid, "retained_attempts": retained_attempts}))
+		var receipt := _metadata()
+		receipt["retained_attempts"] = retained_attempts
+		print("HORDE_PROFILE_RESULT=" + JSON.stringify(receipt))
 
 func retain_attempt(wall_seconds: float) -> void:
 	if run_generation == 0 or attempt_retained:
@@ -187,6 +225,7 @@ func _flush_frames() -> void:
 func _close(wall_seconds: float) -> void:
 	buffer_open = false
 	t1 = wall_seconds
+	active_capture_duration += t1 - t0
 	var begin := Time.get_ticks_usec()
 	_flush_frames()
 	if frame_output != null:
@@ -206,9 +245,13 @@ func _close(wall_seconds: float) -> void:
 	if not evidence_path.is_empty():
 		# Serialize intended success; any write/flush fault resets it to outstanding.
 		profile_capture_outcome = "passed" if capture_diagnostics.is_empty() else "outstanding"
+		var stream := {"path": frame_evidence_path, "format": "little-endian float64 monotonic wall seconds; 8 bytes per callback", "sample_count": frame_sample_count, "chunk_capacity": FRAME_CHUNK_SIZE}
+		var segment_summary := summary.duplicate(true)
+		segment_summary.erase("enemy_samples")
+		segments.append({"t0": t0, "t1": t1, "evidence_path": evidence_path, "summary": segment_summary, "frame_stream": stream})
 		var payload := _metadata()
 		payload["conditions"] = conditions.duplicate(true)
-		payload["frame_stream"] = {"path": frame_evidence_path, "format": "little-endian float64 monotonic wall seconds; 8 bytes per callback", "sample_count": frame_sample_count, "chunk_capacity": FRAME_CHUNK_SIZE}
+		payload["frame_stream"] = stream
 		payload["enemy_samples"] = enemy_samples
 		payload["summary"] = summary
 		_write_json(evidence_path, payload)
@@ -239,4 +282,4 @@ func _capture_fault(field: String, observed: Variant, constraint: String, cause:
 	printerr("Profile capture failure: " + JSON.stringify(record))
 
 func _metadata() -> Dictionary:
-	return {"run_generation": run_generation, "t0": t0, "t1": t1, "completed_simulation_duration": completed_simulation_duration, "completed_step_count": completed_step_count, "survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome, "continuation_evidence": continuation_evidence.duplicate(true), "profile_capture_outcome": profile_capture_outcome, "acceptance_invalid": acceptance_invalid, "spawn_failure_count": spawn_failure_count, "failure_diagnostics": failure_diagnostics.duplicate(true), "capture_diagnostics": capture_diagnostics.duplicate(true), "evidence_path": evidence_path, "frame_evidence_path": frame_evidence_path, "frame_sample_count": frame_sample_count, "summary": summary.duplicate(true)}
+	return {"segments": segments.duplicate(true), "interrupted": interrupted, "active_capture_duration": active_capture_duration, "run_generation": run_generation, "t0": t0, "t1": t1, "completed_simulation_duration": completed_simulation_duration, "completed_step_count": completed_step_count, "survival_window_outcome": survival_window_outcome, "continuation_outcome": continuation_outcome, "continuation_evidence": continuation_evidence.duplicate(true), "profile_capture_outcome": profile_capture_outcome, "acceptance_invalid": acceptance_invalid, "spawn_failure_count": spawn_failure_count, "failure_diagnostics": failure_diagnostics.duplicate(true), "capture_diagnostics": capture_diagnostics.duplicate(true), "evidence_path": evidence_path, "frame_evidence_path": frame_evidence_path, "frame_sample_count": frame_sample_count, "summary": summary.duplicate(true)}

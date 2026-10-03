@@ -75,6 +75,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		coordinator.camera.queue_mouse(event.relative)
 
 func _state_changed(state: String) -> void:
+	if coordinator.camera != null:
+		coordinator.camera.set_input_active(state == "Active")
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if state == "Active" else Input.MOUSE_MODE_VISIBLE
 

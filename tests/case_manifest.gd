@@ -43,12 +43,15 @@ static func entries() -> Array[Dictionary]:
 		elif id in ["shutdown_fault", "write_fault"]:
 			expected = [{"source": "ProfileCapture", "constraint": "required output written successfully", "count": 1}]
 		result.append({"id": "restart_evidence." + id, "script": "res://tests/integration/test_restart_evidence.gd", "maps": ["T035", "FR-011", "SC-006", "SC-007", "evidence/" + id], "seed": 4702035, "expected": expected, "ready_after": ["T039", "T040"]})
-	# Existing defeat behavior is executable without US3 implementation. All real
-	# pause/resume and segmentation cases remain outside this required manifest.
+	# US3 production dependencies are implemented; every authored case is required.
 	result.append({"id": "pause.game_over_escape", "script": "res://tests/integration/test_pause_resume.gd", "maps": ["T042", "FR-010", "FR-012", "GameOver/Escape"], "seed": 4702042, "expected": []})
+	result.append_array(pause_entries())
 	return result
 
 static func staged_entries() -> Array[Dictionary]:
+	return []
+
+static func pause_entries() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for id in ["escape_edges", "freeze_combat", "inactive_callbacks", "spawn_delay", "weapon_delay", "contact_delays", "feedback_delay", "mouse_discard", "hud_restart"]:
 		result.append({"id": "pause." + id, "script": "res://tests/integration/test_pause_resume.gd", "maps": ["T042", "FR-009", "FR-012", "SC-003", "pause/" + id], "seed": 4702042, "expected": [], "ready_after": ["T044", "T045", "T046"]})

@@ -207,6 +207,41 @@ func exercise() -> void:
         Assert-Fixture ($profileRestart.ExitCode -eq 0 -and $profileRestart.Output.Contains('PROFILE_RESTART_ASSERTIONS=7') -and $profileRestart.Diagnostics.ProfileResults.Count -eq 1) 'three production Profile restarts emit one validated application receipt'
         Assert-Fixture ($profileRestart.Diagnostics.ProfileResults[0].retained_attempts.Count -eq 3) 'every retired Profile stream manifest and sidecar validated'
 
+        $profileSegmentsPath = Join-Path $fixtureRoot 'profile-segments.gd'
+        $profileSegmentsCode = @'
+extends SceneTree
+func _initialize() -> void:
+    call_deferred("exercise")
+func exercise() -> void:
+    var main = load("res://scenes/main.tscn").instantiate()
+    root.add_child(main)
+    var run = main.coordinator
+    run.set_physics_process(false)
+    run.step(0.125)
+    run.toggle_pause()
+    assert(run.state == "Paused" and not main.capture.buffer_open)
+    run.step(10.0)
+    assert(run.active_time == 0.125)
+    run.toggle_pause()
+    run.step(0.125)
+    assert(run.state == "Active" and main.capture.buffer_open and main.capture.interrupted)
+    assert(not main.capture.qualifies_attempt())
+    # Optional deliberate loss is confined to this generated fixture's stream.
+    if OS.get_cmdline_user_args().has("--lose-segment"):
+        assert(DirAccess.remove_absolute(main.capture.segments[0].frame_stream.path) == OK)
+    print("PROFILE_SEGMENT_ASSERTIONS=4")
+    main.free()
+    quit(0)
+'@
+        Write-ContainedText $profileSegmentsPath $profileSegmentsCode
+        $profileSegments = Invoke-GodotCheck 'profile-startup' @('--headless','--path',$workspace,'--script',$profileSegmentsPath,'--','--profile') $workspace 30
+        Assert-Fixture ($profileSegments.ExitCode -eq 0 -and $profileSegments.Output.Contains('PROFILE_SEGMENT_ASSERTIONS=4')) 'production pause resume emits validated segmented Profile receipt'
+        Assert-Fixture ($profileSegments.Diagnostics.ProfileResults[0].segments.Count -eq 2 -and $profileSegments.Diagnostics.ProfileResults[0].interrupted) 'both Profile segments and interruption retained in application receipt'
+        $missingSegmentRejection = $null
+        try { [void](Invoke-GodotCheck 'profile-startup' @('--headless','--path',$workspace,'--script',$profileSegmentsPath,'--','--profile','--lose-segment') $workspace 30) }
+        catch { $missingSegmentRejection = $_.Exception.Message }
+        Assert-Fixture ($null -ne $missingSegmentRejection -and $script:results[$script:results.Count - 1].Diagnostics.Errors -match 'required segmented Profile evidence is missing') 'missing earlier Profile segment fails launcher despite complete latest stream'
+
         $invalidScript = Join-Path $fixtureRoot 'invalid-restart-app.gd'
         Write-ContainedText $invalidScript @'
 extends "res://scripts/run/main.gd"
@@ -409,7 +444,7 @@ func _initialize() -> void:
         Write-Host "Infrastructure fixtures: $($fixtureChecks.Count) assertions passed."
         $fixturesCompleted = $true
     } finally {
-        Write-ContainedText (Join-Path $sessionDir 'infrastructure-child-results.json') (ConvertTo-Json -InputObject @($script:results.ToArray()) -Depth 10)
+        Write-ContainedText (Join-Path $sessionDir 'infrastructure-child-results.json') (ConvertTo-Json -InputObject @($script:results.ToArray()) -Depth 20)
         Write-ContainedText (Join-Path $sessionDir 'infrastructure-fixtures.json') (ConvertTo-Json -InputObject @($fixtureChecks.ToArray()) -Depth 6)
         $script:results = $parentResults
         $passed = $fixturesCompleted -and $fixtureChecks.Count -gt 0 -and @($fixtureChecks | Where-Object Outcome -eq 'FAILED').Count -eq 0

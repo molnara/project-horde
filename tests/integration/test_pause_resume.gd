@@ -1,5 +1,5 @@
 extends RefCounted
-## T042: game_over_escape is executable today; all other cases are staged.
+## T042/T044–T046: all pause/resume cases are required and executable.
 ## No simulated pause implementation: transitions invoke the real contract or
 ## deliver real viewport input. Only automatic physics driving is disabled.
 const F = preload("res://tests/support/gameplay_fixture.gd")
@@ -27,7 +27,9 @@ func key(main, code: Key = KEY_ESCAPE, pressed: bool = true, echo: bool = false)
 func mouse(main, motion: Vector2) -> void:
 	var event := InputEventMouseMotion.new()
 	event.relative = motion
-	main.get_viewport().push_input(event)
+	# The fixture specifies viewport pixels. Avoid scaling them again from the
+	# headless 64-pixel window into the project's 1920-pixel stretched viewport.
+	main.get_viewport().push_input(event, true)
 
 func transition(ctx, run, expected: String) -> bool:
 	# Synchronous semantic-method seam. Escape dispatch is tested separately.
@@ -96,6 +98,9 @@ func escape_edges(ctx) -> void:
 		key(main)
 		F.invoke(ctx, run, "step", [0.125])
 		ctx.check(run.state == "Paused" and run.active_time == time and run.completed_step_count == ticks, "discrete pause intent prevents that simulation step")
+		key(main, KEY_ESCAPE, true, false)
+		F.invoke(ctx, run, "step", [0.125])
+		ctx.check(run.state == "Paused" and states.size() == cycle * 2 + 1, "duplicate non-echo press while held cannot resume")
 		for _repeat in 4:
 			key(main, KEY_ESCAPE, true, true)
 			F.invoke(ctx, run, "step", [0.125])
@@ -112,6 +117,12 @@ func escape_edges(ctx) -> void:
 		ctx.check(run.state == "Active" and states.size() == (cycle + 1) * 2, "resume echo/release cannot re-pause")
 	ctx.check(states == [["Paused"], ["Active"], ["Paused"], ["Active"], ["Paused"], ["Active"]], "three press pairs yield only six transitions")
 	ctx.check(snapshot(run).nodes == before.nodes and run.run_generation == before.generation, "pause pairs preserve encounter identity and generation")
+	key(main)
+	key(main, KEY_ESCAPE, false)
+	key(main)
+	key(main, KEY_ESCAPE, false)
+	F.invoke(ctx, run, "step", [0.125])
+	ctx.check(run.state == "Active" and states.slice(6) == [["Paused"], ["Active"]], "two discrete presses before one tick each transition exactly once")
 	ctx.done()
 
 func freeze_combat(ctx) -> void:
@@ -262,7 +273,9 @@ func mouse_discard(ctx) -> void:
 		Input.action_release("move_forward")
 		ctx.check(run.camera.pending_mouse == Vector2.ZERO, "inactive mouse events are discarded, not buffered")
 		var position: Vector3 = run.player.position
+		Input.action_press("move_right")
 		if transition(ctx, run, "Active"):
+			ctx.check(not Input.is_action_pressed("move_right"), "movement held during Pause is cleared at resume")
 			F.invoke(ctx, run, "step", [0.125])
 			ctx.check(run.player.position == position and run.camera.get_node("Yaw/Pitch/Camera3D").global_transform == view, "released inactive WASD and discarded mouse cause no movement or resumed view jump")
 			mouse(main, Vector2(10, 0))

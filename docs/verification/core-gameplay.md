@@ -1,14 +1,15 @@
 # Core gameplay verification ledger
 
-Current checkpoint: Phase 4 owner acceptance / T041 closure, 2026-10-03.
-All 64 required native cases pass with 4,703 assertions; all 16 authored Phase 4
-integration cases pass with 984 assertions and zero deferrals. Final contained
-validation also passes 35 script parses, both startups and 143 infrastructure
-assertions. The owner reports Phase 4 acceptance testing passed; T034–T041 are
-complete and SC-002 is passed. See the final **Phase 4 T041 owner acceptance
-closure** section for manual results and the Batch 2 section for automated
-evidence. Earlier unrun/deferred statuses below are historical. Phase 5 and full
-feature/performance acceptance remain separate. No Git commit or push was made.
+Current checkpoint: Phase 5 Batch 2 implementation / T044–T047, 2026-10-03.
+All 82 required native cases pass with 5,843 assertions, including all 18 US3
+cases with 1,140 assertions and zero deferrals. Phase 3B remains 48/48 with 3,719
+assertions; Phase 4 remains 16/16 with 984 assertions. Final contained validation
+passes import, all 37 script parses, normal/Profile startup and 146 infrastructure
+assertions without unexpected warnings. T044–T047 are complete; T048 remains
+unchecked pending separate closure and owner pause acceptance. See **Phase 5
+Batch 2 — pause/resume implementation and automated evidence** below. Earlier
+unrun/deferred statuses are historical. Prior owner acceptance is preserved;
+this batch establishes no new owner/performance acceptance. No commit/push made.
 
 Previous Phase 3B checkpoint, retained independently:
 The corrected owner capture is complete and internally consistent; its shutdown
@@ -1790,3 +1791,194 @@ Final tree: branch `001-core-gameplay-prototype`, six tracked files modified
 (`tasks.md`, ledger, test README, manifest, runner comment, runner contract) and
 four new source files (two integration scripts plus UIDs), all unstaged. Generated
 output remains ignored. **Stop at Batch 1; await owner review and authorization.**
+
+## Phase 5 Batch 2 — pause/resume implementation and automated evidence
+
+**Date:** 2026-10-03. **Scope:** T044–T047 only, authorized implementation and
+registration/automated verification of Batch 1 cases. T048 is unchecked; owner
+pause closure and subsequent phases were not begun. Branch:
+`001-core-gameplay-prototype`. Parent revision:
+`b447cafa7c349181709866ad1b22c838122aee35`. Initial working tree was clean.
+Constitution v1.0.0 and existing spec/plan/model/contracts/tasks/quickstart were
+reviewed. Requirements checklist 16/16 and technical checklist 36/36 are checked;
+no checklist markers changed. `.specify/extensions.yml` is absent, so no pre/post
+implementation hooks apply. No dependencies, assets, tuning or engine changes.
+
+### Completed tasks and changed files
+
+| Task | Implementation |
+|---|---|
+| T044 | `scripts/run/run_coordinator.gd`: latched discrete Escape intents, pre-simulation transitions, Active callback gating, preserved encounter/deadlines, retained interruption provenance |
+| T045 | `scripts/run/main.gd`, `scripts/camera/camera_rig.gd`: Active-only capture/input, transition motion clearing, inactive camera input rejection; coordinator clears movement action state at transitions |
+| T046 | `scenes/hud.tscn`, `scripts/ui/hud.gd`: Paused / Escape to resume overlay behind readable health/time HUD; Game Over and Restart remain exclusive to defeat |
+| T047 | `scripts/run/profile_capture.gd`: same-attempt segments, raw-tail sealing, fresh origins/audits, active-duration accounting, persistent interruption exclusion, retained outcomes/diagnostics |
+
+Supporting changes: `tests/case_manifest.gd` requires all 18 US3 cases;
+`tests/unit/test_runner_contract.gd` asserts 82 required cases, 18 US3 and zero
+staged entries; both US3 integration scripts retain and strengthen acceptance
+coverage; `tests/README.md` documents the implemented seam and owner limitations.
+`tools/validate.ps1` validates every segment and sidecar provenance;
+`tools/test-validation.ps1` exercises a real segmented application and rejects a
+missing earlier stream. Both tools retain deeper JSON metadata without truncation.
+Only T044–T047 markers changed in `tasks.md`; this ledger records evidence.
+
+### Lifecycle, deadlines and inactive input
+
+The coordinator captures Escape in `_input`, rejecting echoes and duplicate
+presses while held; release rearms the latch. Every accepted discrete press is
+queued, including multiple press/release pairs before one tick. `step` services
+those transitions before camera/movement/spawn/weapon/contact processing.
+`toggle_pause()` also provides the synchronous contract seam. A pause intent
+prevents that step from advancing completed simulation time or its step count.
+Paused steps and saved inactive encounter callbacks produce no gameplay changes.
+Game Over remains terminal; Escape cannot resume it and Paused cannot Restart.
+The SceneTree remains unpaused, keeping UI processing available.
+
+Pause/resume neither reconstructs actors nor rewrites the active clock, spawn
+index/deadline, weapon cooldown, per-enemy contact cooldowns, feedback expiry,
+health or camera orientation. All deadlines already use completed active time.
+Because inactive wall time never enters that clock, remaining delays are preserved
+without subtracting wall time, resetting schedules or replaying missed events.
+Resumed executed steps use the existing completion-time rules and normal cadence.
+
+Pending Active mouse motion is cleared on pause; Paused/Game Over motion is
+ignored by Main and rejected by the camera queue. Resume clears again without
+resetting yaw/depression/follow position. Movement actions are released at the
+transition so inactive held action state is not replayed. Fresh Active input
+works normally. Main captures the pointer only while Active and releases it in
+Paused/Game Over; headless checks cannot establish physical pointer behaviour.
+
+### Resolved Batch 1 profiling seams and qualification
+
+Production adopts `close_segment(generation, wall_seconds)` and
+`open_segment(generation, wall_seconds)`. `_metadata()` exposes `segments`,
+`interrupted` and `active_capture_duration`. Closed records contain `t0`, `t1`,
+`evidence_path`, existing `summary` statistics and `frame_stream` path/count/format.
+Each segment has a distinct manifest/raw stream. Pause flushes its final tail and
+clears raw/count RAM buffers. Resume creates a new wall origin and draw audit,
+without bridging inactive intervals or treating paused draws as missing callbacks.
+Closed active wall durations are summed separately from completed simulation time.
+The exact [0,1]/[11,12] fixture records two active seconds, excluding the ten-second
+pause while retaining each segment's active boundary stalls.
+
+Generation, attempt serial, conditions, outcomes, sampling cadence and earlier
+spawn/capture diagnostics survive segmentation. Frame chunks remain bounded to
+4,096 float64 timestamps; enemy-count samples are released per closed segment.
+Metadata contains paths/summaries, without retained raw arrays. Defeat/shutdown
+seal unfinished capture; restart retains the old attempt once and resets only
+fresh-attempt state. Stale generations cannot close, reopen or sample a new attempt.
+Required-output failures remain explicit and cannot become successful evidence.
+The launcher checks every sealed manifest/raw descriptor, not only the latest
+stream; its deliberate missing-earlier-stream fixture fails at engine exit zero.
+
+**Interruption after 300 is resolved:** `interrupted` is monotonic within the
+attempt, even if raw capture already ended. Later pause never reopens or rewrites
+the sealed five-minute window. Successful survival/continuation/capture observations
+are retained, while `qualifies_attempt()` rejects the interrupted full attempt.
+Shutdown persists that flag in outcomes and the application receipt. A strengthened
+post-endpoint case starts with otherwise-complete eligible synthetic evidence,
+then proves interruption alone disqualifies it, preserving all successful outcomes
+and sealed artifacts. Thus no segmented or later-interrupted attempt qualifies as
+uninterrupted SC-003/006/007 owner evidence; acceptance still requires one clean
+attempt with independently verified normal tuning, continuation and owner evidence.
+
+### Executed validation and investigation
+
+All engine checks use the existing contained launcher and approved Standard
+`4.7.2.stable.official.ed1daf0bf`. Writable APPDATA/LOCALAPPDATA/TEMP/TMP and actual
+Godot/editor paths were verified inside `.cache/`; environment restoration passed.
+Exact final command:
+
+```powershell
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+```
+
+PowerShell output was retained at `.cache/batch2-final-validation.log`. Final
+session: `.cache/validation/20261003T150625756-b5e4d83192604869b3d42d40335836f2/`.
+`results.json` retains every exact engine command/exit/result; suite stdout and
+`infrastructure-fixtures.json` / `infrastructure-child-results.json` retain counts,
+original diagnostics and deliberate failing children. Output is ignored, uncommitted.
+
+| Final check | Actual result |
+|---|---|
+| Launcher / version / required help / path containment | PASSED, launcher exit 0; approved engine and contained paths verified |
+| Project import/load | PASSED, engine exit 0 |
+| Every source/test GDScript `--script <absolute file> --check-only` | PASSED, 37/37, each exit 0 |
+| Full native suite | PASSED, 82 required/registered/authored/executed, 5,843 assertions; zero deferred/pending/excluded; exit 0 |
+| Phase 3B / foundation regression | PASSED, 48/48 cases, 3,719 assertions |
+| Phase 4 defeat/restart/evidence regression | PASSED, 16/16 cases, 984 assertions |
+| US3 pause/resume and profiling | PASSED, 18/18 cases, 1,140 assertions |
+| Normal startup `--headless --path C:\GameDev\project-horde --quit-after 120` | PASSED, exit 0 |
+| Profile startup: same engine arguments plus `-- --profile` | PASSED, exit 0; diagnostic capture receipt/raw stream/manifests/sidecar validated |
+| Existing infrastructure plus segmented evidence checks | PASSED, 146/146 infrastructure assertions; real lifecycle fixtures additionally execute 26 native assertions (17 existing, 4 in the intact segment application and 5 in the deliberate-loss application, including its deletion precondition) |
+| Environment restoration | PASSED for all four variables |
+| Warnings | Zero in required import/parse/suite/startups; only deliberate `fixture-warning` emits `WARNING: HORDE fixture warning`; no JSON depth/truncation warning remains |
+
+Per-case US3 assertions: game_over_escape 22, escape_edges 49, freeze_combat 622,
+inactive_callbacks 10, spawn_delay 16, weapon_delay 20, contact_delays 24,
+feedback_delay 17, mouse_discard 33, hud_restart 13; close_segment 31,
+resume_origin 23, exclude_gap 57, preserve_attempt 36, paused_endpoint 23,
+nonqualification 35, retained_diagnostics 61, post_endpoint_pause 48.
+
+Earlier commands/results are retained honestly:
+
+- `./tools/validate.ps1 -Mode All`: BLOCKED, exit 1 before any engine launch;
+  sandbox-visible GODOT_BIN was absent in Process/User/Machine scopes.
+- `./tools/validate.ps1 -Mode All -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'`
+  in sandbox: version/help passed; path preflight emitted the Windows certificate-store
+  read error despite child exit 0. Launcher exit 1 stopped dependent checks.
+  Retried outside the sandbox through the approved escalation mechanism, preserving
+  launcher containment. No engine-error filtering or certificate changes were made.
+- Same explicit All command outside sandbox, sessions `20261003T145310202-1b565039fdd448ae81b0bd8008fd4bd6`
+  and `20261003T145427694-4fedfcb8b2524269960e59ae118cf588`: import/37 parses
+  passed; full 82-case suite failed two assertions at 5,807 assertions, exit 1.
+  Startups were UNRUN because the launcher stopped at the failed suite.
+- All/InfrastructureFixtures command, session `20261003T150030831-71888f73ac0445fdb3743266d48fdf3c`:
+  82 cases / 5,816 assertions, one persistence assertion failed; dependent startups
+  and infrastructure were UNRUN. The production mouse behaviour was already correct.
+- Investigation found two observation defects in the authored tests. Viewport
+  `push_input` transformed synthetic relative motion from the 64-pixel headless
+  window to the 1920-pixel stretched viewport (10 became 300). The helper now
+  passes viewport-local coordinates; the original camera assertion remains.
+  Godot JSON parses numbers as floats and nested Dictionary equality is type-sensitive.
+  Persistence assertions now compare **every** field against its expected JSON
+  representation, without dropped fields or new tolerance; split assertions improve
+  failure attribution. No acceptance requirement or production tuning was weakened.
+- Sessions `20261003T150305761-654e27233d0c4a8396c5fde30c533f72` and
+  `20261003T150445320-8dde2b8c62034795a96dc064a39af903`: suite passed 82/82,
+  5,818 assertions, both startups and 146 infrastructure assertions passed.
+  The former emitted a results-JSON depth warning; increasing serialization depth
+  preserved segment receipts and removed it. Final rerun adds stronger stale-API and
+  otherwise-complete post-300 qualification assertions, producing 5,843 assertions.
+
+An atomic partial-line patch failed before editing and was reapplied correctly.
+One evidence inspection requested absent `infrastructure-results.json`; the actual
+`infrastructure-fixtures.json` and `infrastructure-child-results.json` were then
+enumerated and read. No absent evidence or failed inspection was counted as a pass.
+The earlier progress update overstated script count as 39; actual executed final
+source/test parses are **37**. Intentional infrastructure failures (including missing
+segment, engine faults, incomplete capture and timeout) are expected and asserted,
+not unresolved regressions.
+
+### Outstanding owner acceptance and review boundary
+
+Interactive owner checks are **UNRUN** for this batch. In contained Play
+(`./tools/validate.ps1 -Mode Play -GodotBin '<approved console executable>'`), pause
+once during contact and once between spawn/weapon/contact opportunities. Note
+health/time/positions/view/feedback, wait ten **real** seconds while trying WASD,
+mouse and held Escape, then release/repress Escape. Verify frozen values, readable
+Paused/Escape instruction with health/time visible and Restart absent, released
+pointer, recapture on resume, preserved remaining delays, no jump/early/burst event.
+Confirm fresh movement/view input works and Game Over Escape remains inert.
+Physical key/capture behaviour, overlay contrast and game feel require owner review;
+600 delivered ticks and synthetic wall gaps are automated evidence only.
+
+No interactive or new five-minute profiling session was performed or warranted.
+Previously recorded owner survival/profile evidence remains separate; these
+fixtures claim no new SC-006/007 acceptance and no 200-enemy/60-FPS benchmark.
+T048 and T049–T056 remain unchanged and incomplete. Stop after Batch 2 for review.
+
+Final tree: 15 tracked files modified, all unstaged; no untracked deliverables,
+no generated validation/profile artifacts tracked, no Git commit or push.
+`git diff --check` passed (exit 0); final source line endings normalized to the
+repository's CRLF convention to remove Git's LF conversion notices.

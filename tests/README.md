@@ -1,10 +1,11 @@
-# Core gameplay test handoff — Phase 4 complete
+# Core gameplay test handoff — Phase 5 Batch 2 implemented
 
 T014–T017 authored the tests before implementation. T018–T032 now supply the
 production components and technical verification. The original 48 registered
 cases remain required: 13 foundation/fixture and 35 gameplay cases (6 movement,
 7 combat, 13 survival-loop, 9 profile/continuation). Batch 2 registers all nine
-defeat/restart and seven restart-evidence cases: 64 required cases, zero deferred.
+defeat/restart and seven restart-evidence cases. Phase 5 Batch 2 requires all 18
+US3 cases as well: 82 required cases, zero deferred.
 Actual commands/results are in the [verification ledger](../docs/verification/core-gameplay.md).
 A pending case is not executed, passed or silently skipped. If a prerequisite
 is missing, it is printed per ID as
@@ -132,36 +133,34 @@ The T041 automated registration/validation portion ran within the owner's Batch 
 authorization. Owner visual/control acceptance subsequently passed, completing
 T041; the ledger records the owner's confirmation separately from automated tests.
 
-## Phase 5 Batch 1 — pause/resume test foundation
+## Phase 5 Batch 2 — pause/resume implementation
 
-T042/T043 author **18 cases**, with seeds 4702042/4702043. Only
-`pause.game_over_escape` is executable today (PASSED, 22 assertions). Nine pause
-cases and all eight profiling cases remain **authored, unregistered and unrun**
-in `staged_entries()`, pending T044–T047. Default execution has 65 registered
-cases; full authored discovery has 82. `HORDE_CASE_DEFERRED` reports each gate.
-Missing/duplicate/unknown staged cases still fail discovery reconciliation. File
-presence never promotes a staged case, and deferral never counts as a pass.
+T042/T043 authored **18 cases**, with seeds 4702042/4702043. T044–T047 now supply
+their production dependencies; all 18 are registered, required and passing.
+Default execution and full authored discovery both contain 82 cases.
+`staged_entries()` is empty. Missing/duplicate/unknown/unexecuted cases still fail
+reconciliation; no implementation-dependent US3 case is deferred.
 
-| Case ID | Behaviour asserted | Batch 1 status |
+| Case ID | Behaviour asserted | Batch 2 status |
 |---|---|---|
 | `pause.game_over_escape` | Real Escape press/echo/release and mouse after lethal contact: immutable result, no transition or gameplay signals | PASSED; existing defeat behaviour only |
-| `pause.escape_edges` | Three Active↔Paused press pairs; echo/release/unrelated key rejection; pause intent prevents simulation step | DEFERRED T044–T046 |
-| `pause.freeze_combat` | Actual attack/contact, 600 inactive ticks plus real process/physics frames: frozen actors/view/health/time/ticks/IDs/generation/deadlines/line/flash; no signals; UI tree runs | DEFERRED T044–T046 |
-| `pause.inactive_callbacks` | Saved real health/death/spawn/feedback Callables cannot change inactive gameplay/HUD/outcomes | DEFERRED T044–T046 |
-| `pause.spawn_delay` | Before/at/after original spawn deadline: one spawn, ordinary cadence, no reset/early/burst event | DEFERRED T044–T046 |
-| `pause.weapon_delay` | Actual hit creates cooldown; preserved delay, exactly one later hit and next normal deadline | DEFERRED T044–T046 |
-| `pause.contact_delays` | Two actual staggered attackers retain independent cooldowns; no early or catch-up damage | DEFERRED T044–T046 |
-| `pause.feedback_delay` | Real line/target flash survives Pause, expires at original active-time deadline | DEFERRED T044–T046 |
-| `pause.mouse_discard` | Queued Active motion cleared; inactive mouse discarded; released WASD has no backlog; resume has no view jump; fresh motion works once | DEFERRED T044–T046 |
-| `pause.hud_restart` | Visible Paused/resume instruction and health/time; hidden Restart; repeated coordinator/HUD restart intents ignored; resume removes overlay | DEFERRED T044–T046 |
-| `pause_profile.close_segment` | Main/coordinator pause closes at transition, flushes raw tail, releases buffers, rejects inactive capture | DEFERRED T044/T045/T047 |
-| `pause_profile.resume_origin` | Real new wall origin; old segment/attempt serial/generation/encounter preserved; production callback captures again | DEFERRED T044/T045/T047 |
-| `pause_profile.exclude_gap` | Exact [0,1]/[11,12] segments exclude ten-second pause; per-segment FPS/intervals/boundary stalls/raw samples/draw audits | DEFERRED T044/T045/T047 |
-| `pause_profile.preserve_attempt` | Three pauses preserve outcomes/conditions/time/ticks/generation; no retired or fabricated attempt | DEFERRED T044/T045/T047 |
-| `pause_profile.paused_endpoint` | Pause at 299.75 earns no survival/steps; only resumed simulation crosses 300; no ending or acceptance | DEFERRED T044/T045/T047 |
-| `pause_profile.nonqualification` | Otherwise-complete segmented evidence rejected, clean technical control eligible; successful observations/output retained; interruption persisted | DEFERRED T044/T045/T047 |
-| `pause_profile.retained_diagnostics` | Defeat/retirement/fresh generation retain raw artifacts, segments, earlier failure, outcomes/sidecar; stale samples rejected | DEFERRED T044/T045/T047 |
-| `pause_profile.post_endpoint_pause` | Later interruption preserves successful survival/sealed manifest; never reopens sampling or grants full attempt acceptance | DEFERRED T044/T045/T047 |
+| `pause.escape_edges` | Three Active↔Paused press pairs; echo/release/unrelated key rejection; pause intent prevents simulation step | PASSED T044–T046 |
+| `pause.freeze_combat` | Actual attack/contact, 600 inactive ticks plus real process/physics frames: frozen actors/view/health/time/ticks/IDs/generation/deadlines/line/flash; no signals; UI tree runs | PASSED T044–T046 |
+| `pause.inactive_callbacks` | Saved real health/death/spawn/feedback Callables cannot change inactive gameplay/HUD/outcomes | PASSED T044–T046 |
+| `pause.spawn_delay` | Before/at/after original spawn deadline: one spawn, ordinary cadence, no reset/early/burst event | PASSED T044–T046 |
+| `pause.weapon_delay` | Actual hit creates cooldown; preserved delay, exactly one later hit and next normal deadline | PASSED T044–T046 |
+| `pause.contact_delays` | Two actual staggered attackers retain independent cooldowns; no early or catch-up damage | PASSED T044–T046 |
+| `pause.feedback_delay` | Real line/target flash survives Pause, expires at original active-time deadline | PASSED T044–T046 |
+| `pause.mouse_discard` | Queued Active motion cleared; inactive mouse discarded; released WASD has no backlog; resume has no view jump; fresh motion works once | PASSED T044–T046 |
+| `pause.hud_restart` | Visible Paused/resume instruction and health/time; hidden Restart; repeated coordinator/HUD restart intents ignored; resume removes overlay | PASSED T044–T046 |
+| `pause_profile.close_segment` | Main/coordinator pause closes at transition, flushes raw tail, releases buffers, rejects inactive capture | PASSED T044/T045/T047 |
+| `pause_profile.resume_origin` | Real new wall origin; old segment/attempt serial/generation/encounter preserved; production callback captures again | PASSED T044/T045/T047 |
+| `pause_profile.exclude_gap` | Exact [0,1]/[11,12] segments exclude ten-second pause; per-segment FPS/intervals/boundary stalls/raw samples/draw audits | PASSED T044/T045/T047 |
+| `pause_profile.preserve_attempt` | Three pauses preserve outcomes/conditions/time/ticks/generation; no retired or fabricated attempt | PASSED T044/T045/T047 |
+| `pause_profile.paused_endpoint` | Pause at 299.75 earns no survival/steps; only resumed simulation crosses 300; no ending or acceptance | PASSED T044/T045/T047 |
+| `pause_profile.nonqualification` | Otherwise-complete segmented evidence rejected, clean technical control eligible; successful observations/output retained; interruption persisted | PASSED T044/T045/T047 |
+| `pause_profile.retained_diagnostics` | Defeat/retirement/fresh generation retain raw artifacts, segments, earlier failure, outcomes/sidecar; stale samples rejected | PASSED T044/T045/T047 |
+| `pause_profile.post_endpoint_pause` | Later interruption preserves successful survival/sealed manifest; never reopens sampling or grants full attempt acceptance | PASSED T044/T045/T047 |
 
 Fixtures reuse Context/F and actual Main/coordinator/components through Phase 4
 helpers. Positive slow pursuit/high enemy health isolate timing. Context owns
@@ -173,7 +172,7 @@ helper. Normal Play has no sampler. Binary-exact deadline inputs and determinist
 capture timestamps are diagnostic fixtures, never owner survival/FPS evidence.
 No substitute pause, scheduling, damage or statistics algorithm is provided.
 
-### Provisional Batch 2 observation seam
+### Implemented Batch 2 API and metadata
 
 `toggle_pause()` comes from the semantic contract; direct transitions are
 synchronous. Escape tests deliver viewport events then a real coordinator step
@@ -182,10 +181,10 @@ execute its delivered active step. Exact delay tests use `toggle_pause()` before
 the next controlled delta. No tests assume an input callback name, pending-intent
 field, global tree pause or new HUD node path.
 
-The specs leave segment APIs/storage open. Wiring helpers currently invoke
+The production implementation adopts the authored wiring seam. Helpers invoke
 `close_segment(generation, wall_seconds)` for explicit pause closure and
 `open_segment(generation, wall_seconds)` for resume. Metadata observations use
-existing `_metadata()` with proposed fields:
+existing `_metadata()` with these implemented fields:
 
 - `segments`: closed records with `t0`, `t1`, existing `summary` statistics and
   `frame_stream` (`path`, `sample_count`), without copied raw timestamp arrays.
@@ -200,18 +199,29 @@ keep generation/attempt serial unchanged. Shutdown/retained metadata preserves
 diagnostics. Endpoint closure prevents later sampling even after pause/resume.
 All output stays inside ignored workspace `.cache/`.
 
-These are provisional test seams, not an approved production schema. Batch 2 may
-adapt wiring/metadata helpers to its format without weakening behavioural
-assertions. Post-endpoint interruption conservatively disqualifies the full
-uninterrupted attempt while preserving earlier survival/profile observations;
-review the distinction between the first 300-second window and continuation.
+Each segment writes a distinct manifest and lossless raw stream. The application
+receipt and shutdown sidecar retain all closed segment descriptors; the launcher
+verifies every segment, including earlier streams. Metadata holds summaries and
+paths, without raw timestamp/count copies. Frame chunks remain bounded to 4096
+float64 entries; enemy-count opportunities retain their active-time cadence.
+`interrupted` persists for the whole attempt, including pause after 300 seconds.
+It disqualifies full uninterrupted acceptance while preserving successful
+survival/continuation/capture observations. Endpoint buffers never reopen.
+
+Two observation corrections preserve all behavioural assertions: mouse fixtures
+use viewport-local coordinates to avoid the headless window's stretch transform;
+persisted JSON comparisons normalize expected JSON numeric types and precision,
+then compare every field without dropping values or adding tolerance. Additional
+assertions cover duplicate held non-echo Escape, two presses before a tick, held
+inactive movement, stale segment APIs and otherwise-complete post-300 evidence.
 
 The tests cover automatable T044–T047 requirements. Headless execution cannot
 verify actual mouse release/recapture, overlay contrast, physical held keys or
 game feel. After Batch 2, perform ten-real-second contact/between-event pauses
 with WASD/mouse/held Escape and verify preserved delays/no jump on resume.
-T048 is unchecked/unperformed. T042/T043 completion means test authoring only;
-Pause, segmentation, SC-003/006/007 acceptance remains open. Actual commands,
+T048 remains unchecked; its owner closure is unperformed. T044–T047 implementation
+and automated acceptance are complete. Interactive pause acceptance remains open;
+segmented fixtures establish no new SC-006/007 owner evidence. Actual commands,
 counts and failures are in [the verification ledger](../docs/verification/core-gameplay.md).
 
 ## Original Phase 3B coverage
@@ -331,7 +341,7 @@ time and mouse release, and attempt WASD/mouse/Escape for ten real seconds.
 Complete three defeat/restart cycles using click, Enter and Space; also try rapid
 repeated activation. Check full health, initial position/view, 00:00, empty old
 population, mouse recapture and a full first-spawn delay after each restart.
-Use Alt+F4 to close while the mouse is captured. Pause is a later phase. Controls,
+Use Escape to pause/resume and Alt+F4 to close while the mouse is captured. Controls,
 visuals/game feel and qualifying survival/rendered profiling require owner evidence;
 these deterministic fixtures cannot establish them. Invalid data requires
 correction and relaunch; no in-application retry is supplied.

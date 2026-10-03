@@ -15,9 +15,9 @@ func prerequisites(ctx) -> void:
 	ctx.check(Manifest.missing_prerequisites(["outside-workspace.gd"]) == ["outside-workspace.gd"], "non-project prerequisite rejected")
 	var entries := Manifest.entries()
 	var selected := Manifest.select_scope(entries, true)
-	ctx.check(selected.size() == 13 and entries.size() == 65, "explicit foundation scope preserves all registered required cases")
+	ctx.check(selected.size() == 13 and entries.size() == 82, "explicit foundation scope preserves all registered required cases")
 	var staged := Manifest.staged_entries()
-	ctx.check(staged.size() == 17 and staged.all(func(entry): return entry.id.begins_with("pause.") or entry.id.begins_with("pause_profile.")), "only seventeen implementation-dependent US3 cases deferred; no Phase 4 regression staged")
+	ctx.check(staged.is_empty() and entries.filter(func(entry): return entry.id.begins_with("pause.") or entry.id.begins_with("pause_profile.")).size() == 18, "all eighteen US3 cases required; no implementation-dependent deferrals remain")
 	var phase4 := entries.filter(func(entry): return entry.id.begins_with("defeat.") or entry.id.begins_with("restart_evidence."))
 	ctx.check(phase4.size() == 16, "all sixteen authored Phase 4 cases registered")
 	for entry in phase4:
@@ -29,7 +29,7 @@ func prerequisites(ctx) -> void:
 		discovered_inventory.append({"id": entry.id, "script": entry.script})
 	ctx.check(Manifest.reconcile(inventory, discovered_inventory).is_empty(), "complete staged/registered inventory reconciles")
 	discovered_inventory.pop_back()
-	ctx.check(not Manifest.reconcile(inventory, discovered_inventory).is_empty(), "missing staged case fails discovery reconciliation")
+	ctx.check(not Manifest.reconcile(inventory, discovered_inventory).is_empty(), "missing authored case fails discovery reconciliation")
 	ctx.check(not Manifest.reconcile(entries, [{"id": "unknown.case", "script": "res://tests/integration/test_restart_evidence.gd"}]).is_empty(), "complete registration does not waive unregistered-case checks")
 	ctx.check(Manifest.select_scope(entries, false).size() == entries.size(), "default includes every gameplay case")
 	var gameplay := {"id": "movement.example", "script": "res://tests/unit/test_movement_arena.gd", "maps": ["FR-001"], "seed": 1, "expected": []}
