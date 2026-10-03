@@ -13,7 +13,7 @@ profiling session. Historical T049 audit descriptions below retain that scope.
 | Previously verified | T051 complete: 82/82 cases, 5,843 assertions, 37 script parses, clean import, normal/Profile startup and 146 infrastructure assertions; approved Standard `4.7.2.stable.official.ed1daf0bf`; not rerun by DX-001 Batch 1 |
 | Owner-reported story acceptance | T033, T041 and T048 are closed; Phase 4/SC-002 and Phase 5/SC-003 acceptance is recorded separately from automated tests |
 | Historical survival/profile | Prior owner observations and corrected cap-50 capture remain in the ledger. Historical source-snapshot provenance and full SC-006/SC-007 qualification remain unresolved; those results do not certify the current integrated build |
-| Outstanding Phase 6 | T052 remains open pending sufficient combined evidence; owner accepts directly observed gameplay, complete SC-004 coverage/independence not established. T053–T055 conditions/survival/profile review and T056 final gates remain unstarted here |
+| Current Phase 6 | T051/T052 complete per the T052 closure ledger. T053 procedure prepared; actual warm-up/clean relaunch pending. T054–T056 remain open; SC-006/007 qualification outstanding |
 | SC-005 | **Future/unverified: 200 representative active enemies at 60 FPS.** Neither the cap-50 baseline nor a synthetic configurable-cap test establishes it |
 
 See [the verification ledger](../../docs/verification/core-gameplay.md), especially
@@ -38,8 +38,9 @@ Implemented paths, relative to the repository root:
 | `docs/asset-provenance.md`, `tests/README.md`, `docs/verification/core-gameplay.md` | Asset audit, detailed coverage and executed evidence |
 
 There are 20 production and 17 test/support `.gd` files, six scenes and five
-definition resources. `docs/verification/prototype-profile.md` is **absent**:
-it is the future T053/T055 report destination, not existing evidence.
+definition resources. The [T053 profiling runbook](../../docs/verification/prototype-profile.md)
+now supplies pre-recorded conditions, exact warm-up/measured commands, source
+retention and artifact interpretation. It contains preparation, not T054/T055 results.
 
 ## Current defaults from production
 
@@ -363,13 +364,19 @@ outstanding. Later tuning/behavior corrections require affected checks rerun.
 No forced fixtures or UI are added by DX-001 Batch 1; see the
 [DX-001 handoff](../../docs/development/dx-001-autonomous-qa.md).
 
-## Profiling preparation and execution (T053–T055 — unrun here)
+## Profiling preparation and execution (T053 prepared; owner execution pending)
+
+Start with the [owner procedure and session record](../../docs/verification/prototype-profile.md#start-the-owner-session-after-review).
+T053 documentation is prepared. Its actual 30-active-second warm-up and clean
+relaunch remain pending; T054–T056 are unrun in this batch. The method below is
+unchanged. T051/T052 are complete per the current task/ledger closure records;
+earlier T052-open notes above describe historical checkpoints.
 
 Use [fixed plan conditions](plan.md#measurement-conditions-fixed-before-profiling):
 standalone debug without editor/debugger, Forward+ 1920×1080, 100% scale,
 AA/VSync/frame cap/shadows/SSAO/SSIL/glow off, one directional light, 60 Hz physics.
-Before a later authorized session, create `docs/verification/prototype-profile.md`
-and record actual engine/OS/GPU/driver/hardware, Git revision, clean/diff state,
+Before a later authorized session, complete the session record in
+`docs/verification/prototype-profile.md` with actual engine/OS/GPU/driver/hardware, Git revision, clean/diff state,
 all tuning, conditions and deviations. Retain a reproducible source snapshot;
 historical capture provenance is still unresolved. Main records engine/OS/debug/
 renderer/viewport/cap/VSync/physics/tuning, but `source_revision`, `warmup` and

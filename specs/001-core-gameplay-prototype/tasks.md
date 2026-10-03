@@ -5,7 +5,9 @@ independent integrated SC-004 journey and retained DX-001 Full technical evidenc
 are reconciled in the [T052 closure ledger](../../docs/verification/core-gameplay.md#phase-6--t052-integrated-owner-acceptance-closure-2026-10-03).
 Earlier T052-open notes are historical. T053–T056 remain unchecked; SC-005 is
 future/unverified and SC-006/SC-007 remain pending survival/profiling evidence.
-Stop for owner review before T053; full feature acceptance is not claimed.
+T053's owner procedure is prepared; its actual separate warm-up and clean
+relaunch still require evidence. Stop for owner review before T054; full feature
+acceptance is not claimed. See the [profiling runbook](../../docs/verification/prototype-profile.md).
 
 **Input**: Approved design documents in `specs/001-core-gameplay-prototype/`: `spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/gameplay-components.md`, `contracts/player-interface.md`, and `quickstart.md`.
 

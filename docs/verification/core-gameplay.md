@@ -1,5 +1,27 @@
 # Core gameplay verification ledger
 
+**T053 preparation — 2026-10-03:** The [profiling runbook](prototype-profile.md)
+now records actual environment discovery, unchanged conditions/method/tuning,
+exact owner warm-up and measured launch commands, source/evidence retention,
+artifact naming/interpretation and automated versus owner responsibilities.
+T051/T052 remain complete. T053's procedure is ready for review, but its original
+checkbox remains open pending actual separate 30-active-second warm-up and clean
+relaunch evidence. No T054–T056 execution or SC-006/007 acceptance is claimed;
+SC-005 stays future/unverified.
+
+This batch changed documentation only. Under DX-001, static validation was
+selected; Full was not repeated. Executed
+`./.cache/t053-preparation-audit.ps1 | Tee-Object -FilePath .cache/t053-preparation-audit.txt`
+passed, exit 0: retained Full receipt/source-hash reconciliation (88 cases,
+4,152 assertions, 38 parses, 163 infrastructure expectations, both startups and
+four restorations); historical rendered manifest/raw/sidecar integrity (6,000
+ordered callbacks, 48,000 bytes, 2.06666666666666 active seconds); PowerShell
+example syntax/local links and `git diff --check`. Retained evidence directories
+and initial inspection/discovery failures are recorded in the runbook. These
+checks reread prior evidence; they did not execute Godot, a warm-up or owner play.
+The current executable source is unchanged from DX-001 closure. Stop for review
+before T054; no commit or push.
+
 **Current acceptance method/status — T052 reconciliation, 2026-10-03:** T051 and
 T052 are complete. Independent owner-reported SC-004 acceptance is combined with
 retained DX-001 Full technical evidence; see the final T052 closure section.
