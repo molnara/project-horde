@@ -43,6 +43,10 @@ func connect_callback(event: Signal, callback: Callable) -> void:
 	connections.append({"signal": event, "callback": callback})
 
 func cleanup() -> void:
+	# Even a genuine component exception must not leave synthetic key state behind.
+	for action in ["move_forward", "move_backward", "move_left", "move_right", "pause_toggle"]:
+		if InputMap.has_action(action):
+			Input.action_release(action)
 	for connection in connections:
 		var event: Signal = connection.signal
 		if not event.is_null() and event.is_connected(connection.callback):

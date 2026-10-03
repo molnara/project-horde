@@ -2,9 +2,49 @@ extends RefCounted
 
 const Manifest = preload("res://tests/case_manifest.gd")
 const Context = preload("res://tests/support/test_context.gd")
+const Sampling = preload("res://tests/support/scripted_rng.gd")
+const Faults = preload("res://tests/support/spawn_faults.gd")
+const F = preload("res://tests/support/gameplay_fixture.gd")
 
 func cases() -> Array[Dictionary]:
-	return [{"id": "runner.reconciliation", "method": "reconciliation"}, {"id": "runner.context", "method": "context"}, {"id": "runner.diagnostics", "method": "diagnostics"}]
+	return [{"id": "runner.reconciliation", "method": "reconciliation"}, {"id": "runner.context", "method": "context"}, {"id": "runner.diagnostics", "method": "diagnostics"}, {"id": "runner.prerequisites", "method": "prerequisites"}, {"id": "runner.fixtures", "method": "fixtures"}]
+
+func prerequisites(ctx) -> void:
+	ctx.check(Manifest.missing_prerequisites(["res://tests/support/gameplay_fixture.gd"]).is_empty(), "existing fixture is executable prerequisite")
+	ctx.check(Manifest.missing_prerequisites(["res://tests/support/absent-component.fixture"]) == ["res://tests/support/absent-component.fixture"], "expected absence is reported without load/error")
+	ctx.check(Manifest.missing_prerequisites(["outside-workspace.gd"]) == ["outside-workspace.gd"], "non-project prerequisite rejected")
+	var entries := Manifest.entries()
+	var selected := Manifest.select_scope(entries, true)
+	ctx.check(selected.size() == 13 and entries.size() == 48, "explicit foundation scope preserves all authored required cases")
+	ctx.check(Manifest.select_scope(entries, false).size() == entries.size(), "default includes every gameplay case")
+	var gameplay := {"id": "movement.example", "script": "res://tests/unit/test_movement_arena.gd", "maps": ["FR-001"], "seed": 1, "expected": []}
+	ctx.check(not Manifest.reconcile([gameplay], [{"id": gameplay.id, "script": gameplay.script}], [], true).is_empty(), "pending prerequisite cannot satisfy execution reconciliation")
+	ctx.done()
+
+func fixtures(ctx) -> void:
+	var sampling := Sampling.new()
+	ctx.check(sampling.randf_range(-2, 2) == 0.0 and sampling.calls == 1, "scripted midpoint generates valid zero coordinate")
+	sampling.fractions.assign([0.0, 1.0])
+	sampling.calls = 0
+	ctx.check(sampling.randf_range(-2, 2) == -2.0 and sampling.randf_range(-2, 2) == 2.0 and sampling.calls == 2, "candidate draws/counter reproducible")
+	var faults := Faults.new()
+	var failure := faults.choose_spawn(Vector3.ZERO, 0.4, 1.2, ctx.rng)
+	ctx.check(not failure.success and not failure.has("position") and failure.diagnostics.size() == 2, "fault fixture deliberately forbids position reads and supplies two records")
+	ctx.check(faults.selection_calls == 1 and faults.factory_calls == 0, "selection fixture has no instantiation/scheduling algorithm")
+	faults.mode = "instantiate"
+	ctx.check(faults.create_enemy() == null and faults.factory_calls == 1, "null instantiation fault is explicit")
+	faults.mode = "partial"
+	ctx.own(faults.create_enemy())
+	ctx.check(is_instance_valid(faults.partial) and not faults.partial.has_method("configure"), "partial instance cannot satisfy configuration contract")
+	var isolated := Context.new("fixture-teardown", 4702014)
+	isolated.own(faults.partial)
+	isolated.cleanup()
+	ctx.check(not is_instance_valid(faults.partial), "partial fixture supports disposal checks without leaks")
+	var entries := F.cases_for("example", ["one", "two"], ["res://missing.scene"])
+	ctx.check(entries.size() == 2 and entries[0].id == "example.one" and entries[0].requires == ["res://missing.scene"], "case factory preserves explicit ID/method/prerequisites")
+	entries[0].requires.clear()
+	ctx.check(entries[1].requires == ["res://missing.scene"], "case prerequisite lists independent")
+	ctx.done()
 
 func reconciliation(ctx) -> void:
 	var entry := {"id": "one", "script": "res://tests/unit/test_one.gd", "maps": ["fixture"], "seed": 42, "expected": []}

@@ -227,7 +227,9 @@ if (-not $DefineOnly) {
         if (Test-Path -LiteralPath 'Env:TEMP') { Remove-Item -LiteralPath 'Env:TEMP' }
         $before = [Environment]::GetEnvironmentVariables('Process')
         if ($before.Contains('TEMP')) { throw 'FAILED: fixture could not create an absent TEMP.' }
-        $arguments = @{Mode='All';InfrastructureFixtures=$true}
+        # Infrastructure remains independently runnable while authored gameplay
+        # cases wait for Phase 3B. Full-suite acceptance still uses default All.
+        $arguments = @{Mode='All';InfrastructureFixtures=$true;SuiteScope='Foundation'}
         if ($PSBoundParameters.ContainsKey('FixtureGodotBin')) { $arguments.GodotBin = $FixtureGodotBin }
         & (Join-Path $PSScriptRoot 'validate.ps1') @arguments
         $fixtureExit = $LASTEXITCODE

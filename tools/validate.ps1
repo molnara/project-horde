@@ -12,6 +12,7 @@ param(
     [string] $GodotBin,
     [ValidateSet('All', 'Play', 'Profile')][string] $Mode = 'All',
     [switch] $InfrastructureFixtures,
+    [ValidateSet('All', 'Foundation')][string] $SuiteScope = 'All',
     [ValidateRange(1, 86400)][int] $PreflightTimeoutSeconds = 30,
     [ValidateRange(1, 86400)][int] $ImportTimeoutSeconds = 180,
     [ValidateRange(1, 86400)][int] $ParseTimeoutSeconds = 30,
@@ -321,7 +322,10 @@ func _enter_tree() -> void:
         $runner = Join-Path $workspace 'tests/run_tests.gd'
         if (Test-Path -LiteralPath $runner -PathType Leaf) {
             [void](Assert-ContainedPath $runner)
-            [void](Invoke-GodotCheck 'suite' @('--headless', '--path', $workspace, '--script', 'res://tests/run_tests.gd') $workspace $SuiteTimeoutSeconds)
+            $suiteArguments = @('--headless', '--path', $workspace, '--script', 'res://tests/run_tests.gd')
+            if ($SuiteScope -eq 'Foundation') { $suiteArguments += @('--', '--foundation-only') }
+            Write-Host "Native suite scope: $SuiteScope (Foundation does not validate gameplay)."
+            [void](Invoke-GodotCheck 'suite' $suiteArguments $workspace $SuiteTimeoutSeconds)
         } else { Add-BlockedCheck 'suite' 'tests/run_tests.gd is not supplied until T010 (Phase 2).' }
         # A missing suite does not prevent independent bootstrap startup evidence.
         [void](Invoke-GodotCheck 'startup' @('--headless', '--path', $workspace, '--quit-after', '120') $workspace $StartupTimeoutSeconds)

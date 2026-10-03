@@ -11,6 +11,8 @@ func _initialize() -> void:
 
 func run() -> void:
 	var manifest: Array[Dictionary] = Manifest.entries()
+	var foundation_only := OS.get_cmdline_user_args().has("--foundation-only")
+	print("HORDE_SUITE_SCOPE=" + ("foundation-only (gameplay excluded, not feature acceptance)" if foundation_only else "all required cases"))
 	var discovered: Array[Dictionary] = []
 	var fixtures := {}
 	var failures: Array[String] = []
@@ -32,16 +34,27 @@ func run() -> void:
 			if not entry is Dictionary or not entry.has_all(["id", "method"]) or not fixture.has_method(entry.get("method", "")):
 				failures.append("missing/invalid case method in " + path + ": " + str(entry))
 				continue
-			discovered.append({"id": entry.id, "script": path, "method": entry.method})
+			discovered.append({"id": entry.id, "script": path, "method": entry.method, "requires": entry.get("requires", [])})
 	failures.append_array(Manifest.reconcile(manifest, discovered))
+	# Always reconcile ALL authored cases before selecting an explicit limited run.
+	var selected := Manifest.select_scope(manifest, foundation_only)
 	var executed: Array[String] = []
+	var pending: Array[Dictionary] = []
 	var assertion_count := 0
 	if failures.is_empty():
-		for entry in manifest:
+		for entry in selected:
 			var method: String = ""
+			var prerequisites: Array = []
 			for found in discovered:
 				if found.id == entry.id:
 					method = found.method
+					prerequisites = found.requires
+			var missing := Manifest.missing_prerequisites(prerequisites)
+			if not missing.is_empty():
+				var record := {"case": entry.id, "missing": missing, "status": "pending", "seed": entry.seed}
+				pending.append(record)
+				print("HORDE_CASE_PENDING=" + JSON.stringify(record))
+				continue
 			var ctx := Context.new(entry.id, entry.seed, entry.expected)
 			print("HORDE_CASE_BEGIN=" + JSON.stringify({"case": entry.id, "seed": entry.seed, "expected": entry.expected}))
 			await fixtures[entry.script].call(method, ctx)
@@ -56,7 +69,12 @@ func run() -> void:
 			assertion_count += ctx.assertions
 			failures.append_array(ctx.failures)
 			print("HORDE_CASE_END=" + JSON.stringify({"case": entry.id, "assertions": ctx.assertions, "passed": ctx.failures.is_empty(), "completed": ctx.completed}))
-	failures.append_array(Manifest.reconcile(manifest, discovered, executed, true))
+	var selected_discovery: Array[Dictionary] = []
+	for found in discovered:
+		for entry in selected:
+			if found.id == entry.id:
+				selected_discovery.append(found)
+	failures.append_array(Manifest.reconcile(selected, selected_discovery, executed, true))
 	var diagnostics := error_monitor.snapshot()
 	for error in diagnostics.errors:
 		failures.append("unexpected engine error: " + error)
@@ -64,6 +82,6 @@ func run() -> void:
 		print("HORDE_RECORDED_WARNING=" + warning)
 	for failure in failures:
 		print("HORDE_SUITE_FAILURE=" + failure)
-	print("HORDE_SUITE_END=" + JSON.stringify({"required": manifest.size(), "executed": executed.size(), "assertions": assertion_count, "passed": failures.is_empty()}))
+	print("HORDE_SUITE_END=" + JSON.stringify({"required": selected.size(), "authored": manifest.size(), "excluded": manifest.size() - selected.size(), "scope": "foundation" if foundation_only else "all", "pending": pending.size(), "executed": executed.size(), "assertions": assertion_count, "passed": failures.is_empty()}))
 	OS.remove_logger(error_monitor)
 	quit(0 if failures.is_empty() else 1)

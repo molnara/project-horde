@@ -310,3 +310,97 @@ exist: follow quickstart steps 1–4 for controls/visuals/game feel and step 5 w
 the approved profile procedure for survival/continuation/capture. Keep those
 outcomes separate; neither headless tests nor reaching 300 alone grants feature
 acceptance. Phase 3 may begin from this verified foundation.
+
+## Phase 3A — T014–T017 test authoring, 2026-10-02
+
+This section supersedes the Phase 2 test-inventory/readiness observations above.
+The existing FR/edge/success ledger remains valid: **gameplay assertions and
+owner acceptance have not executed**. The integration directory now exists and
+contains authored cases; directory presence does not establish gameplay coverage.
+T014–T017 deliverables are test authoring/fixtures/registration, completed here.
+T018 onward remains unchecked and unimplemented. No production script, scene,
+definition, asset or project setting changed. No commits or pushes were made.
+
+The [test handoff](../../tests/README.md) lists all new IDs, boundary fixtures,
+component prerequisites, provisional constructor/observation seams and future
+manual steps. There are 48 required registered cases: 13 foundation/fixture cases
+that execute now and 35 pending gameplay cases (6 movement, 7 combat, 13
+survival-loop, 9 profile/continuation). Each has a concrete assertion body against
+real production components, fixed seed, explicit prerequisites, path and FR/edge
+mapping. Helpers supply wiring/scripted randomness/fault inputs only. They do not
+implement movement, combat, scheduling, statistics or a substitute encounter.
+
+Missing production files are detected before loading, reported per case, and
+remain **unexecuted** for strict manifest reconciliation. The default suite
+therefore returns exit 1. It cannot grant a pass to a pending case. Once files
+exist, their cases automatically become runnable; malformed scripts/interfaces,
+real assertions and engine errors still fail. `-SuiteScope Foundation` is an
+explicit independent check, with full authoring/discovery reconciliation before
+selecting its subset. It is not full-suite or feature acceptance.
+
+### Actual commands and results
+
+Commands ran at the project root with the approved existing console executable
+supplied via `-GodotBin`; no installed software/global configuration was changed.
+Machine-specific executable paths are retained only in ignored raw logs.
+
+| Executed command/check | Actual result | Status |
+|---|---|---|
+| `./tools/validate.ps1 -Mode All -SuiteScope Foundation` in sandbox | Exit 1; Process/User/Machine GODOT_BIN absent/hidden, no engine launched | BLOCKED environment attempt |
+| Same command with authorized registry access outside isolation | Exit 0; engine/help/path checks, import, all 19 parses, then 12 initial foundation cases and bootstrap startup passed before the final fixture additions | PASSED intermediate snapshot |
+| `./tools/test-validation.ps1 -GodotBin <approved console path>` in sandbox | Exit 1; path preflight child exit 0 still emitted `ERROR: Failed to read the root certificate store.`; classifier correctly failed; project checks unrun in this attempt | FAILED environment attempt |
+| Same infrastructure command outside isolation, final snapshot | Exit 0; Godot `4.7.2.stable.official.ed1daf0bf`, verified actual workspace-contained paths, import and all 19 script parses passed | PASSED |
+| Native suite invoked by final infrastructure command with `--foundation-only` | Exit 0; 13/13 executed, 554 assertions, 48 authored, 35 explicitly excluded by scope; zero suite warnings | PASSED foundation only |
+| Bootstrap main invoked by final infrastructure command with `--quit-after 120` | Exit 0, no recognized engine/script errors; still an empty bootstrap | PASSED bootstrap only |
+| Final infrastructure fixtures | 103 assertions passed, including intentional failed children/one-second timeout and genuine exit-zero error classification; environment restoration checks passed | PASSED |
+| `./tools/validate.ps1 -GodotBin <approved console path> -Mode All`, final snapshot | Preflight/import/all 19 parses passed; native full suite exit 1: 13 cases executed/554 assertions, 35 explicit pending records, 35 unexecuted-case failures, `passed=false`, zero suite warnings | FAILED full suite; expected component blockers |
+| Startup after failed strict full suite | Launcher halts dependent work after suite failure; bootstrap independently ran above | UNRUN in full command |
+| Gameplay case assertions | Missing real health/arena/actor/camera/registry/weapon/spawner/HUD/coordinator/feedback/profile components; no fake pass | BLOCKED / UNRUN |
+| Controls/visuals/game feel, uninterrupted owner survival, actual rendered profiling | No playable gameplay exists yet | UNRUN |
+| Required foundation checks | None skipped in final limited run | No skipped required checks |
+
+The root-certificate-store failure was investigated in captured diagnostics and
+resolved by the authorized run outside sandbox isolation. It was not suppressed
+or accepted as a successful zero-exit check. The final full-suite nonzero is
+specifically caused by required pending/unexecuted cases, not an unexpected
+engine exception. Its launcher records the suite and propagated launcher failure
+separately; both refer to that one unmet gameplay prerequisite condition.
+
+Raw evidence (ignored, workspace-relative):
+
+- Final passing infrastructure/import/parse/foundation/startup:
+  `.cache/validation/20261003T031505741-1bc5f61cb3674792a45914870063eece/`.
+- Final strict full-suite pending failure:
+  `.cache/validation/20261003T031713260-6e240c1b75fb46a894c0a4de1e35370d/`.
+- Sandbox certificate-store attempt:
+  `.cache/validation/20261003T030752776-b5e3e29628604399abf3c2573aad8916/`.
+
+Each session retains exact child command/exit/outcome, original streams, engine
+logs, results and environment restoration. Infrastructure expected failed child
+results are retained separately with fixture assertions. The deliberate warning
+fixture was recorded; there were no warnings in the final native suite.
+
+### Changed files and Phase 3B readiness
+
+- Added `tests/unit/test_movement_arena.gd`, `test_combat.gd`,
+  `test_profile_capture.gd`, and `tests/integration/test_survival_loop.gd`.
+- Added `tests/support/gameplay_fixture.gd`, `scripted_rng.gd`, `spawn_faults.gd`;
+  all seven new scripts have required source `.gd.uid` files.
+- Updated `tests/case_manifest.gd`, `tests/run_tests.gd`,
+  `tests/support/test_context.gd`, `tests/unit/test_runner_contract.gd` for
+  registration, explicit pending/scoping, fixture verification and input cleanup.
+- Updated `tools/validate.ps1`, `tools/test-validation.ps1` for the explicit
+  independent foundation suite; diagnostic failure expectations are unchanged.
+- Added `tests/README.md`; updated this ledger and the feature's `tasks.md`
+  completion markers for T014–T017 only.
+
+Ready for Phase 3B **implementation** from T018: executable foundations and
+parseable registered tests are established. Full gameplay validation is blocked
+until the corresponding T018–T031 components/wiring exist. Constructor/property/
+node/statistics-result names in the adapter are documented provisional choices;
+reconcile those seams to actual components without weakening behavioral bounds
+or adding algorithms to the test helper. Run default full validation as components
+arrive and require executed passing story cases before the US1 checkpoint.
+Manual SC gates and the 200-enemy performance target remain unverified. The
+extension registry was checked before/after implementation and is absent, so no
+extension hook was registered or dispatched. Work stops after T017.
