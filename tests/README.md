@@ -1,4 +1,4 @@
-# Core gameplay test handoff — Phase 5 Batch 2 implemented
+# Core gameplay test handoff — Phase 5 complete
 
 T014–T017 authored the tests before implementation. T018–T032 now supply the
 production components and technical verification. The original 48 registered
@@ -6,6 +6,10 @@ cases remain required: 13 foundation/fixture and 35 gameplay cases (6 movement,
 7 combat, 13 survival-loop, 9 profile/continuation). Batch 2 registers all nine
 defeat/restart and seven restart-evidence cases. Phase 5 Batch 2 requires all 18
 US3 cases as well: 82 required cases, zero deferred.
+T048's final All/infrastructure rerun passes all 82 cases with 5,843 assertions,
+including 18 US3 cases with 1,140 assertions and 146 infrastructure assertions.
+The owner reports all six Phase 5 manual acceptance groups passed; T042–T048 are
+complete. Full feature/integrated acceptance remains separate.
 Actual commands/results are in the [verification ledger](../docs/verification/core-gameplay.md).
 A pending case is not executed, passed or silently skipped. If a prerequisite
 is missing, it is printed per ID as
@@ -133,7 +137,7 @@ The T041 automated registration/validation portion ran within the owner's Batch 
 authorization. Owner visual/control acceptance subsequently passed, completing
 T041; the ledger records the owner's confirmation separately from automated tests.
 
-## Phase 5 Batch 2 — pause/resume implementation
+## Phase 5 — pause/resume implementation and T048 closure
 
 T042/T043 authored **18 cases**, with seeds 4702042/4702043. T044–T047 now supply
 their production dependencies; all 18 are registered, required and passing.
@@ -141,7 +145,7 @@ Default execution and full authored discovery both contain 82 cases.
 `staged_entries()` is empty. Missing/duplicate/unknown/unexecuted cases still fail
 reconciliation; no implementation-dependent US3 case is deferred.
 
-| Case ID | Behaviour asserted | Batch 2 status |
+| Case ID | Behaviour asserted | Final automated status |
 |---|---|---|
 | `pause.game_over_escape` | Real Escape press/echo/release and mouse after lethal contact: immutable result, no transition or gameplay signals | PASSED; existing defeat behaviour only |
 | `pause.escape_edges` | Three Active↔Paused press pairs; echo/release/unrelated key rejection; pause intent prevents simulation step | PASSED T044–T046 |
@@ -215,14 +219,24 @@ then compare every field without dropping values or adding tolerance. Additional
 assertions cover duplicate held non-echo Escape, two presses before a tick, held
 inactive movement, stale segment APIs and otherwise-complete post-300 evidence.
 
-The tests cover automatable T044–T047 requirements. Headless execution cannot
-verify actual mouse release/recapture, overlay contrast, physical held keys or
-game feel. After Batch 2, perform ten-real-second contact/between-event pauses
-with WASD/mouse/held Escape and verify preserved delays/no jump on resume.
-T048 remains unchecked; its owner closure is unperformed. T044–T047 implementation
-and automated acceptance are complete. Interactive pause acceptance remains open;
-segmented fixtures establish no new SC-006/007 owner evidence. Actual commands,
-counts and failures are in [the verification ledger](../docs/verification/core-gameplay.md).
+The tests cover automatable T044–T047 requirements. T048 rechecked registration
+and reran the complete suite, import, 37 script parses, normal/Profile startup
+and infrastructure fixtures, all passing. No production or test changes were
+needed. Run from the project root with the contained launcher:
+
+```powershell
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+```
+
+Headless checks do not establish mouse capture, physical controls or readability.
+For those observations the owner reports successful completion of all six manual
+groups: basic pause/HUD, freeze during contact, preserved scheduled-event delays,
+mouse/keyboard handling, repeated pause/resume, and Game Over/restart regression.
+This owner confirmation closes Phase 5's documented pause/resume independent
+acceptance (FR-009/012, SC-003); it is separate from automated fixture evidence.
+T042–T048 are complete. Segmented fixtures establish no new SC-006/007 owner
+evidence. Exact commands, counts and owner-reported results are in
+[the verification ledger](../docs/verification/core-gameplay.md).
 
 ## Original Phase 3B coverage
 
@@ -329,19 +343,19 @@ values. Seeded RNG tests and scripted center/edge inputs contain no production
 selection algorithm. Test cleanup releases synthetic actions, disconnects
 callbacks and disposes owned scenes even after an assertion failure.
 
-## Outstanding manual verification
+## Owner acceptance and remaining feature verification
 
-The main scene now runs the US1 loop. Repeat the
-[quickstart owner scenarios](../specs/001-core-gameplay-prototype/quickstart.md):
-all WASD directions/opposed/released/diagonal before and after yaw rotation,
-pitch extremes/perimeter traversal, overlap without blocking, readable HUD,
-automatic target line/flash, independent contact damage and lethal stop.
-For T041, take normal lethal contact damage, check Game Over/zero health/final
-time and mouse release, and attempt WASD/mouse/Escape for ten real seconds.
-Complete three defeat/restart cycles using click, Enter and Space; also try rapid
-repeated activation. Check full health, initial position/view, 00:00, empty old
-population, mouse recapture and a full first-spawn delay after each restart.
-Use Escape to pause/resume and Alt+F4 to close while the mouse is captured. Controls,
-visuals/game feel and qualifying survival/rendered profiling require owner evidence;
-these deterministic fixtures cannot establish them. Invalid data requires
-correction and relaunch; no in-application retry is supplied.
+Phase 3B T033 and Phase 4 T041 owner acceptance remain recorded as complete in
+the ledger. The owner now also reports all six Phase 5 groups passed, completing
+T048. This does not close Phase 6's integrated acceptance/provenance/performance
+review or establish the future 200-enemy/60-FPS benchmark. Existing owner
+survival/profile evidence is retained independently; no new five-minute session
+was run for T048.
+
+The [quickstart owner scenarios](../specs/001-core-gameplay-prototype/quickstart.md)
+remain the reproducible procedures, including ten-real-second contact and
+between-event pauses, frozen health/time/view, held Escape/WASD/mouse, preserved
+delays and Game Over/restart. Use Escape to pause/resume and Alt+F4 to close while
+the mouse is captured. Headless evidence alone cannot establish these physical
+controls, visuals or game feel. Invalid data requires correction and relaunch;
+no in-application retry is supplied.

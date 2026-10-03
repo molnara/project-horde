@@ -1,15 +1,17 @@
 # Core gameplay verification ledger
 
-Current checkpoint: Phase 5 Batch 2 implementation / T044–T047, 2026-10-03.
+Current checkpoint: Phase 5 Batch 3 final validation / T048 closure, 2026-10-03.
 All 82 required native cases pass with 5,843 assertions, including all 18 US3
 cases with 1,140 assertions and zero deferrals. Phase 3B remains 48/48 with 3,719
 assertions; Phase 4 remains 16/16 with 984 assertions. Final contained validation
 passes import, all 37 script parses, normal/Profile startup and 146 infrastructure
-assertions without unexpected warnings. T044–T047 are complete; T048 remains
-unchecked pending separate closure and owner pause acceptance. See **Phase 5
-Batch 2 — pause/resume implementation and automated evidence** below. Earlier
-unrun/deferred statuses are historical. Prior owner acceptance is preserved;
-this batch establishes no new owner/performance acceptance. No commit/push made.
+assertions without unexpected warnings. The owner reports all six Phase 5 manual
+acceptance groups passed; T042–T048 and US3/SC-003 are complete. See **Phase 5
+Batch 3 — T048 final validation and owner acceptance closure** below for fresh
+automated results and separately attributed owner observations. That section
+supersedes earlier Phase 5 owner-unrun/closure-pending statuses. Prior owner
+acceptance is preserved; full feature/performance acceptance remains separate.
+No production changes, new five-minute profile, staging, commit or push in Batch 3.
 
 Previous Phase 3B checkpoint, retained independently:
 The corrected owner capture is complete and internally consistent; its shutdown
@@ -1982,3 +1984,133 @@ Final tree: 15 tracked files modified, all unstaged; no untracked deliverables,
 no generated validation/profile artifacts tracked, no Git commit or push.
 `git diff --check` passed (exit 0); final source line endings normalized to the
 repository's CRLF convention to remove Git's LF conversion notices.
+
+## Phase 5 Batch 3 — T048 final validation and owner acceptance closure
+
+**Closure recorded:** 2026-10-03. **Scope:** T048 only. Branch:
+`001-core-gameplay-prototype`; validated source revision:
+`ea73096ed0a6dd0efe49c0d54e7ccd264ed3d591`
+(`feat(gameplay): implement Phase 5 pause and resume lifecycle`). Initial working
+tree was clean. The owner reports T042–T047 were committed/pushed and all six
+preliminary manual groups completed successfully. This closure records that
+confirmation alongside a fresh automated run; Codex did not perform those manual
+playtests. Constitution v1.0.0 and the existing Phase 5 spec/plan/contracts/tasks
+and independent test were reviewed. Read-only checklists passed 16/16 and 36/36;
+no extension hooks file exists.
+
+### Registration and final automated evidence
+
+The existing manifest already registers every authored US3 case: ten `pause.*`
+(including `game_over_escape`) and eight `pause_profile.*`, each using its real
+integration script and fixed seed 4702042/4702043. `entries()` includes both the
+Game Over regression and `pause_entries()`; `staged_entries()` returns an empty
+array. `ready_after` fields describe implemented prerequisites and do not defer
+these registered entries. The runner reconciled authored methods, registered
+IDs and executed IDs, with 82 in each inventory and zero deferred/pending/excluded
+cases. All Phase 3B and Phase 4 cases remain required and were executed.
+No manifest, assertions, production scripts/scenes, configuration or assets changed.
+
+Exact successful command, from `C:\GameDev\project-horde`:
+
+```powershell
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+```
+
+**Result:** launcher exit 0, 49/49 recorded checks passed. Approved Godot Standard
+version `4.7.2.stable.official.ed1daf0bf`; verified writable user/editor/cache/temp
+paths remained inside workspace `.cache/`, and all four environment variables
+were restored. Output: `.cache/batch3-final-validation.log`. Final evidence:
+`.cache/validation/20261003T152808972-6f432766b8e1416886c2d57a3e37f153/`.
+`results.json` retains exact per-child commands/exits, `suite.stdout.txt` the native
+case records, and `infrastructure-fixtures.json` / `infrastructure-child-results.json`
+the fixture outcomes and deliberately failing children. These generated files stay
+ignored and untracked.
+
+| Executed check | Actual result |
+|---|---|
+| Version / help / path preflight | PASSED, each child exit 0; approved Standard version and actual containment verified |
+| Project import/load | PASSED, child exit 0 |
+| All source/test GDScript `--script <absolute file> --check-only` | PASSED, 37/37, each child exit 0 |
+| Complete native suite | PASSED, 82/82 cases, 5,843 assertions, child exit 0; zero deferred/pending/excluded |
+| Phase 3B / foundation regression | PASSED, 48/48 cases, 3,719 assertions |
+| Phase 4 defeat/restart/evidence regression | PASSED, 16/16 cases, 984 assertions |
+| US3 pause/resume/profiling integration | PASSED, 18/18 cases, 1,140 assertions |
+| Normal startup `--headless --path C:\GameDev\project-horde --quit-after 120` | PASSED, child exit 0 |
+| Profile startup, same arguments plus `-- --profile` | PASSED, child exit 0; required receipt/stream/manifest/outcomes checked |
+| Infrastructure fixtures | PASSED, 146/146 assertions, including segmented application receipt and missing-earlier-stream rejection |
+| APPDATA / LOCALAPPDATA / TEMP / TMP restoration | PASSED, four checks |
+| Unexpected warnings / errors | None in final required checks; only intentional `fixture-warning` emitted `WARNING: HORDE fixture warning` |
+
+Fresh per-case US3 assertion counts match Batch 2: game_over_escape 22,
+escape_edges 49, freeze_combat 622, inactive_callbacks 10, spawn_delay 16,
+weapon_delay 20, contact_delays 24, feedback_delay 17, mouse_discard 33,
+hud_restart 13; close_segment 31, resume_origin 23, exclude_gap 57,
+preserve_attempt 36, paused_endpoint 23, nonqualification 35,
+retained_diagnostics 61, post_endpoint_pause 48.
+
+The first command, `./tools/validate.ps1 -Mode All -InfrastructureFixtures`, was
+**BLOCKED**, exit 1 before engine launch: sandbox registry isolation exposed no
+GODOT_BIN in Process/User/Machine scopes. The explicit approved console override
+and authorized execution outside the sandbox resolved it while retaining launcher
+write containment. No installation, global configuration or diagnostic suppression
+was used. Expected infrastructure fault/timeout/missing-output children were
+observed and asserted; they are not unresolved regressions. No other failed,
+skipped, blocked or unrun required Phase 5 automated check remains.
+
+### Owner-reported manual acceptance — separate evidence
+
+**Source:** the product owner's Batch 3 request explicitly states all six
+preliminary acceptance groups completed successfully. **Outcome:** PASSED for
+all six groups, as reported by the owner. The confirmation supplies manual
+acceptance of the existing documented procedures; no new manual run was performed
+by Codex. Specific execution times, measured coordinates/health values, stopwatch
+traces, screenshots and a per-test machine report were not supplied and are not
+invented here.
+
+| Group | Owner-reported result | Requirement coverage of the completed group |
+|---|---|---|
+| 1. Basic pause and HUD | PASSED — owner reported | Active/Paused indication and resume instructions; visible frozen health/time; pause presentation distinct from defeat (FR-009/012, T046) |
+| 2. Freeze during enemy contact | PASSED — owner reported | Contact pause protocol, unchanged encounter/view/health/time with no inactive combat; ten-real-second criterion from the existing procedure (FR-012, SC-003) |
+| 3. Preserved scheduled-event delays | PASSED — owner reported | Between-event pause protocol and resume with remaining spawn/weapon/contact delays, without early/catch-up events (FR-012, SC-003) |
+| 4. Mouse and keyboard input handling | PASSED — owner reported | Held Escape handling, inactive WASD/mouse, release/recapture and no resumed camera jump (T044/T045, player-interface contract) |
+| 5. Repeated pause/resume cycles | PASSED — owner reported | Repeatable living-encounter transitions with preserved state and delays (FR-012) |
+| 6. Phase 4 Game Over/restart regression | PASSED — owner reported | Defeat remains terminal to Escape; existing Game Over presentation/restart remains usable (FR-010/011, prior US2 acceptance preserved) |
+
+The ten-real-second contact and between-event procedures are specified in
+`tasks.md`'s Phase 5 independent test, FR-012 acceptance and quickstart step 3.
+The owner's report of successful completion of the prescribed groups is the
+manual evidence for that criterion; deterministic 600-tick/synthetic wall-gap
+fixtures are recorded separately and do not substitute for it. No additional
+unreported timings, cycle counts or input measurements are claimed.
+
+### T042–T048 requirements reconciliation and closure
+
+| Tasks / criteria | Closure evidence |
+|---|---|
+| T042 / T044 — discrete Escape and inactive gameplay | Required `pause.*` cases pass, including held press/echo/release, pre-step gating, frozen callbacks and terminal defeat; owner groups 2/4/5/6 passed |
+| T045 — capture, transition clearing and preserved view | `pause.mouse_discard` and freeze/edge cases pass; owner group 4 passed |
+| T046 / FR-009 — readable pause HUD and unavailable Restart | `pause.hud_restart` and freeze cases pass; owner group 1 passed |
+| FR-012 / US3 acceptance scenarios / independent test / SC-003 | Freeze and spawn/weapon/contact/feedback delay cases pass; owner groups 1–5 passed, covering contact and between-event pauses plus preserved-delay resume |
+| T043 / T047 — profiling segments and interruption qualification | All eight `pause_profile.*` cases pass, including exact pause-gap exclusion, bounded buffers, stale generations, retained diagnostics and otherwise-complete post-300 nonqualification; launcher validates every segment |
+| T048 — registration, final tooling, ledger and owner acceptance | All 18 cases required, no deferrals; fresh full All/infrastructure run passed; six owner groups recorded separately; README and ledger reconciled |
+
+**T048 is complete; T042–T048 and Phase 5/US3 are closed. SC-003 is passed on the
+combined automated and owner-reported evidence.** No genuine regression was found,
+so production scope was not expanded. Pause testing establishes SC-003; interrupted
+profile attempts remain diagnostic and cannot qualify as uninterrupted SC-006/007
+evidence. This batch does not award new survival/performance acceptance or change
+previously retained owner/profile outcomes.
+
+Only three tracked documentation files changed: `tests/README.md`,
+`docs/verification/core-gameplay.md`, `specs/001-core-gameplay-prototype/tasks.md`.
+Only T048's task marker changed; a Phase 5 closure note/checkpoint was added.
+Earlier Batch 1/2 unrun/deferred/owner-pending statements remain historical and
+are superseded by this section. Phase 6 T049–T056 remains unchanged and unchecked;
+full integrated feature/provenance/performance review and the future 200-enemy/
+60-FPS benchmark remain separate work, not Phase 5 blockers.
+
+`git diff --check` passed (exit 0). Final working tree: the three documentation
+files above modified and unstaged, no staged changes or untracked files; generated
+validation/profile/import artifacts remain ignored and untracked. No new five-minute
+profiling session, gameplay changes, staging, commit or push. **Stop after T048
+and await owner review.**
