@@ -5,7 +5,8 @@ production components and technical verification. The original 48 registered
 cases remain required: 13 foundation/fixture and 35 gameplay cases (6 movement,
 7 combat, 13 survival-loop, 9 profile/continuation). Batch 2 registers all nine
 defeat/restart and seven restart-evidence cases. Phase 5 Batch 2 requires all 18
-US3 cases as well: 82 required cases, zero deferred.
+US3 cases as well: 82 historical required cases, zero deferred. DX-001 Batch 3
+adds six missing technical acceptance cases, bringing the current inventory to 88.
 T048's final All/infrastructure rerun passes all 82 cases with 5,843 assertions,
 including 18 US3 cases with 1,140 assertions and 146 infrastructure assertions.
 The owner reports all six Phase 5 manual acceptance groups passed; T042–T048 are
@@ -22,7 +23,7 @@ Use the workspace-contained launcher, never a direct uncontained engine call:
 ```powershell
 & ./tools/validate.ps1 -Mode All -SuiteScope Foundation
 & ./tools/test-validation.ps1
-& ./tools/validate.ps1 -Mode All
+& ./tools/validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240
 ```
 
 An optional `-GodotBin` absolute console path is supported by both launchers.
@@ -39,11 +40,34 @@ exit-zero classification without changing global configuration.
 `Foundation` is an explicit limited suite, not gameplay acceptance. It still
 discovers/reconciles the entire manifest before selecting its 13 cases. The
 infrastructure wrapper uses that scope so its diagnostic/timeout/environment
-fixtures can run before gameplay exists. Default `All` requires all 82 registered cases,
+fixtures can run before gameplay exists. Default `All` requires all 88 registered cases,
 returns nonzero for any pending or failed case, and stops dependent startup checks.
 Both commands exercise real main-scene startup; when the capture helper exists,
 they also run a short headless `--profile` startup/shutdown. The resulting sparse
 capture is diagnostic evidence, not rendered profiling or survival acceptance.
+
+DX-001 Batch 3 uses the unchanged native runner and complete discovery/execution
+reconciliation. `technical.hud_clock` runs the actual 60 Hz driver from zero to
+at least 65 active seconds; `technical.pause_contact/pause_between` each measure
+at least ten real seconds with live inactive callbacks and attempted movement,
+mouse and held/echo Escape; `technical.three_cycles` measures ten defeated real
+seconds, then delivers click/Enter/Space across three consecutive cycles in one
+Main. `technical.configurable_eligibility/mapped_input` fill fresh range/contact
+and actual configured key-delivery gaps. Existing cases/thresholds are preserved.
+The explicit 240-second suite watchdog accommodates required waits and startup
+overhead; the launcher's default 120 seconds and all acceptance durations remain
+unchanged. This is a per-invocation timeout, not a new validation tier or benchmark.
+Foundation excludes these six along with all other gameplay cases.
+
+Receipts are `HORDE_TECHNICAL_EVIDENCE` lines in retained suite stdout/engine log.
+Controlled definitions isolate scheduling: HUD uses enemy speed 0.000001 and
+weapon range 0.01; pause/cycles use enemy health 1000 and speed 0.000001 with
+default spawn/weapon/contact/feedback timing. Resume deadlines are checked with
+controlled 1/64-second steps after real waits. These are technical fixtures;
+headless visibility flags and injected input cannot establish rendered
+readability, physical usability, independent SC-004 or owner survival/profile.
+See the [Batch 3 audit and clause map](../docs/verification/dx-001-batch3.md)
+for actual evidence and outstanding human requirements.
 There is no engine-diagnostic suppression or reduced gameplay expectation.
 
 Phase 3B profiling repair: `profile.bounded_late_failure` now persists and rereads

@@ -49,7 +49,7 @@ func cleanup() -> void:
 			Input.action_release(action)
 	for connection in connections:
 		var event: Signal = connection.signal
-		if not event.is_null() and event.is_connected(connection.callback):
+		if not event.is_null() and is_instance_id_valid(event.get_object_id()) and event.is_connected(connection.callback):
 			event.disconnect(connection.callback)
 	connections.clear()
 	for node in owned_nodes:

@@ -5,8 +5,8 @@ reliability → Batch 3 autonomous technical acceptance → Batch 4 assertion cl
 and execution measurement → Batch 5 execution tiers and final reconciliation.
 **Authority:** product-owner DX-001 Bootstrap + Batch 1 request, 2026-10-03;
 [constitution v1.0.0](../../.specify/memory/constitution.md) remains unchanged.
-Current authority: product-owner **DX-001 Batch 2: Environment Reliability** request,
-2026-10-03, after Batch 1. Only Batch 2 is authorized in this session; stop for review.
+Current authority: product-owner **DX-001 Batch 3: Autonomous Technical Acceptance**
+request, 2026-10-03. Batch 3 only is authorized in this session; stop for review.
 
 ## Repository baseline and evidence
 
@@ -86,7 +86,7 @@ and the verification ledger; this handoff tracks actual changes/results.
   successfully where available; commands/results and remaining blockers are
   recorded honestly. No gameplay/threshold changes or T053–T056 work.
 
-## Batch 3 — Autonomous technical acceptance (planned)
+## Batch 3 — Autonomous technical acceptance (implemented; ready for review)
 
 **Scope:** map objective acceptance clauses to existing evidence, then add only
 missing reproducible technical checks in a separately authorized implementation.
@@ -545,3 +545,97 @@ Documentation checks executed after this update: ignored
 `./.cache/dx001-batch2-doc-check.ps1` PASSED exit 0 (28 local links/anchors, five
 documents' whitespace and three existing tool parses); `git diff --check` PASSED
 exit 0, LF→CRLF advisory only. No implementation change was made.
+
+## Batch 3 session outcome and exact Batch 4 handoff — 2026-10-03
+
+**Batch 3 implemented and verified; stop for review.** Scope/authority is the
+owner's Batch 3 request. Initial status clean; HEAD
+`2022d403f44eb18d90d1e2dd2cf051041eada416` plus this session's uncommitted
+tests/documentation. The complete pre-implementation audit, requirement map,
+conditions, failures/corrections, exact results and source hashes are in the
+[Batch 3 technical evidence](../verification/dx-001-batch3.md). That report and
+this section supersede earlier future-Batch-3 statements; history is preserved.
+
+Changes are limited to six native acceptance cases and their manifest/UID,
+Context freed-signal-source cleanup with a regression check, inventory assertions,
+README/quickstart and evidence/handoff docs. Existing 82 cases remain mandatory;
+no assertion redundancy removal, gameplay/tuning/threshold/duration/cycle change,
+launcher implementation/default change, dependency, installation/global config,
+alternative Windows sandbox/certificate investigation, commit or push.
+
+All engine invocations used ignored workspace selection, existing Godot 4.7.2
+Standard console and explicit approval outside isolation through the unchanged
+actual-path-containment launcher. APPDATA/LOCALAPPDATA/TEMP/TMP restorations passed.
+Outputs/source snapshots remain ignored/workspace-local.
+
+| Actual command/result | Evidence under `.cache/validation/` |
+|---|---|
+| `C:\GameDev\project-horde\tools\validate.ps1 -Mode All -InfrastructureFixtures`: baseline PASSED exit 0, 37 parses, 82 cases / 5,843 assertions, both startups, 163 infrastructure assertions | `20261003T180119398-ec4769de5414432faa064a32f6391415/` |
+| Same command with `-SuiteTimeoutSeconds 240`: first expanded run FAILED exit 1 on hard-coded inventory, buffered input, stale cleanup and an incorrectly added wall-time gate; dependent startup/infrastructure UNRUN. Corrected test infrastructure, preserved original criteria | `20261003T180518843-d1d0b40262794ec99ed3c068eb8695a8/` |
+| Same expanded command: final PASSED exit 0, 38 parses, 88/88 cases / 6,142 assertions, zero pending/deferred/excluded, normal/Profile startup, 163 infrastructure assertions | `20261003T180830902-06a41356654849c199b9629b050d214c/` |
+
+Actual new evidence: >=65 completed automatic physics seconds/01:05 and next-step
+health; ten-real-second contact/between-event/defeated waits respectively
+10.025078/10.034548/10.028147 seconds with 97 state/input samples each; no inactive
+state/signal changes; preserved default resume deadlines; three consecutive
+same-Main click/Enter/Space cycles, generations 2/3/4 with all fresh invariants,
+full 1.5-second first-spawn delay and one event each; fresh range/contact-distance
+eligibility and actual mapped WASD after yaw/pitch/nonblocking overlap.
+These controlled headless fixtures are not rendered usability or owner survival.
+The 240-second invocation watchdog accommodates mandatory waits; default 120
+seconds and all original acceptance durations remain unchanged.
+
+**Remaining gaps:** T052 stays unchecked. Technical evidence maps objective
+FR/edges and SC-002/003, but current complete independent SC-004 action coverage,
+no developer intervention, physical controls, readable/observable presentation,
+responsiveness and subjective feel need actual owner evidence. Prior qualified
+positive owner feedback and T033/T041/T048 results remain historical. No new human
+playtest or rendered profile smoke ran. T053–T056 and SC-006/007 final
+survival/profile/source qualification remain unstarted/outstanding; no prototype
+profile report created; SC-005 remains future/unverified. Batches 4/5 unstarted.
+
+### Exact next-session instructions — Batch 4 only after review/authorization
+
+1. Read AGENTS.md, constitution v1.0.0, this handoff, active spec/plan/tasks,
+   quickstart, tests README, gameplay ledger and Batch 3 report. Inspect initial
+   Git status; preserve uncommitted work and the six new required cases. Confirm
+   Batch 3 source/evidence or document intervening changes. Keep T052 open while
+   independent human evidence is missing. Do not start Batch 5 or T053–T056.
+2. Check ignored `.cache/godot-bin.txt` exists/valid before use, or obtain the
+   documented explicit engine selection. Use the established approval-mediated
+   contained route only; do not retry known ineffective isolated Godot execution
+   or investigate sandbox modes/certificates. Approval is session-specific. If
+   unavailable: execution BLOCKED, affected checks UNRUN, retain static findings.
+3. Establish **new measured pre-cleanup evidence** with the full command:
+   `C:\GameDev\project-horde\tools\validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240`.
+   Record exact argv, revision/diff, engine/environment, scope, case/assertion
+   counts, outcomes and monotonic elapsed time for the command and native suite.
+   Add only necessary workspace-contained timing instrumentation/receipt tooling
+   if existing logs cannot measure those costs; do not treat Batch 3 durations or
+   assertion counts as a suite-cost benchmark. Preserve mandatory real waits.
+4. Inspect repeated assertions **before editing**. For each proposed removal,
+   show the exact failure/edge/data obligation and retained assertion/case that
+   gives equivalent coverage and diagnostics. Keep distinct contracts, all
+   required discovery/execution checks, true error classification, real durations,
+   cycle counts, health/range/deadline thresholds and production behavior. If no
+   demonstrated redundancy exists, report that result without speculative cleanup.
+5. Run the same fully scoped command and measurement method after justified
+   edits. Record actual before/after environment, commands, per-check/full-suite
+   elapsed measurements, case/assertion counts, failures and reasons. Do not claim
+   speed from counts or assume machine noise proves improvement. Rerun relevant
+   parsing/startups/infrastructure after changes; add tests only for distinct gaps.
+6. Update tests README, evidence ledger and this handoff with actual measurements,
+   a removal-to-retained-coverage map, remaining technical/human gaps, and exact
+   separately authorized Batch 5 instructions. No gameplay tuning/production
+   cheats/new dependencies/fixed speed target, commit or push. Stop for review.
+
+Batch 5 tiering/final reconciliation remains dependent on the reviewed Batch 4
+results; no tier is introduced or measured by this Batch 3 handoff.
+
+Final documentation/provenance checks executed: ignored
+`./.cache/dx001-batch3-doc-check.ps1` PASSED exit 0 (five documents' whitespace,
+33 local link paths, five source hashes, final outcomes/counts and real-wait/cycle
+receipts); `git diff --check` PASSED exit 0; `git diff --exit-code HEAD -- scripts scenes resources tools project.godot .specify/memory/constitution.md specs/001-core-gameplay-prototype/spec.md specs/001-core-gameplay-prototype/plan.md specs/001-core-gameplay-prototype/tasks.md`
+PASSED exit 0. All original gameplay/spec/plan/task/launcher/constitution files
+remain unchanged. Final source matches the passing run; evidence docs were edited
+afterward. No code rerun is claimed for those documentation-only edits.

@@ -46,6 +46,15 @@ static func entries() -> Array[Dictionary]:
 	# US3 production dependencies are implemented; every authored case is required.
 	result.append({"id": "pause.game_over_escape", "script": "res://tests/integration/test_pause_resume.gd", "maps": ["T042", "FR-010", "FR-012", "GameOver/Escape"], "seed": 4702042, "expected": []})
 	result.append_array(pause_entries())
+	for id in ["hud_clock", "pause_contact", "pause_between", "three_cycles", "configurable_eligibility", "mapped_input"]:
+		var maps := {
+			"hud_clock": ["FR-004.a", "FR-009.a", "FR-009.b", "FR-009.c", "65-active-seconds"],
+			"pause_contact": ["FR-009.e", "FR-012", "SC-003", "ten-real-seconds/contact"],
+			"pause_between": ["FR-009.e", "FR-012", "ten-real-seconds/between-events"],
+			"three_cycles": ["FR-010", "FR-011", "SC-002", "ten-real-seconds/defeated", "click/Enter/Space"],
+			"configurable_eligibility": ["FR-005.i", "FR-008.i"],
+			"mapped_input": ["FR-001", "FR-002.f", "FR-008.h"]}
+		result.append({"id": "technical." + id, "script": "res://tests/integration/test_technical_acceptance.gd", "maps": maps[id], "seed": 4702052, "expected": []})
 	return result
 
 static func staged_entries() -> Array[Dictionary]:

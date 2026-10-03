@@ -1,6 +1,6 @@
 # Core gameplay verification ledger
 
-**Current acceptance method/status — DX-001 Batch 1, 2026-10-03:** T051 is
+**Current acceptance method/status — DX-001 Batch 3, 2026-10-03:** T051 is
 complete; T052 remains open pending sufficient combined evidence. SC-005 remains
 future/unverified. The DX-001 section at the end supersedes historical demands
 for duplicate human technical measurements, not the recorded observations or
@@ -2789,3 +2789,49 @@ or must report retry BLOCKED/project checks UNRUN. Historical failure evidence
 remains. T051 stays complete, T052 stays open; independent SC-004 and the Batch 3
 technical evidence audit remain pending. SC-005 is future/unverified and no new
 SC-006/007 evidence or prototype-profile report was created. Stop for review.
+
+## DX-001 Batch 3 — autonomous technical acceptance, 2026-10-03
+
+**Batch 3 only, implemented/verified; stop for review.** Current HEAD
+`2022d403f44eb18d90d1e2dd2cf051041eada416` plus uncommitted tests/docs;
+initial working tree clean. The [Batch 3 audit/report](dx-001-batch3.md) records
+pre-implementation missing coverage, every objective FR clause/edge and
+SC-002/003 mapping, fixture tuning, source hashes, commands and actual outcomes.
+The [DX-001 handoff](../development/dx-001-autonomous-qa.md#batch-3-session-outcome-and-exact-batch-4-handoff--2026-10-03)
+has exact Batch 4 instructions; Batch 4/5 are unstarted.
+
+Explicitly approved outside-isolation execution used ignored local selection and
+unchanged version/Standard/actual-path-containment gates. Baseline
+`C:\GameDev\project-horde\tools\validate.ps1 -Mode All -InfrastructureFixtures`
+PASSED exit 0: 82 cases/5,843 assertions, 37 parses, normal/Profile startup,
+163 infrastructure assertions and all four environment restorations; evidence
+`.cache/validation/20261003T180119398-ec4769de5414432faa064a32f6391415/`.
+
+Final command adds only `-SuiteTimeoutSeconds 240`, preserving default 120 and
+acceptance durations. PASSED exit 0: **88/88 cases, 6,142 assertions, 38 parses,
+both startups, 163 infrastructure assertions**, zero pending/deferred/excluded
+and all four restorations; evidence
+`.cache/validation/20261003T180830902-06a41356654849c199b9629b050d214c/`.
+First expanded run FAILED exit 1, retained in
+`.cache/validation/20261003T180518843-d1d0b40262794ec99ed3c068eb8695a8/`, with
+dependent startup/infrastructure UNRUN. The report explains/corrects inventory,
+input buffering, freed-signal cleanup and an invented wall gate; genuine errors
+were not suppressed. Existing required cases/assertions remain.
+
+Six new native checks prove missing technical clauses: actual >=65 completed
+active physics seconds/01:05/next-update health; measured contact pause 10.025078,
+between-event pause 10.034548 and defeat 10.028147 real seconds, 97 samples each
+with WASD/mouse/held Escape and frozen state/signals; preserved default resumed
+deadlines/no burst; three same-Main consecutive click/Enter/Space restarts with
+fresh-state/full default spawn-delay/isolation; paired fresh range/contact
+eligibility; actual physical mapped movement keys after yaw/pitch and nonblocking
+overlap. These are controlled headless fixtures, not normal survival/visual
+acceptance. No production/tooling/tuning/threshold change or new dependency.
+
+T051 complete; **T052 remains unchecked**. Independent complete SC-004 action
+coverage/no developer intervention and physical controls, observable/readable
+presentation, responsiveness/feel still need owner evidence. Prior feedback and
+T033/T041/T048 closures are preserved. Human playtest/rendered profile smoke UNRUN;
+no fresh SC-006/007 qualification, profile report or T053–T056 work. SC-005 remains
+future/unverified. No assertion cleanup/cost benchmarking/tiering, alternative
+Windows sandbox/certificate troubleshooting, staging, commit or push.

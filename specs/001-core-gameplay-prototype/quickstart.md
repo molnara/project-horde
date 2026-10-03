@@ -314,9 +314,14 @@ human fallback and report it separately from the usability journey.
 
 For each claimed clause record check ID/command, revision, conditions/tuning,
 output path and actual passed/failed/skipped/blocked/unrun result. Existing
-deterministic checks cover many invariants; their complete real-duration/input
-coverage has not been newly established by this amendment. Batch 3 will audit
-remaining technical gaps. T052 remains open pending sufficient combined evidence.
+deterministic checks cover many invariants; Batch 1 did not establish their
+complete real-duration/input coverage. The executed Batch 3 audit/results live in the
+[Batch 3 clause map](../../docs/verification/dx-001-batch3.md). Reproduce its full
+native checks with `./tools/validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240`
+through the documented approval-mediated contained route. The per-run watchdog
+allows the unchanged 65-active-second and three ten-real-second checks; launcher
+defaults and acceptance thresholds are unchanged. T052 remains open pending
+sufficient combined evidence.
 Failures, missing independent participation and unverified clauses stay
 outstanding. Later tuning/behavior corrections require affected checks rerun.
 No forced fixtures or UI are added by DX-001 Batch 1; see the
