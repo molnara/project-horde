@@ -183,9 +183,18 @@ func bounded_late_failure(ctx) -> void:
 	var object = capture(ctx)
 	F.invoke(ctx, object, "open_attempt", [3, 0.0])
 	F.invoke(ctx, object, "record_step", [3, 300.125, 1, 400.0, 3, true])
+	# This same closed capture keeps its script throughout the loop. Check each
+	# API once with F.invoke's diagnostic; all 1,000 callback pairs still execute.
+	var has_frame: bool = object != null and object.has_method("record_frame")
+	var has_step: bool = object != null and object.has_method("record_step")
+	ctx.check(has_frame, "required real method: record_frame")
+	ctx.check(has_step, "required real method: record_step")
+	if not has_frame or not has_step:
+		ctx.done()
+		return
 	for index in 1000:
-		F.invoke(ctx, object, "record_frame", [3, 401.0 + index])
-		F.invoke(ctx, object, "record_step", [3, 301.0 + index, 2 + index, 401.0 + index, 4, true])
+		object.record_frame(3, 401.0 + index)
+		object.record_step(3, 301.0 + index, 2 + index, 401.0 + index, 4, true)
 	ctx.check(object.frame_timestamps.is_empty() and object.enemy_samples.is_empty(), "unlimited continuation cannot grow closed five-minute buffers")
 	F.invoke(ctx, object, "record_spawn_failure", [3, {"cause": "late injected failure"}])
 	ctx.check(object.spawn_failure_count == 1 and object.acceptance_invalid, "failure invalidates even after buffer closes")

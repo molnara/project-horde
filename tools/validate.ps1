@@ -22,6 +22,7 @@ param(
 )
 
 Set-StrictMode -Version Latest
+$validationTimer = [Diagnostics.Stopwatch]::StartNew()
 $ErrorActionPreference = 'Stop'
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')).TrimEnd('\', '/')
 $cacheRoot = Join-Path $workspace '.cache'
@@ -178,6 +179,7 @@ function Invoke-GodotCheck {
     $child.StartInfo = $startInfo
     $timedOut = $false
     $launched = $false
+    $checkTimer = [Diagnostics.Stopwatch]::StartNew()
     try {
         if (-not $child.Start()) { throw "Could not start child for $Name." }
         $launched = $true
@@ -263,7 +265,8 @@ function Invoke-GodotCheck {
             $diagnostics.Failed = $true
         }
         $outcome = if ($timedOut -or $child.ExitCode -ne 0 -or $diagnostics.Failed) { 'FAILED' } else { 'PASSED' }
-        $result = [pscustomobject]@{Name=$Name; Command=$command; ChildId=$child.Id; ExitCode=$child.ExitCode; Outcome=$outcome; TimedOut=$timedOut; TimeoutSeconds=if ($Interactive) {$null} else {$TimeoutSeconds}; Stdout=$stdoutPath; Stderr=$stderrPath; EngineLog=$logPath; Warnings=$diagnostics.Warnings; Diagnostics=$diagnostics; Output=$plain}
+        $checkTimer.Stop()
+        $result = [pscustomobject]@{Name=$Name; Command=$command; ChildId=$child.Id; ExitCode=$child.ExitCode; Outcome=$outcome; TimedOut=$timedOut; TimeoutSeconds=if ($Interactive) {$null} else {$TimeoutSeconds}; ElapsedSeconds=$checkTimer.Elapsed.TotalSeconds; Stdout=$stdoutPath; Stderr=$stderrPath; EngineLog=$logPath; Warnings=$diagnostics.Warnings; Diagnostics=$diagnostics; Output=$plain}
         $results.Add($result)
         Write-Host "RESULT [$Name]: $outcome; exit=$($child.ExitCode); timeout=$timedOut; logs=$sessionDir"
         foreach ($warning in $diagnostics.Warnings) { Write-Host "Recorded $warning" }
@@ -458,6 +461,8 @@ func _enter_tree() -> void:
     }
     if ($null -ne $sessionDir) {
         Write-ContainedText (Join-Path $sessionDir 'results.json') (ConvertTo-Json -InputObject @($results.ToArray()) -Depth 20)
+        $validationTimer.Stop()
+        Write-ContainedText (Join-Path $sessionDir 'timing.json') (ConvertTo-Json -InputObject @{ElapsedSeconds=$validationTimer.Elapsed.TotalSeconds; ExitCode=$exitStatus; Mode=$Mode; SuiteScope=$SuiteScope; InfrastructureFixtures=[bool]$InfrastructureFixtures})
         Write-Host "Validation evidence: $sessionDir"
     }
 }

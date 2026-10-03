@@ -5,8 +5,10 @@ reliability → Batch 3 autonomous technical acceptance → Batch 4 assertion cl
 and execution measurement → Batch 5 execution tiers and final reconciliation.
 **Authority:** product-owner DX-001 Bootstrap + Batch 1 request, 2026-10-03;
 [constitution v1.0.0](../../.specify/memory/constitution.md) remains unchanged.
-Current authority: product-owner **DX-001 Batch 3: Autonomous Technical Acceptance**
-request, 2026-10-03. Batch 3 only is authorized in this session; stop for review.
+Current authority: product-owner **DX-001 Batch 4: Assertion Cleanup and Execution
+Measurement** request, 2026-10-03. Batch 4 only is authorized in this session;
+stop for review. Current results and exact Batch 5 instructions are appended below;
+earlier session handoffs remain historical.
 
 ## Repository baseline and evidence
 
@@ -104,7 +106,7 @@ sufficient combined technical and independent human evidence, never by test coun
 **Constraints:** no weakened criteria, production cheats or substituted SC-004
 participation; T053–T056 require their own authorization.
 
-## Batch 4 — Assertion cleanup and execution measurement (planned)
+## Batch 4 — Assertion cleanup and execution measurement (implemented; ready for review)
 
 **Scope:** measure current execution cost and inspect repeated assertions before
 removing demonstrated redundancy; retain distinct failure/edge/data contracts.
@@ -639,3 +641,96 @@ receipts); `git diff --check` PASSED exit 0; `git diff --exit-code HEAD -- scrip
 PASSED exit 0. All original gameplay/spec/plan/task/launcher/constitution files
 remain unchanged. Final source matches the passing run; evidence docs were edited
 afterward. No code rerun is claimed for those documentation-only edits.
+
+## Batch 4 completed results and exact Batch 5 handoff — 2026-10-03
+
+**Batch 4 complete; stop for review.** Owner's Batch 4 request supersedes the
+historical authorization/status above. Initial Git status clean; HEAD
+`c9978527621b1850b4a54ff4610f3040a99a0d9a`; all five retained Batch 3 hashes match.
+[Batch 4 report](../verification/dx-001-batch4.md) records measurement boundaries,
+full per-check/case receipts, exact removal-to-coverage/diagnostics map and limits.
+
+Passive monotonic timing added before baseline to native case/suite receipts,
+launcher child records and aggregate `timing.json`. Baseline assertions unchanged.
+Only cleanup: consolidate 1,000 identical API checks per method in
+`profile.bounded_late_failure` to one per method with original failure predicates/
+messages; remove 1,998 redundant checks. All 1,000 callback pairs, million-sample
+stress protocol and behavioural/late-failure assertions remain. No other pruning
+is supported. All 88 cases and six Batch 3 acceptance cases remain mandatory;
+technical cases retain original counts, durations, cycles and thresholds.
+
+Both executions use the same explicitly requested approval-mediated contained
+route and existing Godot 4.7.2 Standard console selection. No isolated execution
+or sandbox/certificate investigation. Exact command for both:
+
+```powershell
+C:\GameDev\project-horde\tools\validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240
+```
+
+| Actual result | Baseline | Final |
+|---|---|---|
+| Outcome | PASSED exit 0 | PASSED exit 0 |
+| Aggregate/native suite seconds | 118.775031 / 96.873584 | 118.090575 / 96.815639 |
+| Required/executed cases; assertions | 88/88; 6,142 | 88/88; 4,144 |
+| Parses/startups/infrastructure/restoration | 38; normal/Profile; 163; all four | Same |
+| Evidence under `.cache/validation/` | `20261003T190404339-22cc7fee048a475e93bee07c90a01124` | `20261003T190633709-610b11ffc3a544a2a03c166b8b949348` |
+
+Zero pending/deferred/excluded in both. Expected negative infrastructure child
+failures retain original evidence; no unexpected required failure. No new test
+case or full exploratory rerun. About 98.1% of baseline native time lies in the
+six technical cases, dominated by mandatory waits. One uncontrolled before/after
+pair establishes no causal speedup; cleanup is justified API redundancy, not a
+demonstrated wall-time bottleneck. No duration/cycle reduction is authorized.
+
+T051 complete; **T052 stays open** pending independent complete SC-004 owner
+evidence without developer intervention. Existing manual quickstart journey
+remains; human controls/presentation/responsiveness/feel and rendered profile
+smoke UNRUN. SC-006/007 qualification and T053–T056 unstarted, SC-005 future/
+unverified. No gameplay/tuning/constitution/spec/plan/task change, new dependency,
+execution tier, installation/global configuration, commit or push.
+
+### Exact next-session instructions — Batch 5 only after review/authorization
+
+1. Read AGENTS.md, constitution v1.0.0, this current handoff, active spec/plan/
+   tasks/quickstart, tests README, gameplay ledger and Batch 3/4 evidence. Inspect
+   status/revision/diff; preserve all existing work. Verify executed-source hashes
+   or document intervening changes. Keep T052 open for missing independent SC-004.
+2. Check local engine selection exists/valid, or use documented explicit selection.
+   Use the established approval-mediated contained route; do not investigate
+   isolation/certificates again. If execution approval is unavailable, report
+   BLOCKED route and dependent checks UNRUN, continuing useful static work.
+3. Define proportionate fast/targeted/full execution instructions from actual
+   Batch 4 per-child/per-case costs and coverage map. Foundation remains the
+   existing limited 13-case infrastructure selection, excluding gameplay; never
+   label it feature acceptance. Add runner/manifest/tool selection only if needed
+   for a concrete targeted use. Keep full discovery/reconciliation, genuine-error
+   classification and explicit selection/omission reporting for every tier.
+4. For each tier document exact command, selected cases, prerequisites, omissions,
+   expected scope and applicable use. Define when full validation is mandatory,
+   particularly integrated acceptance and changes touching shared lifecycle,
+   scheduling, input or runner/selection infrastructure. Preserve all 88 required
+   cases, six Batch 3 obligations, mandatory real waits/three cycles/thresholds;
+   a targeted pass never silently completes omitted acceptance. Keep default
+   watchdogs unless a separately justified change is approved; full invocation
+   currently uses `-SuiteTimeoutSeconds 240` to accommodate original protocols.
+5. Execute appropriate tier checks through containment, using passive timing and
+   the smallest relevant selections during exploration. Run full All/infrastructure
+   where required by final changes/acceptance; report exact commands, actual
+   outcomes/counts/costs and failures. Do not repeatedly run full suites merely to
+   chase noise or claim speed from counts. Add tests only for distinct risks.
+6. Reconcile README, quickstart, plan/tasks, ledger and this handoff with final
+   implementation/selection and measured evidence. Distinguish technical FR/
+   SC-002/003 proof, remaining independent SC-004, and future SC-005/006/007 gates.
+   DX-001 completion cannot imply prototype acceptance. Leave T052 open absent
+   sufficient independent owner evidence; do not start T053–T056, alter gameplay
+   tuning/requirements, commit or push. Record remaining gaps and stop for review.
+
+Batch 5 is **not started** here. Current changes are ready for owner review.
+
+Final static checks PASSED: launcher PowerShell syntax, ignored
+`./.cache/dx001-batch4-audit.ps1` (both receipts/88 case counts, preserved six
+technical cases/durations/cycles, source hashes, unchanged production/spec/plan/
+task boundaries, whitespace and 29 local links), and `git diff --check`.
+No executable source changed after the passing final run. Search/rejected
+documentation-context mistakes are recorded in the report; no engine failure
+or hidden acceptance result occurred.

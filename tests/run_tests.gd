@@ -10,6 +10,7 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
+	var suite_started := Time.get_ticks_usec()
 	var manifest: Array[Dictionary] = Manifest.entries()
 	var staged: Array[Dictionary] = Manifest.staged_entries()
 	var authored: Array[Dictionary] = manifest.duplicate()
@@ -65,6 +66,7 @@ func run() -> void:
 				print("HORDE_CASE_PENDING=" + JSON.stringify(record))
 				continue
 			var ctx := Context.new(entry.id, entry.seed, entry.expected)
+			var case_started := Time.get_ticks_usec()
 			print("HORDE_CASE_BEGIN=" + JSON.stringify({"case": entry.id, "seed": entry.seed, "expected": entry.expected}))
 			await fixtures[entry.script].call(method, ctx)
 			ctx.cleanup()
@@ -77,7 +79,7 @@ func run() -> void:
 				executed.append(entry.id)
 			assertion_count += ctx.assertions
 			failures.append_array(ctx.failures)
-			print("HORDE_CASE_END=" + JSON.stringify({"case": entry.id, "assertions": ctx.assertions, "passed": ctx.failures.is_empty(), "completed": ctx.completed}))
+			print("HORDE_CASE_END=" + JSON.stringify({"case": entry.id, "assertions": ctx.assertions, "passed": ctx.failures.is_empty(), "completed": ctx.completed, "elapsed_seconds": (Time.get_ticks_usec() - case_started) / 1000000.0}))
 	var selected_discovery: Array[Dictionary] = []
 	for found in discovered:
 		for entry in selected:
@@ -91,6 +93,6 @@ func run() -> void:
 		print("HORDE_RECORDED_WARNING=" + warning)
 	for failure in failures:
 		print("HORDE_SUITE_FAILURE=" + failure)
-	print("HORDE_SUITE_END=" + JSON.stringify({"required": selected.size(), "registered": manifest.size(), "authored": authored.size(), "deferred": staged.size(), "excluded": manifest.size() - selected.size(), "scope": "foundation" if foundation_only else "all", "pending": pending.size(), "executed": executed.size(), "assertions": assertion_count, "passed": failures.is_empty()}))
+	print("HORDE_SUITE_END=" + JSON.stringify({"required": selected.size(), "registered": manifest.size(), "authored": authored.size(), "deferred": staged.size(), "excluded": manifest.size() - selected.size(), "scope": "foundation" if foundation_only else "all", "pending": pending.size(), "executed": executed.size(), "assertions": assertion_count, "passed": failures.is_empty(), "elapsed_seconds": (Time.get_ticks_usec() - suite_started) / 1000000.0}))
 	OS.remove_logger(error_monitor)
 	quit(0 if failures.is_empty() else 1)

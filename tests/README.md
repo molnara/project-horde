@@ -70,6 +70,27 @@ See the [Batch 3 audit and clause map](../docs/verification/dx-001-batch3.md)
 for actual evidence and outstanding human requirements.
 There is no engine-diagnostic suppression or reduced gameplay expectation.
 
+DX-001 Batch 4 adds passive monotonic timing: native `HORDE_CASE_END` and
+`HORDE_SUITE_END` receipts include `elapsed_seconds`; launcher child records in
+`results.json` include `ElapsedSeconds`, and `timing.json` records aggregate
+validation elapsed seconds/exit/scope. Native case timing includes setup/body/
+cleanup/diagnostics; suite timing includes discovery and reconciliation. Child
+timing includes process launch, stream/log handling and diagnostic classification.
+Aggregate timing includes setup, checks, infrastructure and restoration through
+writing `results.json`, excluding its own timing-receipt write and shell startup.
+Timing is observational and never affects pass/fail or timeouts.
+
+Batch 4 consolidates only the repeated `record_frame`/`record_step` API assertions
+in `profile.bounded_late_failure`: each exact method diagnostic remains once,
+while all 1,000 continuation callback pairs, the 1,050,001-callback stress stream
+and every behavioural assertion remain. Full scope still requires 88 cases;
+assertions become 4,144 (from 6,142). All six Batch 3 cases and their durations,
+three restart cycles and thresholds are unchanged. See the
+[Batch 4 measurement and coverage report](../docs/verification/dx-001-batch4.md)
+for actual before/after costs and limits; fewer assertions do not establish a
+speedup. No execution tier is introduced here. T052 still requires independent
+owner SC-004 evidence; use the existing quickstart controls/presentation journey.
+
 Phase 3B profiling repair: `profile.bounded_late_failure` now persists and rereads
 all 1,050,001 synthetic callbacks exactly, including every chunk boundary/tail,
 one injected stall and an endpoint gap. Statistics cases compare streamed

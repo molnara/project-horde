@@ -2835,3 +2835,28 @@ T033/T041/T048 closures are preserved. Human playtest/rendered profile smoke UNR
 no fresh SC-006/007 qualification, profile report or T053–T056 work. SC-005 remains
 future/unverified. No assertion cleanup/cost benchmarking/tiering, alternative
 Windows sandbox/certificate troubleshooting, staging, commit or push.
+
+## DX-001 Batch 4 — assertion cleanup and measured execution, 2026-10-03
+
+Batch 4 completed; stop for review. HEAD `c9978527621b1850b4a54ff4610f3040a99a0d9a`,
+initial status clean. [Batch 4 evidence](dx-001-batch4.md) records actual costs,
+environment, source/receipts, removals and equivalent retained diagnostics.
+Both approved contained executions of
+`C:\GameDev\project-horde\tools\validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240`
+PASSED exit 0: 38 parses, 88/88 cases, zero pending/deferred/excluded, normal/
+Profile startup, 163 infrastructure assertions and four restorations.
+Baseline aggregate/native suite: 118.775031/96.873584 seconds, 6,142 assertions;
+final: 118.090575/96.815639 seconds, 4,144 assertions. No causal speedup claim
+from one pair. Evidence sessions: `20261003T190404339-22cc7fee048a475e93bee07c90a01124`
+and `20261003T190633709-610b11ffc3a544a2a03c166b8b949348` under `.cache/validation/`.
+
+Only 1,998 repeated method-presence assertions in one stable closed-capture loop
+were consolidated; all 1,000 callback pairs, million-callback stress coverage
+and behavioural/late-fault checks remain. All six Batch 3 cases and their original
+durations/cycles/thresholds remain unchanged and passed. Passive monotonic timers
+add measurement receipts without acceptance decisions. No new tests or tiers.
+T052 remains open for independent owner SC-004 evidence; human/rendered checks
+UNRUN, SC-006/007 and T053–T056 unstarted, SC-005 future/unverified. Production/
+tuning/requirements/task states unchanged; no commit or push. The latest
+[DX-001 handoff](../development/dx-001-autonomous-qa.md) supplies exact separately
+authorized Batch 5 instructions.
