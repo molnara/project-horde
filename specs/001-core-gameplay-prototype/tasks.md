@@ -145,7 +145,7 @@ SC-003 are satisfied; full feature/integrated acceptance remains Phase 6 work.
 
 - [X] T049 Reconcile `specs/001-core-gameplay-prototype/quickstart.md` with implemented files/modes/commands, exact default tuning, controls, containment prerequisites/timeouts/overrides/error policy, actual test manifest/coverage and manual procedures; distinguish implemented behavior from unverified acceptance and keep SC-005 explicitly future/unverified.
 - [X] T050 [P] Reconcile `docs/asset-provenance.md` against every actual mesh/material/font/audio source and visual replacement interface; record license/source for any unavoidable third-party item and remove undocumented or distinctive copied content without adding production art.
-- [ ] T051 Execute clean reproducible contained import, every-script parse, complete manifest-reconciled suite and main startup using `tools/validate.ps1 -Mode All`, including `tools/test-validation.ps1`; inspect logs/exit codes, investigate every unexpected failure, verify source UID tracking/generated exclusions and record exact results and unresolved blockers in `docs/verification/core-gameplay.md`.
+- [X] T051 Execute clean reproducible contained import, every-script parse, complete manifest-reconciled suite and main startup using `tools/validate.ps1 -Mode All`, including `tools/test-validation.ps1`; inspect logs/exit codes, investigate every unexpected failure, verify source UID tracking/generated exclusions and record exact results and unresolved blockers in `docs/verification/core-gameplay.md`.
 - [ ] T052 Have the product owner execute the integrated controls/boundaries/HUD/kill/contact/pause/resume/defeat/restart journey in `specs/001-core-gameplay-prototype/quickstart.md` without developer intervention; record observations for each FR clause/edge and SC-002–004 in `docs/verification/core-gameplay.md`, leaving unavailable owner participation/controls/visual/game-feel checks outstanding rather than substituting headless evidence.
 - [ ] T053 Pre-record actual engine/OS/GPU/driver/hardware/source revision/tuning and plan deviations in `docs/verification/prototype-profile.md` before `tools/validate.ps1 -Mode Profile`: standalone debug/no editor or debugger, Forward+ 1920×1080/100% scale, AA/VSync/frame cap/shadows/SSAO/SSIL/glow off, one directional light, 60 Hz physics; perform a separate 30-active-second warm-up, retain unsuccessful attempts and restart cleanly with normal vulnerability/default cap 50 unless changed tuning is explicitly recorded.
 - [ ] T054 Have the owner perform one uninterrupted normal Profile attempt reaching >=300 completed physics simulation seconds alive and continue it normally; in `docs/verification/core-gameplay.md` record actual simulation/tick/wall endpoint, normal spawning/pursuit/combat/vulnerability, later advancing time/responsive movement/view/unchanged tuning and a later scheduled spawn opportunity with timestamps, attacks when eligible and zero unexpected spawn failures throughout continuation; preserve partial window success after later death without claiming unobserved continuation or splicing attempts (SC-006).
@@ -186,6 +186,30 @@ T051–T056 remain unchecked/unrun in this batch. SC-005 remains future/unverifi
 the cap-50 evidence is not extrapolated. Ready for Batch 2 T051–T052 after owner
 review, with no integrated Phase 6 acceptance, new five-minute session, commit
 or push. Stop after Batch 1.
+
+Phase 6 Batch 2 — 2026-10-03: T051 passed on source revision
+`31975d35d2dc5432633e0ae690409a293e7b5610` after a clean `.godot/` rebuild:
+37 parses, 82/82 manifest-reconciled cases, 5,843 assertions, normal/Profile
+startup and 146 infrastructure assertions; all 49 top-level records passed.
+The separate `test-validation.ps1` wrapper passed 13 Foundation cases with
+575 assertions, the same 146 infrastructure assertions and absent-TEMP
+restoration. Sandbox GODOT_BIN absence/certificate-store failure were retained
+and resolved by the documented binary override and approved contained retry
+outside isolation. Source audit verified 37 tracked unique UIDs, 33 production
+source references and zero tracked generated artifacts. No executable changes.
+The ledger contains exact commands/environment/results and A01–A15 integrated
+owner steps and clause/edge mapping. Subsequent owner feedback confirms the
+integrated journey was performed to the best of the owner's ability; all
+directly observed gameplay is accepted as successful, with no observable
+failure reported. The ledger reconciles that aggregate feedback separately
+from technical invariants and prior story acceptance. T052 remains unchecked:
+complete SC-004 action coverage/independence, three consecutive same-application
+cycles, both ten-real-second pause contexts, and specified HUD/defeat timing
+checks are not explicitly confirmed in this qualified report. No per-check
+execution, timing or observation is invented. T053–T056 remain unrun. No five-minute
+session, tuning/profiling change, staging, commit or push; SC-005 future/unverified.
+Stop for review of the recorded owner acceptance and remaining confirmations
+before Batch 3; T051 is complete and T052 is not yet closed.
 
 ## Dependencies & Execution Order
 

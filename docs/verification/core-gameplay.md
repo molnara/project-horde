@@ -2114,3 +2114,577 @@ files above modified and unstaged, no staged changes or untracked files; generat
 validation/profile/import artifacts remain ignored and untracked. No new five-minute
 profiling session, gameplay changes, staging, commit or push. **Stop after T048
 and await owner review.**
+
+## Phase 6 Batch 2 — T051 passed; T052 owner feedback reconciled, closure pending
+
+**Recorded:** 2026-10-03. Scope is T051–T052 only, governed by constitution
+v1.0.0 and the reconciled [quickstart](../../specs/001-core-gameplay-prototype/quickstart.md).
+Validated branch: `001-core-gameplay-prototype`; source revision:
+`31975d35d2dc5432633e0ae690409a293e7b5610`. The initial working tree was clean.
+Both read-only requirements checklists passed (16/16 and 36/36); no
+`.specify/extensions.yml` exists. No production/test/scene/resource/tuning,
+launcher or profiling semantics changed. Historical acceptance above remains
+historical; it does not supply observations for the new integrated journey.
+
+### T051 automated evidence — PASSED
+
+Actual environment: PowerShell **7.6.6** on Microsoft Windows 10 IoT Enterprise
+LTSC, 64-bit, build/version **19044 / 10.0.19044**; Intel Core i7-12700KF;
+34,099,900,416 bytes physical RAM reported by CIM (32 GB installed reference);
+NVIDIA GeForce RTX 3080, Windows driver version **32.0.16.1062**; timezone
+`Eastern Standard Time`. GPU VRAM was not independently measured. Engine is the
+existing console Standard executable
+`C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe`, verified as
+`4.7.2.stable.official.ed1daf0bf`, non-Mono, editor-capable, PE console subsystem.
+These are headless checks; actual rendered GPU performance is unmeasured.
+PowerShell 7.6.6 is the execution-shell deviation from the quickstart's Windows
+PowerShell wording; Windows PowerShell 5.1 was not separately tested.
+
+For clean import, the existing generated `.godot/` was moved to
+`.cache/t051-import-before` after checking both resolved paths stayed under
+`C:\GameDev\project-horde`, rejecting reparse-point roots and refusing to
+overwrite an existing backup. `.godot/` was confirmed absent before validation.
+The first successful full run rebuilt it from tracked sources/UIDs. The wrapper
+then validated that imported project. The old cache and all new artifacts remain
+ignored; nothing outside the workspace was moved or modified.
+
+Commands actually executed from the repository root, in order:
+
+```powershell
+./.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
+./tools/validate.ps1 -Mode All
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+# Retry the same command through approved execution outside sandbox isolation:
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+# Also through approved execution outside sandbox isolation:
+./tools/test-validation.ps1 -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+./.cache/t051-audit.ps1
+git check-ignore -v .godot/uid_cache.bin .cache/validation/20261003T160901684-0951428d062b466586829e4bf6ecf3ef/results.json .cache/t051-import-before .cache/profile
+git diff --exit-code -- scripts tests scenes resources project.godot
+git diff --check
+```
+
+The prerequisite check exited 0. The bare All command was **BLOCKED**, exit 1,
+before engine launch: sandbox-visible Process/User/Machine GODOT_BIN scopes
+were all absent/empty. The explicit sandbox command was **FAILED**, launcher
+exit 1: version/help passed, but `paths` emitted
+`ERROR: Failed to read the root certificate store.` at
+`get_system_ca_certificates (platform/windows/os_windows.cpp:2582)` with child
+exit 0. Import/parse/suite/startups/infrastructure were **UNRUN** in that attempt.
+Failed session: `.cache/validation/20261003T160839471-f06ef2aeb9a34872bc953e5da6d436c4/`.
+The genuine engine error was retained and not suppressed or converted to success.
+The approved retry outside isolation resolved certificate access while preserving
+the launcher's actual-path containment. No certificate/global configuration changed.
+
+Successful full session:
+`.cache/validation/20261003T160901684-0951428d062b466586829e4bf6ecf3ef/`.
+Successful wrapper session:
+`.cache/validation/20261003T160938844-18b2a4f6e08845a5a18774d4ef413352/`.
+Both launcher/wrapper processes exited **0**, with **49/49 PASSED** top-level
+records in each `results.json`. Each session retains exact per-child commands,
+exits, timeouts, classified diagnostics, stdout/stderr and engine logs;
+`verified-paths.json`, `infrastructure-fixtures.json` and
+`infrastructure-child-results.json` provide containment and fixture evidence.
+These paths are actual generated session identifiers, not owner playtest times.
+
+| Required check | Full All result | Wrapper result |
+|---|---|---|
+| Version/help/actual-path preflight | PASSED, each exit 0 | PASSED, each exit 0 |
+| Import/load | PASSED, clean `.godot/` rebuild, exit 0 | PASSED, exit 0 |
+| Every GDScript parse | PASSED, 37/37: 20 production + 17 test/support, each exit 0 | PASSED, same 37/37 |
+| Manifest/discovery/execution | PASSED, 82 authored/registered/required/executed, 5,843 assertions | PASSED, 82 authored/registered; 13 required/executed Foundation cases, 575 assertions; 69 intentionally excluded gameplay cases |
+| Deferred/pending cases | 0 / 0; excluded 0 | 0 / 0; Foundation exclusion is declared scope |
+| Normal main startup | PASSED, exit 0 | PASSED, exit 0 |
+| Profile main startup | PASSED, exit 0, required receipt/manifest/raw stream/outcomes validated | PASSED, same lifecycle checks |
+| Infrastructure | PASSED, 146/146 assertions | PASSED, 146/146 assertions |
+| APPDATA/LOCALAPPDATA/TEMP/TMP restoration | PASSED, all four | PASSED, including initially absent TEMP |
+| Wrapper's extra restoration checks | Not applicable | PASSED, all five: APPDATA/LOCALAPPDATA/TEMP/TMP/GODOT_BIN; TEMP and GODOT_BIN remained absent |
+| Unexpected errors/ambiguous severity/warnings | 0 / 0 / 0 in required engine checks | 0 / 0 / 0 in required engine checks |
+
+Full suite counts reconciled to `HORDE_CASE_END` records and actual ten-file
+manifest/discovery; every case completed with positive assertions:
+
+| Case group / source file | Cases | Assertions |
+|---|---:|---:|
+| definitions / `unit/test_definitions.gd` | 8 | 510 |
+| runner / `unit/test_runner_contract.gd` | 5 | 65 |
+| movement / `unit/test_movement_arena.gd` | 6 | 178 |
+| combat / `unit/test_combat.gd` | 7 | 161 |
+| survival / `integration/test_survival_loop.gd` | 13 | 469 |
+| profile / `unit/test_profile_capture.gd` | 9 | 2,336 |
+| defeat / `integration/test_defeat_restart.gd` | 9 | 824 |
+| restart_evidence / `integration/test_restart_evidence.gd` | 7 | 160 |
+| pause / `integration/test_pause_resume.gd` | 10 | 826 |
+| pause_profile / `integration/test_pause_profile.gd` | 8 | 314 |
+| **Total** | **82** | **5,843** |
+
+Phase 3B/foundation: 48 cases / 3,719 assertions; Phase 4: 16 / 984;
+Phase 5: 18 / 1,140. Infrastructure assertions are separate from suite totals.
+The 22 retained infrastructure children exercise controls, real Profile restart
+and segments, failed restart status, informational/warning output, engine errors,
+capture/stream/sidecar faults, native error monitoring/assertions, parse/runtime/
+resource faults, timeout cleanup, and all five runner reconciliation failures.
+Five children pass normally; seventeen deliberately fail as their enclosing checks
+require. Seven deliberately fail at exit 0 (missing earlier segment stream,
+zero-exit error, capture failure, truncated capture, sidecar failure, runtime
+exception and missing resource); nine exit 1; the timeout record uses exit -1
+with `TimedOut=true`. Original
+diagnostics and owned-process cleanup assertions are retained. The one deliberate
+`fixture-warning` emits `WARNING: HORDE fixture warning`, recorded separately.
+These fixture outcomes are verified error-policy evidence, not gameplay failures.
+
+All default limits were used: version/help/path probe 30 s, import 180 s,
+each parse 30 s, suite 120 s, each startup 30 s. Startup engine arguments were
+`--headless --path C:\GameDev\project-horde --quit-after 120`, with
+`-- --profile` for Profile; 120 counts iterations, not seconds. No timeout
+override or optional `-RenderedProfileSmoke` was used. Infrastructure enforced
+its own intentional one-second timeout; no required check timed out. Actual
+user/data/config/cache/editor paths were checked under the unique workspace
+session; project import stayed under `.godot/`. Profile startups and synthetic
+endpoint/segmentation cases are diagnostic and establish no owner survival/FPS.
+
+Source audit **PASSED**, exit 0: 37 unique, valid, tracked `.gd.uid` sidecars
+for all 37 production/test scripts; 33 literal production source references
+exist and are tracked across project/scenes/resources/scripts. There are **zero
+explicit `uid://` references in production source text**; resource loading uses
+tracked paths. Clean import/parse/startup additionally exercise resolution.
+The two `.cache/` literals in Main/capture are documented output containment
+paths, not source resources. Zero tracked generated cache/import/log/temp/raw
+frame artifacts; `git check-ignore -v` confirmed `.godot/` and `.cache/` rules.
+`git diff --exit-code -- scripts tests scenes resources project.godot` passed,
+so clean import did not alter tracked source or UIDs. Audit script/results and
+reference inventory are retained only under ignored `.cache/t051-*`.
+
+Ancillary investigations: sandbox CIM OS/CPU/RAM/GPU queries reported access
+denied, although that compound shell returned 0; they were not counted as
+successful environment checks. Approved read-only CIM retry with terminating
+errors passed and supplied the environment above. The initial reference audit
+twice exited 1 by treating Main's profile destination and capture's cache root
+as tracked inputs. Inspection identified both `ProjectSettings.globalize_path`
+output literals; the corrected audit checks loaded source references and reports
+those two destinations separately. Its initial diagnostic counter also counted
+null fields on non-engine records; inspecting engine records directly corrected
+the counter to zero. No production/test change or scope expansion was needed.
+
+**T051 is complete.** No remaining required automated blocker, skipped or unrun
+check. The optional rendered fixture and Windows PowerShell 5.1 run are unrun,
+not required checks claimed as passed. T052 owner feedback has been received;
+its accepted observations and remaining closure requirements are reconciled below.
+
+### T052 owner procedure — prepared checks; aggregate owner acceptance recorded below
+
+The owner has now reported performing the integrated journey to the best of
+their ability, with all observed gameplay behaving as expected and no observable
+failures. The A01–A15 entries retain the prepared procedure and expected results;
+they are not individual execution records. Their individual details were not
+supplied. See the owner-feedback reconciliation below for accepted observations,
+technical evidence and remaining closure requirements.
+
+Perform this after T051 in normal contained **Play**, using the quickstart's
+unchanged default resources. Run it yourself without developer intervention:
+
+```powershell
+Set-Location 'C:\GameDev\project-horde'
+./tools/validate.ps1 -Mode Play -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+```
+
+Use the standalone 1920×1080 view with working Forward+ graphics. Keep the
+console open; close with Alt+F4/window close at the end and report launcher
+result/evidence path. Do not use the editor, debug injection, changed tuning or
+Profile. Play has no automatic timeout. No five-minute session is requested.
+Record your actual date, revision/working-tree state, OS/CPU/RAM/GPU/driver,
+window resolution/settings and any deviation; do not assume the automated
+environment is your manual environment. A stopwatch is useful; optional video
+makes subsecond delays easier to review, but recording software is not required.
+
+Movement is WASD; mouse changes yaw/depression; Escape toggles alive
+Active/Paused once per press. Release/repress Escape; release other keys before
+transitions and press movement afresh after resume. Restart is offered only in
+Game Over and accepts mouse click, Enter/keypad Enter or Space. There is no
+manual fire/jump/sprint. Cyan is the player, orange-red is the one enemy type;
+yellow attack lines and white hit flashes last 0.12 active seconds.
+
+Perform A01–A11 during ordinary attempts. Kite by moving around the open arena
+when you need time; the player moves 6 m/s versus enemies' 3 m/s. If defeated
+before a check, restart normally and identify the new attempt in your notes.
+Complete A12–A14 as **three consecutive defeat/restart cycles in the same
+application**, counting the first deliberate defeat as cycle 1. Finish A15 in
+the final fresh run. Do not turn a missed observation into a pass.
+
+**A01 — Fresh presentation (FR-003/006/009/011; SC-004).**
+Steps: On launch, look at the player, floor, visible boundary strips and HUD;
+note health, time and initial view before moving. Repeat this immediate inspection
+after each counted restart.
+Expected: One cyan player at the center, flat contrasting floor, identifiable
+limits; health `100 / 100`, time `00:00`, no inherited enemies; Active pointer
+captured, no Paused/Game Over/Restart overlay.
+Timing/setup: Initial zero time/empty population lasts less than 1.5 active s;
+use a restart if you missed launch.
+Report: Recognizability/readability, actual fresh values/view/population, any
+unexpected overlay or stale actor. Status/observation: **Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A02 — Directions, cancellation and stopping (FR-001; diagonal/opposed/release
+edges; SC-004).**
+Steps: Away from walls, tap W, S, A and D separately, releasing each. Hold W+S,
+then A+D briefly. Compare approximately one second of W with one second of W+D
+on open floor; release all keys after each. Rotate mouse yaw about 90° and repeat
+the four individual keys. While moving, rotate yaw and see movement respond.
+Expected: Forward/back/left/right follow current horizontal camera orientation;
+opposed axes cancel; release stops; diagonal travel has comparable total speed;
+new yaw changes movement direction promptly.
+Timing/setup: Use short trials away from perimeter/enemies. No coordinate/ruler
+HUD exists; this is an observable speed check, not an exact distance measurement.
+Report: Each key before/after yaw, cancellation/stop, apparent diagonal speed,
+simultaneous mouse/movement responsiveness and any uncertainty. **Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A03 — Mouse limits and follow (FR-001/002; SC-004).**
+Steps: Stop moving and move mouse horizontally, then up/down. Continue vertical
+motion to each limit; try further motion. Walk while observing follow at each
+pitch, returning to a comfortable view afterward.
+Expected: Mouse alone changes view but never player position; pitch never adds
+vertical travel. Camera follows immediately; cyan player remains visible, with
+no inversion or floor crossing. Depression stops within configured 15–65°.
+Timing/setup: Active only; numeric angles need not be measured. Recheck visibility
+at perimeter/corners in A04.
+Report: Rotation directions, both limits, visibility/follow, capture feel/jumps.
+**Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A04 — All boundaries and overlap (FR-003/004/008; containment/nonblocking
+edges; SC-004).**
+Steps: Traverse each of the four sides and four corners; hold movement outward
+briefly at each. At a corner try diagonal outward input and both pitch limits.
+Watch pursuing enemies at the perimeter. Walk through an approaching enemy or
+overlapping group, then escape into open space.
+Expected: Player/enemy bodies stay inside visible arena limits (centers inset
+by 0.4 m); no vertical escape, speed advantage or camera loss at corners. Actors
+can overlap without obstructing movement; enemies redirect and remain contained.
+Timing/setup: Keep moving to avoid lethal crowd contact; repeat missed corners
+on another normal attempt. No need to hold every corner until enemies arrive.
+Report: Sides/corners actually visited, actor escape/occlusion/blocking, enemies
+observed at limits. **Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A05 — Spawn cadence and pursuit (FR-004; safe-spawn edges; SC-004).**
+Steps: On a fresh launch/restart, stay moving and watch the first three spawn
+opportunities, then change direction/location and watch enemies follow. Where
+possible keep targets outside the weapon's 4 m range for this observation.
+Expected: No enemy immediately at reset; first spawn after 1.5 active s, then
+one at ordinary 1.5 s opportunities while capacity is available, one visual type;
+new actors start inside limits and strictly outside 1.2 m contact distance.
+Pursuit follows your current position and can reach contact.
+Timing/setup: Look for spawns around active 1.5, 3.0 and 4.5 s; HUD rounds to
+whole seconds and does not expose IDs/counts. Distinguish kills from missing spawns.
+Report: Observed first/next opportunities, type/placement, redirection/contact,
+any immediate spawn damage, burst or diagnostic. **Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A06 — Automatic hits, selection and kills (FR-005/006/007; no-target,
+reassessment/dead-source edges; SC-004).**
+Steps: Keep away from enemies first and observe no attack without eligibility.
+Let an approaching enemy enter weapon range, without pressing a fire control.
+Watch yellow line/white target flash and the eventual disappearance. If two
+enemies are visibly at unequal nearby distances, watch which receives the line.
+After a kill, move through its former location when no other enemy is contacting.
+Expected: Automatic attack identifies one nearest eligible living target; ready
+weapon attacks promptly, later hits about 0.6 active s apart. A fresh enemy takes
+three 10-damage hits to exhaust 30 health; death removes it promptly and it no
+longer moves, flashes, is targeted or damages you. Other living targets are
+reassessed at later opportunities.
+Timing/setup: Feedback is only 0.12 s; track one actor when possible. There is
+no enemy-health/debug-distance HUD. Do not report exact health, tied-distance
+ordering or exact 4 m eligibility unless actually observable; see edge table.
+Report: At least one witnessed kill, feedback clarity/cadence, absent-target
+behaviour, nearest-target observation or missing opportunity, post-kill effects.
+**Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A07 — Contact, vulnerability and independent damage (FR-006/008;
+overlap/multiple-contact edges; SC-004).**
+Steps: Note health. Move toward an approaching enemy and let it contact you;
+watch the decrement. Remain briefly if safe, then separate. If feasible, quickly
+leave and re-enter contact before one second elapses. Later allow two enemies
+to contact you, then escape and wait several active seconds without contact.
+Expected: Each ready living attacker removes 10 health on first contact;
+sustained contact respects that enemy's 1.0 active s interval, not every frame.
+Leaving stops contact damage; quick re-entry neither bypasses nor resets its
+remaining cooldown. Multiple ready enemies may remove 20 or more in one update;
+health never goes negative. Separation/waiting does not heal. Overlap does not
+block movement; there is no grace period.
+Timing/setup: Automatic weapon may kill the isolated enemy before a second
+contact. Try another naturally approaching enemy/group; identify crowd size and
+report any cooldown observation you could not isolate rather than guessing.
+Report: Actual before/after health, approximate hit spacing, separation/re-entry
+and no-healing observations, crowd size and vulnerability feel. **Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A08 — Active HUD/time (FR-009; SC-004).**
+Steps: Kite in one ordinary attempt to at least 65 completed active seconds;
+watch HUD throughout movement, attacks and health changes. Use a stopwatch from
+fresh-run readiness, stopping it during pauses; look for `01:05`. If defeated
+early, restart and identify the successful observation attempt separately.
+Expected: Current/max health stays readable and damage appears promptly; time
+starts zero and advances as MM:SS only in Active. At about 65 active s, display
+is `01:05`, within one displayed second under smooth simulation.
+Timing/setup: Wall stalls can make simulation lag the stopwatch; report stalls
+and timings instead of equating wall time to exact completed ticks. This is a
+65-second HUD check, not five-minute survival/profile acceptance.
+Report: HUD readability, health update, displayed time/stopwatch estimate,
+paused duration excluded and any stalls or inability to reach 65. **Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A09 — Ten-real-second pause during contact (FR-008/009/012; SC-003/004).**
+Steps: When taking contact damage while alive, release movement and press Escape
+once. Note health/time, actor positions, camera and any visible attack feedback.
+Hold Escape after this press for at least two seconds: it must stay paused.
+Release it, try WASD and mouse while paused, and wait at least ten real seconds
+total. Compare the noted values, then release all keys and press/release Escape
+once to resume; press movement afresh and escape the contact.
+Expected: Paused/Escape-to-resume overlay, readable HUD, released pointer,
+Restart hidden; zero gameplay/view/time/health changes, new spawns or attacks
+throughout pause. Existing visible feedback freezes. Resume recaptures mouse,
+keeps encounter/view, discards inactive mouse/input and causes no jump or burst.
+Timing/setup: Pause promptly after a contact hit to retain some cooldown. A
+different ready enemy may legitimately hit immediately after resume; note crowd
+context. If feedback was absent at pause, record that clause as unobserved.
+Report: Before/after health/time/view/positions, measured real pause duration,
+held-Escape response, overlay/pointer, feedback observation, resume effects.
+**Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A10 — Preserved spawn delay (FR-004/012; between-event/no-catch-up edges;
+SC-003/004).**
+Steps: In a fresh run, press Escape roughly half a second after readiness,
+before the first enemy spawns. Note empty encounter/health/time/view, wait ten
+real seconds with attempted WASD/mouse, release keys, then press/release Escape
+to resume. Watch first spawn and the following two opportunities.
+Expected: No spawn while paused; first spawn waits roughly the remaining one
+active second after resume, rather than immediately, a new full 1.5 s, or a
+ten-second backlog. Subsequent opportunities return to ordinary cadence.
+Timing/setup: Repeat after a counted restart if launch setup was missed. A
+stopwatch/video supports the approximation; there is no deadline debug HUD.
+Report: Estimated active elapsed before pause and real pause duration,
+resume-to-first-spawn delay, later cadence and any burst/reset/early event.
+**Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A11 — Preserved weapon/contact delays and repeated transitions (FR-005/008/
+009/012; inactive-input, feedback, no-reset/no-catch-up edges; SC-003/004).**
+Steps: Press Escape immediately after a visible weapon hit while its target
+remains alive and eligible. Wait ten real seconds, resume, and watch the next
+hit. Separately pause immediately after a contact decrement while the same
+enemy remains alive; wait ten real seconds, then resume and watch the next
+decrement. Repeat at least two more short pause/resume cycles during ordinary
+movement, releasing/repressing Escape and pressing movement afresh.
+Expected: Eligible weapon/contact events wait their remaining portions of
+0.6/1.0 active s, not wall pause time or a reset full interval; no catch-up burst.
+Only one toggle per press; living encounter/HUD/view persist and fresh input
+works each time. Feedback visible at pause persists until its remaining active
+duration expires after resume. Restart stays absent in Active/Paused.
+Timing/setup: Readiness may already be reached when you pause late, targets
+may die/leave range, and different contacts have independent deadlines. Report
+those circumstances; don't force fixtures or claim exact subsecond timing.
+Report: What event preceded each pause, pause duration, same target/contact
+availability, approximate resume delay, cycle count, pointer/input/view behaviour,
+feedback if visible and any unobserved clause. **Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A12 — Defeat and terminal freeze (FR-006/007/009/010/012; lethal-order,
+multiple-contact/Game-Over-Escape edges; SC-002/004).**
+Steps: Deliberately stop/enter a crowd until health reaches zero. Note final
+time and population/view. Wait ten real seconds trying WASD, mouse and several
+discrete Escape presses; release all keys afterward. Perform this for each
+counted defeat, identifying cycles 1, 2 and 3.
+Expected: Zero health, Game Over, matching final survival time, readable HUD,
+released pointer and focused/actionable Restart. No movement/camera/spawning/
+attacks/damage/time after defeat; Escape never resumes. Defeat presentation
+occurs once and the final result stays fixed; attack feedback is cleared.
+Timing/setup: Multiple contacts can kill immediately; report crowd context.
+Normal visuals cannot establish same-tick internal event order or old callback IDs.
+Report: Final health/HUD/overlay time, ten-second durations, terminal freeze,
+Restart visibility/focus, any post-defeat change or repeated transition.
+**Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A13 — Three clean restarts with all activation paths (FR-011; SC-002/004).**
+Steps: After cycle 1's A12 check, click Restart; after cycle 2, activate initially
+focused Restart with Enter; after cycle 3, use Space. Keep the same application
+open throughout. Immediately inspect A01 values after each, then watch the
+first spawn and ordinary cadence. Rotate/move/damage the player before the
+next defeat so each restart has changed state to clear.
+Expected: Exactly one fresh encounter per activation, health 100/100, 00:00,
+center/initial yaw 0° and depression 35°, no old enemies/carried damage, ready
+weapon on first eligibility, full first-spawn delay 1.5 active s. Mouse captured;
+Game Over/Restart gone; normal controls/cadence return each time.
+Timing/setup: Capture fresh values immediately; naturally resumed simulation
+starts advancing at once. The third restart opens a fourth fresh attempt.
+Report: Cycle 1/2/3 activation method, reset values/view/population, first-spawn
+delay, later attack/damage behaviour and any duplicate/stale encounter.
+**Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A14 — Repeated/stale activation guard (FR-010/011/012; repeated-Restart,
+inactive-restart/old-encounter edges; SC-002/004).**
+Steps: During one of the counted Game Overs, activate Restart rapidly twice
+(double click or two Enter presses). In the resulting Active run press Enter
+and Space again; also try them while Paused, then resume. Observe the encounter
+through at least three ordinary spawn opportunities.
+Expected: One fresh run from the Game Over intent, no second reset/old actors,
+duplicate spawn cadence or damage. Enter/Space do not restart Active/Paused;
+Restart is unavailable there. Escape still resumes only the living paused run.
+Timing/setup: Combine with A13 without adding an application relaunch. Internal
+generation/ID/failure counters are fixture evidence, not visible HUD values.
+Report: Repeated input used, any reset/duplication, active/paused guard response,
+post-restart cadence and old-actor/damage symptoms. **Individual execution/detail not separately reported; observed subset accepted below**.
+
+**A15 — Integrated usability, console and close (FR-001–012 observable journey;
+SC-004).**
+Steps: In the final fresh run demonstrate WASD, mouse, a normal pause/resume,
+then close via Alt+F4/window close. Review the console's launcher result and
+any warning/error/application diagnostic. Confirm which of A01–A14 you actually
+completed without developer intervention.
+Expected: Controls/contrast/HUD/feedback/overlays are usable across the complete
+loop; close returns to console normally. Unexpected spawn/configuration/runtime
+diagnostics are failures to investigate even if play continued or exit was zero.
+Timing/setup: Console/log evidence survives closure in the printed contained
+session directory. No five-minute run, Profile capture or tuning changes needed.
+Report: Difficulty/game feel, unclear controls/visuals, intervention if any,
+unobserved checks, console exit/result and evidence path, exact diagnostic text.
+**Individual execution/detail not separately reported; observed subset accepted below**.
+
+### T052 clause/edge evidence boundaries
+
+The owner accepts the gameplay they directly observed during the integrated
+journey. Individual A01–A15 executions, omissions and measurements were not
+itemized; their procedure markers refer to those missing details, not absence
+of owner participation. Automated coverage below is separate; it cannot replace
+missing controls/visuals/game-feel or integrated owner evidence.
+For clauses requiring invisible values or controlled geometry/data, normal Play
+offers no debug HUD/setup; record the owner's limit explicitly at reconciliation.
+
+| Clauses/edges | Owner observation procedure | Existing executed technical coverage / limit |
+|---|---|---|
+| FR-001 directions/yaw/equal speed/opposed/release/planar; diagonal wall contact | A02–A04 | `movement.directions`, `movement.containment`, `survival.order`; exact distances automated |
+| FR-002 yaw/pitch/follow/player visibility/mouse-only/no floor crossing | A03–A04, A09/A11 | `movement.mouse_follow`; visuals/capture require owner |
+| FR-003 flat/visible/original placeholders/player+enemy containment | A01/A04/A05 | `movement.containment/pursuit`; provenance retained from T050 |
+| FR-004 first/fixed cadence/type/inside+strictly outside contact/pursuit/reachability | A04/A05/A10 | `movement.selection/pursuit`, `survival.cadence_cap/deadlines` |
+| FR-004 full-cap skips/next-opportunity refill/no backlog; configurable cap/interval | Report only if naturally exposed in A05/A14; no forced cap run/tuning edits | `survival.cadence_cap/default_custom_cap/subtick_long_step`; cap 50 is resource-verified, not owner-counted |
+| FR-004 unexpected selection/factory/partial failure consumed/reported/counter/invalid attempt | A15 diagnostic review; don't inject faults | `survival.selection_fault/instantiation_fault/partial_fault`; failure counter invisible |
+| FR-005 nearest single living/inclusive range/tie order/positive damage/cadence/ready/reassessment/feedback; no target | A06/A11 | `combat.targeting/weapon_readiness/feedback`; exact 4 m boundary, equidistance/spawn-ID ties and changed-resource range/cadence are deterministic fixtures, owner observation unavailable unless exposed |
+| FR-006 independent maximum/current health/subtraction/zero clamp/no regeneration | A01/A06/A07/A12/A13 | `combat.health/invalid_damage`; per-enemy internal health/excess damage lack manual inspection |
+| FR-007 synchronous removal/no subsequent move/target/damage/contact; killed-before-contact | A06/A12 | `combat.registry_death`, `survival.order/lethal`; same-step order technical only |
+| FR-008 inclusive XZ 1.2 m threshold/immediate/independent 10 damage+1 s cadence/separation/re-entry/nonblocking/multiple contacts | A04/A07/A09/A11/A12 | `combat.contact`, `pause.contact_delays`; exact threshold/changed distance require fixtures; report unisolated cooldowns |
+| FR-009 current/max/fresh/time format/65 s/next-step damage/visible inactive HUD | A01/A07–A13 | `survival.hud`, `pause.hud_restart`, `defeat.final_hud`; owner readability/65 s stay pending |
+| FR-010 zero/one lethal transition/final commit/overlay+Restart/complete freeze/no Escape resume; coincident later events | A12 | `survival.lethal`, `defeat.lethal_commit/freeze_escape/final_hud`, `pause.game_over_escape`; coincident events cannot be arranged reliably by owner |
+| FR-011 exactly one reset/full spawn delay/ready weapon/all state/three cycles/repeated or stale intents/invalid restart | A01/A13/A14 | `defeat.three_cycles/guarded_requests/stale_callbacks_removal/invalid_restart/failure_isolation`, `restart_evidence.*`; generation/IDs/counters, stale callbacks and invalid-data recovery technical only; no resource edit requested |
+| FR-012 once-per-press/frozen simulation+view+feedback+deadlines/UI/preserved resume/no catch-up/input clearing/invalid state intents | A09–A11/A14 | All ten `pause.*` cases plus `pause_profile.*`; exact deadlines/old callbacks technical; owner timing/pointer/visuals pending |
+| SC-002 three consecutive defeat→restart cycles in one application | A12–A14 | Technical cycles and prior story acceptance passed; current integrated cycle count/session continuity not supplied |
+| SC-003 ten real seconds paused during combat, frozen state and preserved delays | A09–A11 | Technical freeze/delay fixtures and prior story acceptance passed; current timed contexts not supplied |
+| SC-004 independent integrated controls/boundaries/HUD/kill/damage/pause/resume/defeat/restart | A01–A15 | Owner reports an integrated journey with successful observed behaviour; complete named action set/independence not explicitly confirmed; cannot be established headlessly |
+
+No owner acceptance is claimed for the exact-boundary/tie/cap/configuration/
+internal-lifecycle edges just because their fixtures pass. Report missed natural
+opportunities as UNOBSERVED with a reason; any required unresolved owner clause
+remains pending for reconciliation. SC-001/final feature closure is not awarded
+here. SC-005 remains **future/unverified**. T053–T056 and new SC-006/007 evidence
+are unrun and outside this batch.
+
+### Owner evidence return structure — aggregate feedback received; details not supplied
+
+Return actual session/environment details and one entry per A01–A15:
+`ID — PASS / FAIL / UNOBSERVED; attempt/cycle; steps actually performed;
+observed behaviour; health/time before→after where applicable; measured pause
+duration/estimated event delay; deviations/uncertainty; evidence path if any`.
+Use actual execution dates/times only; no timestamps or measurements are presumed.
+For A12/A13 identify all three cycles and click/Enter/Space methods. For A15 state
+whether you completed the integrated journey without developer intervention.
+
+Required evidence is your written per-check observations, environment/revision,
+the two ten-real-second pause contexts (contact and between events), observed
+resume delays, three cycles and the Play launcher result/diagnostics. Supply
+exact diagnostic text and steps for failures. Screenshots/video are optional;
+useful captures are fresh HUD, before/after paused HUD/view, Game Over/final time,
+and a short resume/restart clip. Static screenshots alone cannot demonstrate
+frozen simulation or preserved subsecond delays. Save any chosen captures inside
+the workspace's ignored `.cache/`; do not stage generated evidence.
+
+| Evidence field | Actual owner value |
+|---|---|
+| Session date/time, source revision and working-tree state | PENDING |
+| Machine, driver, window/settings/default-tuning confirmation | PENDING |
+| A01–A08 observations, including witnessed kill/damage/65-second HUD | Observed gameplay accepted in aggregate; individual checks and 65-second observation not identified |
+| A09 contact pause: duration, before/after, resume | Observed gameplay accepted in aggregate; contact context/duration/values not supplied |
+| A10 between-spawn pause: duration, before/after, resume delay | Observed gameplay accepted in aggregate; context/duration/delay not supplied |
+| A11 weapon/contact/feedback delays and repeated cycles | Observed gameplay accepted in aggregate; individual timing/feedback/cycle observations not supplied |
+| A12/A13 cycles 1/2/3: defeat freeze, activation, fresh values/cadence | Observed gameplay accepted in aggregate; number/consecutiveness/application session and activation methods not supplied |
+| A14 repeated/Active/Paused activation guards | Observed gameplay accepted in aggregate; specific guard trials not identified |
+| A15 usability, independence, console result/evidence paths | Owner reports performing the integrated journey; intervention status/console result/paths not supplied |
+| Missing observations, deviations, failures and follow-up reconciliation | No observable failure reported; unobserved subset not identified; gaps listed below |
+| Integrated FR/SC-002–004 owner outcome and T052 closure | Observed behaviour successful; complete current integrated criteria not yet confirmed; T052 remains open |
+
+### T052 owner-feedback reconciliation and closure assessment
+
+**Evidence source:** the product owner's follow-up request in this conversation:
+
+> I have performed the integrated owner acceptance journey to the best of my
+> ability as a human player. All gameplay behaviour I was able to observe worked
+> as expected, and I encountered no observable failures.
+
+**Owner acceptance result: SUCCESSFUL for directly observed gameplay.** Owner
+participation is now established; the report is positive acceptance of the
+observed integrated experience. No observable failure was reported, and no
+production/test correction is indicated. The report is aggregate and qualified
+by what the owner could observe. It supplies no individual behaviour descriptions,
+omission list, counts, durations, health/time readings, execution date/time,
+screenshots, machine/session revision, tuning confirmation or console outcome.
+None is inferred or fabricated. In particular, the expected results in A01–A15
+are not converted into actual observations, and no individual check is declared
+independently executed or failed. Missing detail is an evidence gap, not a
+reported gameplay failure.
+
+The preceding FR clause/edge mapping still provides the specific technical
+cross-references. T051's already executed clean full suite (82 cases / 5,843
+assertions, all scripts/import/startups and infrastructure passed) is retained
+without rerunning it for this documentation update. Evidence is reconciled as:
+
+| Evidence class | Accepted result and limits |
+|---|---|
+| Human-observable movement/camera/arena/HUD, spawning/pursuit/hit/kill/contact and pause/defeat/restart presentation (FR-001–012, A01–A15) | SUCCESSFUL owner acceptance for the subset directly observed. The owner did not identify that subset by clause; this does not assert every listed action, visual limit or timing check was performed. |
+| Exact normalized distances/yaw/pitch bounds, inclusive range/contact thresholds, nearest/tied spawn-order selection and health isolation (FR-001/002/005/006/008) | PASSED existing deterministic `movement.*` and `combat.*` evidence. No ruler/debug-distance/enemy-health HUD exists; these are technically verified, not claimed as new human measurements. |
+| Cap-full opportunity consumption/refill, changed-definition cadence/range/contact, spawn faults/counters and invalid configuration (FR-004/005/008/011) | PASSED existing definition, survival and defeat fixtures referenced above. No new manual full-cap run, tuning edit or injected failure is reported or required by this normal-play journey. |
+| Same-tick kill/contact/lethal ordering, removed actors, generations/IDs, old callbacks and exactly-once restart guards (FR-007/010/011) | PASSED `survival.order/lethal`, `defeat.*` and `restart_evidence.*`. Internal invariants are not separately visible to a human player; absent observable failure is consistent with, but does not independently prove, them. |
+| Exact remaining spawn/weapon/contact/feedback deadlines, queued input clearing and frozen inactive fields (FR-012) | PASSED `pause.*` and `pause_profile.*`. Owner-observed pause/resume behaviour is accepted where observed; exact deadline/clock values were not measured in the owner report. |
+| SC-002 / SC-003 historical acceptance | Retain the Phase 4 T041 owner closure and Phase 5 T048 owner-reported acceptance above, alongside T051 regression evidence. Those recorded story results remain passed; they are not reclassified as newly executed Phase 6 cycles or timed pauses. |
+| SC-004 current integrated journey | Owner execution and successful observed gameplay are recorded. The qualified report does not establish the complete named action set or absence of developer intervention, so full SC-004/T052 closure is not asserted yet. |
+
+**T052 cannot yet legitimately be marked complete from this report alone.**
+Its task text requires the quickstart's integrated journey without developer
+intervention and observations reconciled for the applicable clauses/SC-002–004.
+The specification expressly includes counted/timed criteria below, and the
+quickstart includes them in the current journey. Unobservable internal invariants
+are covered technically; they are not the reason for leaving T052 open. The
+remaining human-observable coverage cannot be inferred from “able to observe”
+without knowing whether the corresponding procedure was actually completed.
+
+| Remaining confirmation | Exact requirement and current evidence gap |
+|---|---|
+| Complete integrated action set and independence | SC-004: all movement directions, view rotation, health/time and boundary identification, an automatic kill, taking damage, pause/resume and restart after defeat using documented controls without developer intervention. The report confirms a journey and successful observed behaviour but does not identify omissions or confirm this whole set/independence. |
+| Three consecutive cycles in one application | SC-002 and FR-011; quickstart journey step 4 / A12–A14: three consecutive run→defeat→restart cycles, fresh conditions and no duplicate events; quickstart also asks click/Enter/Space across cycles. Neither current cycle count/session continuity nor activation paths are supplied. Earlier story closure is retained, not represented as a repeated integrated check. |
+| Ten-real-second pauses in both contexts, with preserved resume | SC-003 and FR-012; quickstart step 3 / A09–A11: pause during contact and separately between events, try movement/mouse/held Escape, wait ten real seconds, compare frozen health/time/positions/view, resume without early/burst events. The current report does not confirm both contexts or duration. Exact internal deadlines remain technically verified; human sub-tick measurement is not demanded. |
+| Observable HUD and defeat timing checks | FR-009 acceptance / A08: after 65 active seconds show 01:05 within one displayed second; FR-009/010 and quickstart step 4 / A12: ten seconds defeated while trying WASD/mouse/Escape with fixed final health/time/encounter. The report does not say whether these timed procedures were performed. `survival.hud` and `defeat.freeze_escape/final_hud` pass technically, without establishing a new real-time owner execution. |
+
+A concise confirmation of which of these prescribed procedures were actually
+completed, plus any skipped/unobservable items, is sufficient to assess these
+gaps; individual screenshots, exact coordinates, numeric sub-tick delays or an
+invented per-check transcript are not required. If a procedure was skipped,
+only that missing observable check needs further participation. No replay of
+already confirmed observed gameplay is requested by this reconciliation.
+Actual manual environment/revision/tuning and launcher/log results remain
+unprovided quickstart context; record them if available, without copying the
+automated session's values into owner evidence. No invented timestamp is a
+condition for closure. No specification/criterion has been weakened.
+
+SC-001/final feature acceptance remains outstanding. SC-005 remains
+**future/unverified**. T053–T056 and new SC-006/007 survival/profile evidence are
+outside this reconciliation and remain unrun. No gameplay or test implementation
+changed and no engine, interactive or profiling session was run in this update.
+
+Only `docs/verification/core-gameplay.md` and
+`specs/001-core-gameplay-prototype/tasks.md` have tracked changes. Both already
+contained staged Batch 2 work when this reconciliation began; those staged
+changes are preserved, with the reconciliation edits left unstaged.
+Documentation consistency checks and `git diff --check` passed (exit 0);
+generated `.cache/`/`.godot/` and the preserved cache remain ignored/untracked.
+No staging, commit or push was performed by this reconciliation.
+**T051 complete; T052 observed gameplay accepted, explicit integrated coverage
+confirmations still outstanding; task remains unchecked.
+Stop here; do not start Batch 3/T053–T056.**
