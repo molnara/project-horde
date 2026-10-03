@@ -1,5 +1,11 @@
 # Core gameplay verification ledger
 
+**Current acceptance method/status — DX-001 Batch 1, 2026-10-03:** T051 is
+complete; T052 remains open pending sufficient combined evidence. SC-005 remains
+future/unverified. The DX-001 section at the end supersedes historical demands
+for duplicate human technical measurements, not the recorded observations or
+gameplay criteria. Earlier checkpoint statements below are historical.
+
 Current checkpoint: Phase 5 Batch 3 final validation / T048 closure, 2026-10-03.
 All 82 required native cases pass with 5,843 assertions, including all 18 US3
 cases with 1,140 assertions and zero deferrals. Phase 3B remains 48/48 with 3,719
@@ -2271,7 +2277,7 @@ check. The optional rendered fixture and Windows PowerShell 5.1 run are unrun,
 not required checks claimed as passed. T052 owner feedback has been received;
 its accepted observations and remaining closure requirements are reconciled below.
 
-### T052 owner procedure — prepared checks; aggregate owner acceptance recorded below
+### T052 owner procedure — historical pre-DX-001 protocol; aggregate feedback below
 
 The owner has now reported performing the integrated journey to the best of
 their ability, with all observed gameplay behaving as expected and no observable
@@ -2611,7 +2617,7 @@ the workspace's ignored `.cache/`; do not stage generated evidence.
 | Missing observations, deviations, failures and follow-up reconciliation | No observable failure reported; unobserved subset not identified; gaps listed below |
 | Integrated FR/SC-002–004 owner outcome and T052 closure | Observed behaviour successful; complete current integrated criteria not yet confirmed; T052 remains open |
 
-### T052 owner-feedback reconciliation and closure assessment
+### T052 owner-feedback reconciliation and closure assessment (pre-DX-001)
 
 **Evidence source:** the product owner's follow-up request in this conversation:
 
@@ -2688,3 +2694,65 @@ No staging, commit or push was performed by this reconciliation.
 **T051 complete; T052 observed gameplay accepted, explicit integrated coverage
 confirmations still outstanding; task remains unchecked.
 Stop here; do not start Batch 3/T053–T056.**
+
+## DX-001 Batch 1 — acceptance-method amendment, 2026-10-03
+
+**Authority:** product-owner Bootstrap + Batch 1 request. See the persistent
+[DX-001 implementation/handoff](../development/dx-001-autonomous-qa.md), amended
+[spec acceptance methods](../../specs/001-core-gameplay-prototype/spec.md#acceptance-methods--dx-001-batch-1-approved-2026-10-03)
+and [quickstart protocol](../../specs/001-core-gameplay-prototype/quickstart.md#controls-and-phase-6-owner-journey-t052--feedback-received-closure-open).
+This changes verification methods only, under constitution v1.0.0 principles
+V, VI, XI and XII. No constitutional amendment or exception is needed.
+
+Objective FR-001–012/edge and SC-002/003 correctness may be established with
+reproducible automated evidence of actual components/scenes, retaining all
+thresholds, durations and cycle counts. Record claimed clause, case/check ID,
+revision, conditions/tuning, exact command, output path and actual result.
+Counted passing assertions alone do not establish full acceptance coverage.
+Technical proof does not require duplicate owner measurements. Human review
+focuses on independent controls, observable presentation, responsiveness and
+subjective feel. SC-004 still requires its entire named action set performed
+independently by the actual owner without developer intervention.
+
+### Reconciled evidence and remaining blockers
+
+The prior owner feedback remains successful for directly observed gameplay;
+no observable failure was reported. No omitted action, measurement, cycle,
+timestamp or intervention status is inferred. T033/T041/T048 and their story
+acceptance remain recorded; T051's passed clean run of 82 cases / 5,843
+assertions, 37 parses, import, normal/Profile startup and 146 infrastructure
+assertions is retained historical evidence, not a DX-001 rerun.
+
+The pre-DX-001 remaining-confirmation table above records the earlier method.
+The current obligations are:
+
+| Obligation | Evidence and current gap under DX-001 |
+|---|---|
+| Complete independent integrated journey, SC-004 | Actual owner participation and positive observed gameplay are recorded. Complete movement/view/HUD/boundaries/kill/damage/pause/resume/defeat/restart action coverage and absence of developer intervention are not established. Human confirmation of this coverage/independence remains required; automation cannot supply it. |
+| Controls/presentation/responsiveness/feel | Retain accepted observed gameplay and earlier owner story results. Record any remaining human-observable omissions or concerns without asking for exact internal timing/distance measurements. Headless success cannot establish physical usability or visible presentation. |
+| Three consecutive same-application cycles, SC-002/FR-011 | Existing defeat/restart and infrastructure evidence proves many reset/guard/input invariants; prior story acceptance remains passed. Current integrated protocol can be proved automatically or by a human. Audit whether retained evidence establishes all three consecutive cycles in one application and click/Enter/Space paths; do not infer that composition from suite counts. No new cycle run was executed here. |
+| Ten-real-second contact and between-event pauses, SC-003/FR-012 | Existing pause/pause-profile fixtures prove frozen state and preserved deadlines; prior SC-003 owner acceptance remains passed. Synthetic ticks/wall-gap injection do not prove an actual ten-real-second wait. Audit qualifying retained measured-duration/input evidence or add it later. Exact deadline values need no duplicate manual measurement. No new elapsed-duration check ran here. |
+| 65-active-second HUD and ten-second Game Over checks, FR-009/010 | `survival.hud` and defeat/HUD fixtures provide deterministic technical evidence. The 65 seconds, 01:05 within one displayed second, next-update health and inactive freeze obligations remain. Audit the full protocol including measured ten-real-second defeated input/state checks; the owner need not repeat technically sufficient checks. Human readability/presentation remains separate. |
+| Every remaining FR clause/edge | Retain the existing clause/case mapping above, with its stated fixture limits. Batch 3 audits sufficient executed evidence and missing coverage; neither normal play nor one passing suite proves unexercised clauses. |
+| SC-006/007 and final feature acceptance | Actual owner survival/profile/continuation and source-provenance qualification remain outstanding, with all original 300-second, warm-up, measurement and invalidity requirements unchanged. T053–T056 were not started. SC-005 remains future/unverified; cap-50 evidence cannot establish the 200-enemy/60-FPS benchmark. |
+
+**T051 complete; T052 remains unchecked pending sufficient evidence.** The
+amendment resolves excessive manual technical evidence demands; it does not
+resolve the independent human coverage gap or manufacture missing technical
+results. A future evidence audit can reuse sufficient retained results with
+their actual provenance rather than mandate a replay of accepted observations.
+
+### Batch 1 verification and review boundary
+
+`./.cache/dx001-doc-check.ps1` PASSED, exit 0: 35 documentation checks,
+44 local links/anchors, preserved FR/edge/story/scope text, SC-001/003–007,
+SC-002 cycle/session/reset obligations and task states/T053–T056 text.
+`git diff --check` PASSED, exit 0; the new untracked handoff's whitespace is
+checked separately. The audit's production/test/tool/constitution diff check
+PASSED, exit 0. Git LF→CRLF advisories are recorded, not test failures.
+Full commands, corrected read/patch failures and remaining blockers are in
+the DX-001 handoff. Batch 1 is complete and ready for review.
+No engine, suite, interactive playtest or profile session ran for this amendment;
+those checks are UNRUN here because only documentation changed. No production,
+test implementation, tooling, scene/resource or tuning changes; no T053–T056,
+staging, commit or push. DX-001 Batches 2–5 remain unstarted. Stop for review.

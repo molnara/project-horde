@@ -1,18 +1,19 @@
 # Quickstart and Validation: Core Gameplay Prototype
 
-**Reconciled:** 2026-10-03, Phase 6 Batch 1 (T049). Gameplay, launcher and native
-tests are implemented through Phase 5. This source/documentation audit is not a
-new engine validation, owner playtest or profiling session.
+**Reconciled:** 2026-10-03, DX-001 Batch 1 acceptance-method amendment following
+T049 and T051. Gameplay, launcher and native tests are implemented through Phase 5.
+This documentation amendment is not a new engine validation, owner playtest or
+profiling session. Historical T049 audit descriptions below retain that scope.
 
 ## Implementation and evidence status
 
 | Status | Evidence and limits |
 |---|---|
 | Implemented | One flat arena, WASD/mouse camera, one pursuing enemy type, automatic weapon, health/HUD, defeat/restart and pause/resume; contained All/Play/Profile launcher and native tests |
-| Previously verified | T048: 82/82 cases, 5,843 assertions, 37 script parses, import, normal/Profile startup and 146 infrastructure assertions; approved Standard `4.7.2.stable.official.ed1daf0bf` |
+| Previously verified | T051 complete: 82/82 cases, 5,843 assertions, 37 script parses, clean import, normal/Profile startup and 146 infrastructure assertions; approved Standard `4.7.2.stable.official.ed1daf0bf`; not rerun by DX-001 Batch 1 |
 | Owner-reported story acceptance | T033, T041 and T048 are closed; Phase 4/SC-002 and Phase 5/SC-003 acceptance is recorded separately from automated tests |
 | Historical survival/profile | Prior owner observations and corrected cap-50 capture remain in the ledger. Historical source-snapshot provenance and full SC-006/SC-007 qualification remain unresolved; those results do not certify the current integrated build |
-| Outstanding Phase 6 | T051 fresh technical validation, T052 integrated owner journey, T053–T055 conditions/survival/profile review, T056 final gates; none executed by this batch |
+| Outstanding Phase 6 | T052 remains open pending sufficient combined evidence; owner accepts directly observed gameplay, complete SC-004 coverage/independence not established. T053–T055 conditions/survival/profile review and T056 final gates remain unstarted here |
 | SC-005 | **Future/unverified: 200 representative active enemies at 60 FPS.** Neither the cap-50 baseline nor a synthetic configurable-cap test establishes it |
 
 See [the verification ledger](../../docs/verification/core-gameplay.md), especially
@@ -221,7 +222,7 @@ are separate. This audit checks source inventory and prior evidence, without
 rerunning those tests. See [tests/README.md](../../tests/README.md) for case details
 and [component contracts](contracts/gameplay-components.md) for obligations.
 
-## Controls and Phase 6 owner journey (T052 — unperformed)
+## Controls and Phase 6 owner journey (T052 — feedback received, closure open)
 
 | Input | Implemented result |
 |---|---|
@@ -242,47 +243,54 @@ IDs/failures, ready weapon/contacts and full spawn delay. Invalid startup/restar
 shows diagnostics and disables simulation; failed restart discards the old
 encounter. Correct definitions and relaunch; no configuration retry UI exists.
 
-After T051 passes, the owner performs this journey in contained Play with the
-defaults above, without developer intervention. Record revision, machine/settings,
-each FR clause/edge observation and outcome in the ledger. Prior story acceptance
-is retained but does not replace this integrated review.
+T051 has passed. Under the approved [spec acceptance methods](spec.md#acceptance-methods--dx-001-batch-1-approved-2026-10-03),
+technical proof and human experience contribute separate evidence. Record actual
+revision, machine/settings and results in the ledger; do not copy historical
+environment details into a new run. Prior story acceptance and aggregate owner
+feedback are retained, without assuming unreported action coverage or independence.
 
-1. Confirm fresh health/time/population/view. Test each WASD key, opposed keys,
-   release and equal-duration straight/diagonal travel away from walls. Rotate
-   yaw 90° and repeat. Pitch must not move vertically; mouse alone must not move
-   the player. Traverse all sides/corners; reach both pitch limits. Check player
-   visibility, no inversion/floor crossing, identifiable cyan player/orange-red
-   enemies/floor/limits and inset containment of both actors.
-2. Observe first spawn after 1.5 active seconds and three ordinary opportunities
-   with capacity. Move away and see pursuit redirect. Witness automatic hit/kill,
-   yellow line/white flash identifying the target, and no attack without eligibility.
-   Walk through overlaps. Contact one or two enemies: health loses 10 per ready
-   attacker, sustained contact respects the 1.0-second interval, separation stops
-   damage and quick re-entry preserves cooldown. Waiting must not heal. Record
-   crowd size if multiple contacts kill immediately; no grace period exists.
-3. Check readable current/max health and time; after 65 completed active seconds
-   expect 01:05 within one displayed second. Pause during contact and separately
-   between scheduled events. Note health/time/positions/view/feedback and event
-   progress, wait **ten real seconds** while trying WASD/mouse/held Escape, then
-   compare unchanged values. Check Paused/Escape to resume, readable health/time,
-   released pointer and hidden Restart. Release/repress Escape; verify recapture,
-   unchanged view, preserved remaining delays, no early/burst events/camera jump,
-   and fresh input works. Repeat cycles. Exact delays are backed by fixtures;
-   owner observations must not invent an unavailable deadline debug HUD.
-4. Take lethal damage. Check 0 health, Game Over, final time and focused Restart.
-   Wait **ten real seconds** trying WASD/mouse/Escape: all stay frozen; Escape
-   never resumes. Complete **three defeat/restart cycles in one application**,
-   using click, Enter and Space across cycles. Attempt repeated activation;
-   confirm one clean encounter, full reset/full first-spawn interval and no old
-   enemies/damage or duplicate events.
-5. Close and record each FR/edge and SC-002–004 outcome, difficulty/intervention
-   and missing observations. SC-004 needs the actual integrated journey; headless
-   checks cannot prove physical controls, contrast or game feel. Exact ties/range
-   boundaries, full-cap skips/refill and changed-resource cadence have deterministic
-   coverage; do not claim owner observations that normal play did not expose.
+The owner journey in contained Play with documented tuning remains reproducible:
 
-Failures/missing participation remain outstanding. Later authorized tuning/behavior
-corrections require affected checks rerun; this batch adds no forced fixtures or UI.
+1. Use all WASD directions, rotate the view and traverse the arena/perimeter.
+   Assess physical control usability, release response, camera visibility/limits,
+   responsiveness, identifiable player/enemies/floor/boundaries and game feel.
+2. Observe spawning and redirecting pursuit. Witness automatic hit feedback and
+   a kill; take contact damage. Assess whether line/flash, target, damage and
+   health/time are observable and readable during ordinary play.
+3. Pause/resume during combat. Assess the Paused indication, frozen presentation,
+   released/recaptured pointer, resumed input/view and encounter responsiveness.
+   Check visible HUD, hidden Restart and no apparent camera jump or event burst.
+4. Take lethal damage, recognize Game Over/final time and use documented Restart.
+   Assess focus, actionable control and the fresh encounter presentation.
+5. Record actions actually completed, observable results, control/presentation/
+   responsiveness/feel concerns, omissions and whether developer intervention
+   occurred. SC-004 still requires this entire named action set independently
+   performed by the actual owner. Automated checks cannot substitute for it.
+
+Codex's technical reconciliation retains the full original protocol below.
+Reproducible automation may establish it without duplicate manual measurements;
+if automation is insufficient, use the missing portion of this protocol as a
+human fallback and report it separately from the usability journey.
+
+| Required technical protocol (unchanged behavior/counts/durations) | Evidence obligation |
+|---|---|
+| Each/opposed/released input, equal-duration straight/diagonal travel, repeat after 90° yaw; pitch/fixed Y, mouse-only, actor inset/corner containment | Real-component movement/camera/arena checks; human visibility/usability above |
+| First spawn at 1.5 active seconds, three ordinary opportunities with capacity, configured cap/skips/refill; redirecting pursuit | Reconcile actual cadence/containment/definition fixtures; retain all FR-004 cap and three-skip criteria |
+| Nearest/tied/at/beyond-range eligibility, feedback, independent health, ready contacts with 10 damage and 1.0-second default interval, separation/re-entry/no regeneration | Map combat/health/feedback checks to every clause; all tuning remains unchanged |
+| HUD after 65 completed active seconds: 01:05 within one displayed second; next-update health, fresh and inactive displays | Actual HUD value assertions; owner readability is separate |
+| Contact pause and separate between-event pause: ten real seconds each, trying WASD/mouse/held Escape, frozen health/time/positions/view/feedback/deadlines, resume with preserved delays and no early/burst events | Measured monotonic elapsed duration plus exercised state/input checks; synthetic gaps/ticks alone are insufficient; repeated pause/resume coverage retained |
+| Game Over: ten real seconds trying WASD/mouse/Escape, frozen encounter/final values, no resume | Measured inactive-duration/input evidence plus defeat invariants |
+| Three consecutive run→defeat→restart cycles in one application, click/Enter/Space across cycles, repeated activation guards, fresh values/full spawn delay/no old actors or duplicate events | Automated integrated application/input evidence or human execution; isolated fixture resets alone cannot claim the entire protocol |
+
+For each claimed clause record check ID/command, revision, conditions/tuning,
+output path and actual passed/failed/skipped/blocked/unrun result. Existing
+deterministic checks cover many invariants; their complete real-duration/input
+coverage has not been newly established by this amendment. Batch 3 will audit
+remaining technical gaps. T052 remains open pending sufficient combined evidence.
+Failures, missing independent participation and unverified clauses stay
+outstanding. Later tuning/behavior corrections require affected checks rerun.
+No forced fixtures or UI are added by DX-001 Batch 1; see the
+[DX-001 handoff](../../docs/development/dx-001-autonomous-qa.md).
 
 ## Profiling preparation and execution (T053–T055 — unrun here)
 

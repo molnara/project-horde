@@ -146,7 +146,7 @@ SC-003 are satisfied; full feature/integrated acceptance remains Phase 6 work.
 - [X] T049 Reconcile `specs/001-core-gameplay-prototype/quickstart.md` with implemented files/modes/commands, exact default tuning, controls, containment prerequisites/timeouts/overrides/error policy, actual test manifest/coverage and manual procedures; distinguish implemented behavior from unverified acceptance and keep SC-005 explicitly future/unverified.
 - [X] T050 [P] Reconcile `docs/asset-provenance.md` against every actual mesh/material/font/audio source and visual replacement interface; record license/source for any unavoidable third-party item and remove undocumented or distinctive copied content without adding production art.
 - [X] T051 Execute clean reproducible contained import, every-script parse, complete manifest-reconciled suite and main startup using `tools/validate.ps1 -Mode All`, including `tools/test-validation.ps1`; inspect logs/exit codes, investigate every unexpected failure, verify source UID tracking/generated exclusions and record exact results and unresolved blockers in `docs/verification/core-gameplay.md`.
-- [ ] T052 Have the product owner execute the integrated controls/boundaries/HUD/kill/contact/pause/resume/defeat/restart journey in `specs/001-core-gameplay-prototype/quickstart.md` without developer intervention; record observations for each FR clause/edge and SC-002–004 in `docs/verification/core-gameplay.md`, leaving unavailable owner participation/controls/visual/game-feel checks outstanding rather than substituting headless evidence.
+- [ ] T052 Reconcile reproducible automated evidence for objective FR clauses/edges and SC-002/003 with the product owner's independent integrated controls/boundaries/HUD/kill/contact/pause/resume/defeat/restart journey in `specs/001-core-gameplay-prototype/quickstart.md`. Record clause mappings, actual conditions/revision/commands/outputs/results and human observations in `docs/verification/core-gameplay.md`. Preserve all thresholds, durations and cycles; distinguish synthetic timing from measured real-duration evidence. Owner acceptance covers independent control usability, observable presentation, responsiveness and subjective feel; SC-004's full named action set and absence of developer intervention require actual human participation. Leave missing technical or human evidence outstanding; T052 remains open under DX-001 Batch 1.
 - [ ] T053 Pre-record actual engine/OS/GPU/driver/hardware/source revision/tuning and plan deviations in `docs/verification/prototype-profile.md` before `tools/validate.ps1 -Mode Profile`: standalone debug/no editor or debugger, Forward+ 1920×1080/100% scale, AA/VSync/frame cap/shadows/SSAO/SSIL/glow off, one directional light, 60 Hz physics; perform a separate 30-active-second warm-up, retain unsuccessful attempts and restart cleanly with normal vulnerability/default cap 50 unless changed tuning is explicitly recorded.
 - [ ] T054 Have the owner perform one uninterrupted normal Profile attempt reaching >=300 completed physics simulation seconds alive and continue it normally; in `docs/verification/core-gameplay.md` record actual simulation/tick/wall endpoint, normal spawning/pursuit/combat/vulnerability, later advancing time/responsive movement/view/unchanged tuning and a later scheduled spawn opportunity with timestamps, attacks when eligible and zero unexpected spawn failures throughout continuation; preserve partial window success after later death without claiming unobserved continuation or splicing attempts (SC-006).
 - [ ] T055 Summarize actual T054 raw workspace `.cache/` capture in `docs/verification/prototype-profile.md` with whole-window wall FPS, full-interval distribution/minimum/coverage/stalls, partial-boundary gaps, enemy counts/timestamps, available monitors/overhead/bottlenecks, actual conditions/deviations and unavailable reasons; separate survival/continuation/capture/invalidity outcomes, retain failed attempts, and claim neither a new numerical prototype threshold nor 200-enemy/60-FPS compliance (SC-007).
@@ -255,6 +255,21 @@ Complete setup/foundation and US1, run headless checks and demonstrate the integ
 ### Incremental delivery
 
 Add US2 and validate three clean cycles, then US3 and validate preserved pause/resume. Recheck earlier behavior when shared files change. Technical validation belongs to Codex; owner visual/control/game-feel and survival participation is necessary for those acceptance criteria. If owner participation or safe engine launch is unavailable, continue independent authorized work and report the remaining checks honestly.
+
+### DX-001 Batch 1 acceptance amendment — 2026-10-03
+
+The [DX-001 handoff](../../docs/development/dx-001-autonomous-qa.md) records a
+separate five-batch development sequence. Its batch numbers do not renumber the
+historical feature implementation batches above. Current acceptance methods in
+the amended spec/quickstart supersede historical demands for owner measurement
+of objective internal criteria, including the preceding Phase 6 Batch 2 gap list.
+No historical observation or successful story closure is rewritten. Technical
+durations/cycles remain required and may be established by sufficient automated
+evidence. Synthetic time cannot prove real elapsed time. SC-004 human participation
+and independent controls/presentation/responsiveness/feel remain mandatory.
+T051 is complete; T052 remains unchecked pending sufficient evidence; T053–T056
+remain unchecked and are not started by DX-001. SC-005 stays future/unverified.
+No production or test implementation is authorized by this amendment.
 
 ### Verification and completion
 

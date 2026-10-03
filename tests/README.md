@@ -29,7 +29,7 @@ An optional `-GodotBin` absolute console path is supported by both launchers.
 `Foundation` is an explicit limited suite, not gameplay acceptance. It still
 discovers/reconciles the entire manifest before selecting its 13 cases. The
 infrastructure wrapper uses that scope so its diagnostic/timeout/environment
-fixtures can run before gameplay exists. Default `All` requires all 64 registered cases,
+fixtures can run before gameplay exists. Default `All` requires all 82 registered cases,
 returns nonzero for any pending or failed case, and stops dependent startup checks.
 Both commands exercise real main-scene startup; when the capture helper exists,
 they also run a short headless `--profile` startup/shutdown. The resulting sparse
@@ -353,9 +353,28 @@ survival/profile evidence is retained independently; no new five-minute session
 was run for T048.
 
 The [quickstart owner scenarios](../specs/001-core-gameplay-prototype/quickstart.md)
-remain the reproducible procedures, including ten-real-second contact and
-between-event pauses, frozen health/time/view, held Escape/WASD/mouse, preserved
-delays and Game Over/restart. Use Escape to pause/resume and Alt+F4 to close while
-the mouse is captured. Headless evidence alone cannot establish these physical
-controls, visuals or game feel. Invalid data requires correction and relaunch;
-no in-application retry is supplied.
+now apply DX-001 Batch 1's approved acceptance methods. Objective FR/edge and
+SC-002/003 correctness may be established through reproducible automated
+real-component evidence, with actual clause/check mapping, conditions/tuning,
+revision, command, output and result. No new tests were implemented or executed
+by this amendment. T051's recorded 82 cases / 5,843 assertions remain historical
+passing evidence; T052 remains open pending sufficient combined evidence.
+
+Preserve every threshold, duration and cycle count: 65-active-second HUD display,
+ten-real-second contact and between-event pauses, ten-second defeated freeze,
+and three consecutive defeat/restart cycles in one application, including the
+quickstart's click/Enter/Space protocol. Frozen state and remaining deadlines
+can be proved deterministically; synthetic deltas/timestamps or 600 physics
+ticks do not establish a ten-real-second elapsed check. Require measured monotonic
+elapsed time and exercised input/state checks for that claim; audit gaps in
+DX-001 Batch 3, without relabeling existing fixtures as newly executed evidence.
+
+Owner review focuses on independent physical control usability, observable
+presentation, responsiveness and subjective game feel. SC-004 still requires
+the complete named journey independently performed by the actual owner without
+developer intervention. Automated evidence cannot replace that participation.
+Use Escape to pause/resume and Alt+F4 to close while the mouse is captured.
+SC-006/007 owner survival/profile obligations remain; SC-005 is future/unverified.
+T053–T056 are unstarted by DX-001. Invalid data requires correction and relaunch;
+no in-application retry is supplied. See the
+[DX-001 handoff](../docs/development/dx-001-autonomous-qa.md).

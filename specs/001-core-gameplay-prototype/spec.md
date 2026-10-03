@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-02
 
-**Status**: Draft — validated specification; gameplay unimplemented and unverified
+**Status**: Implemented through Phase 5; T051 technical validation complete, T052 integrated acceptance open. SC-006/007 final qualification outstanding; SC-005 future/unverified. DX-001 Batch 1 amends verification methods only.
 
 **Input**: A small, playable, single-player, third-person 3D survival arena demonstrating the foundational combat loop with original placeholders, movement, camera control, one enemy type, one automatic weapon, health, HUD, defeat, restart, and pause/resume.
 
@@ -28,6 +28,36 @@
 - A–G technical resolutions are approved with refinements: completion-time event deadlines; separate survival, continuation and profiling results; no automatic acceptance at 300 seconds; and genuine-error classification that preserves harmless informational logs. See the adopted plan and contracts.
 
 ## User Scenarios & Testing *(mandatory)*
+
+### Acceptance methods — DX-001 Batch 1, approved 2026-10-03
+
+Objective technical correctness for FR-001–FR-012, their acceptance scenarios
+and edge cases, and SC-002/003 may be established by reproducible automated
+evidence exercising actual components/scenes. This amends the verification
+method only: all original gameplay obligations, thresholds, durations and cycle
+counts remain mandatory. Map each claimed clause to executed checks, actual
+conditions/tuning, source revision, command, output and result. A passing suite
+count without that mapping is insufficient. Uncovered clauses remain outstanding.
+
+Technical evidence includes exact movement/range/health/timing invariants, HUD
+values, frozen inactive state, remaining deadlines and restart isolation. Preserve
+the 65-active-second HUD check, ten-second defeated freeze, ten-real-second pauses
+in contact and between-event contexts, and three consecutive defeat/restart cycles
+in one application. Synthetic deltas/timestamps can prove deterministic logic;
+they cannot prove a real elapsed duration or physical input usability. Required
+real-duration checks need measured monotonic elapsed time and exercised input/state
+checks, through automation or a documented human run. Do not convert existing
+synthetic fixtures into evidence of a newly executed real-time check.
+
+Human owner acceptance focuses on independent control usability, observable
+presentation/readability, responsiveness and subjective game feel. Exact internal
+values and technical edge cases need not be remeasured manually when sufficient
+automated evidence exists. Headless results cannot establish these human qualities.
+SC-004 retains the full named integrated action set, actual product-owner
+participation and absence of developer intervention; automation cannot replace it.
+SC-006/007 retain their actual owner survival/profile obligations. Historical
+observations remain historical, T051 is complete, and T052 remains open pending
+sufficient combined evidence. See [DX-001](../../docs/development/dx-001-autonomous-qa.md).
 
 ### User Story 1 - Survive in the arena (Priority: P1)
 
@@ -154,7 +184,7 @@ Timing uses completed, unpaused physics simulation time, excluding Pause and Gam
 ### Measurable Outcomes
 
 - **SC-001**: All FR-001–FR-012 acceptance criteria and listed edge cases have recorded verification results; any unverified criterion prevents a claim of feature completion.
-- **SC-002**: A reviewer completes three consecutive run → defeat → restart cycles in one application session; each restart restores fresh-run conditions without duplicate events.
+- **SC-002**: A reviewer verifies three consecutive run → defeat → restart cycles in one application session, using reproducible automated execution or human execution; each restart restores fresh-run conditions without duplicate events. Human Restart usability remains part of SC-004.
 - **SC-003**: Ten seconds paused during combat produce zero health, position, view, or survival-time changes and zero spawns/attacks; resume preserves remaining delays.
 - **SC-004**: In an integrated playtest, the product owner demonstrates all movement directions, rotates the view, identifies health/time and boundaries, witnesses an automatic kill, takes damage, pauses/resumes, and restarts after defeat using documented controls without developer intervention.
 - **SC-005 — Future performance benchmark (compliance unverified)**: Target 60 FPS with 200 simultaneously active enemies exercising representative pursuit, combat, and damage on the constitution's reference hardware. This separate future benchmark is not a first playable prototype acceptance gate. Before verification, planning MUST specify resolution, renderer, graphics settings, build mode, scenario, warm-up, sampling duration, and frame-time statistics. Evidence MUST record those conditions, enemy count, FPS, frame-time distribution, stalls, and bottlenecks against the approximately 16.67 ms frame budget. Average FPS alone is insufficient. Target revisions require constitutional governance and product-owner approval.

@@ -4,7 +4,34 @@
 
 **Input**: `specs/001-core-gameplay-prototype/spec.md`, its clarified product policies and owner-approved A–G technical baseline.
 
-**Status**: Technical planning baseline approved with owner refinements incorporated. A–G are adopted design decisions; requirements-quality review is complete. Gameplay, tooling, tests and measurements remain unimplemented/unrun. This operation generates no tasks; task generation is the separate next phase.
+**Status**: Approved A–G design baseline, implemented through Phase 5. T051 passed; T052 remains open. DX-001 Batch 1 adopts the specification's acceptance-method amendment; remaining planning-stage descriptions below are historical, not current execution status.
+
+## DX-001 acceptance evidence plan — Batch 1
+
+Use [spec.md's acceptance methods](spec.md#acceptance-methods--dx-001-batch-1-approved-2026-10-03)
+and the [DX-001 handoff](../../docs/development/dx-001-autonomous-qa.md).
+Codex establishes objective FR/edge and SC-002/003 correctness with reproducible
+automated evidence wherever practical. The evidence ledger must map claimed
+clauses to actual real-component checks, conditions/tuning, revision, commands,
+outputs and outcomes. Exact technical values do not require duplicate owner
+measurement. Missing coverage remains open; fixture success is not a universal
+acceptance result.
+
+Keep all thresholds, 65-second HUD formatting, ten-second defeated freeze,
+ten-real-second contact/between-event pauses and three consecutive same-application
+cycles. Distinguish controlled simulation from measured real elapsed time;
+synthetic pause gaps alone do not satisfy the latter. Batch 3 will assess/add
+missing technical evidence after Batch 2 environment reliability; Batch 1 adds
+no checks or gameplay code and does not claim those gaps resolved.
+
+Owner review covers independent physical controls, readable/observable
+presentation, responsiveness and subjective feel. SC-004 requires the complete
+named integrated owner journey without developer intervention; headless evidence
+cannot substitute. Preserve prior owner feedback without inferring omissions,
+timings or independence. T051 stays complete; T052 stays open pending sufficient
+combined evidence. SC-006/007 actual owner survival/profile requirements and all
+measurement conditions remain unchanged; SC-005 stays future/unverified.
+T053–T056 are outside DX-001 Batch 1 and remain unstarted here.
 
 ## Summary
 
