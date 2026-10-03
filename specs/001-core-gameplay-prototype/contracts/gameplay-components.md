@@ -25,12 +25,12 @@ Signatures are semantic contracts: GDScript types follow the model. Use synchron
 ## Ordered active update
 
 1. Handle state intents once per input press. A pause intent prevents gameplay work in that update.
-2. If Active, advance active time by physics delta (60 Hz baseline).
+2. If Active, derive this step's scheduling time from the prior completed active time plus physics delta (60 Hz baseline). Commit that duration only when this active step completes, including a step that deliberately short-circuits on defeat. Do not derive delta or survival credit from stalled wall time.
 3. Apply player motion and enemy pursuit, using current player position and arena containment.
 4. Consume any due spawn opportunity, at most one spawn, only with capacity and valid position.
 5. Reassess weapon targets from living registry. Apply one ready attack; immediately remove a lethal target before contacts.
 6. Visit living enemies in spawn order for contact attacks. On lethal player damage, latch GameOver once, freeze time, and immediately stop all remaining gameplay work.
-7. Present current state/health/time. Inactive runs may update overlay intent but no gameplay, camera, feedback clock or deadline.
+7. Commit completed-step survival time and present current state/health/time, including the final time after lethal damage. Inactive runs may update overlay intent but no gameplay, camera, feedback clock or deadline.
 
 Events earlier in a lethal update may already have happened; once zero player health occurs nothing later changes the final result. Tests must include an enemy killed before its contact step, two simultaneous contacts, and skipped later contact after lethal damage.
 
@@ -44,4 +44,6 @@ Events earlier in a lethal update may already have happened; once zero player he
 
 ## Failure contract
 
-Reject invalid definitions before any run simulation, report exact path/field/constraint, display a visible startup error and produce nonzero automated-check results. Do not substitute values silently. Spawn fallback failure after validated geometry is an unexpected error, not a successful scheduled spawn. Check engine diagnostics as well as process exit status. No gameplay failure becomes an acceptance pass.
+Reject invalid definitions before any run simulation, report exact path/field/constraint, display a visible startup/restart error and produce nonzero automated-check results. Do not substitute values silently. Discard a failed restart's old encounter and keep simulation disabled; correcting definitions and relaunching is sufficient recovery. No in-application configuration retry is required.
+
+Unexpected spawn-selection or instantiation failure consumes that scheduled opportunity, emits actionable diagnostics and increments the coordinator's per-run spawn-failure counter. Continue simulation with the next ordinary scheduled opportunity, without retries, backlog or catch-up. Keep failed/partial instances out of the registry and clean them up. A full-cap skip is expected and is not a failure. Any unexpected spawn failure latches invalid acceptance for that attempt, even if play continues; record its counter and failure diagnostics in verification/profile evidence. Fault-injection tests may pass by asserting this error policy, but the intentionally faulted run never qualifies as a successful owner acceptance attempt. Check engine diagnostics as well as process exit status. No gameplay failure becomes an acceptance pass.

@@ -2,7 +2,7 @@
 
 **Date**: 2026-10-02 | **Scope**: Phase 0 design research, not implementation evidence.
 
-Research was delegated into engine/composition/validation and gameplay scheduling/profiling investigations, then consolidated against the spec and constitution. All design unknowns are resolved below. Defaults remain initial tuning requiring playtesting. Official stable documentation was consulted; verify the selected binary's behavior and CLI help before use.
+Research was delegated into engine/composition/validation and gameplay scheduling/profiling investigations, then consolidated against the spec and constitution. This records prior research; the technical review below distinguishes subsequent approved policies from pending technical proposals. Defaults remain initial tuning requiring playtesting. Official stable documentation was consulted during prior planning; verify the selected binary's behavior and CLI help before use.
 
 ## 1. Stack and dependencies
 
@@ -46,7 +46,7 @@ Research was delegated into engine/composition/validation and gameplay schedulin
 
 ## 5. Active-time scheduling and lifecycle
 
-**Decision**: One 60 Hz coordinator update: state input → advance active clock → move player/enemies → scheduled spawn → weapon → enemy contacts in spawn order → presentation. Immediately latch Game Over on zero player health and short-circuit later gameplay. Absolute active-time deadlines govern weapon/contact attacks; only a successful attack advances its deadline to now + interval. No target/contact leaves a ready attacker ready.
+**Decision**: One 60 Hz coordinator update: state input → derive step scheduling time → move player/enemies → scheduled spawn → weapon → enemy contacts in spawn order → commit completed simulation time and present. Immediately latch Game Over on zero player health and short-circuit later gameplay. Completed, unpaused physics time determines survival; no unexecuted stall time is credited. Absolute simulation-time deadlines govern weapon/contact attacks; only a successful attack advances its deadline to now + interval. No target/contact leaves a ready attacker ready. Camera/feedback phase placement is a pending proposal, not settled by this abbreviated sequence.
 
 **Rationale**: Preserves delays on pause and separation. Stable spawn IDs resolve equal distances and multiple contact order. Remove dead enemies from the registry synchronously before deferred node deletion. Defeat stops camera and simulation; Restart only from Game Over replaces the encounter once, resetting input/view, IDs, health, clock and deadlines.
 
@@ -61,6 +61,8 @@ Research was delegated into engine/composition/validation and gameplay schedulin
 **Alternatives considered**: Unbounded retries can hang; immediate replacement/catch-up spawning violates cap behavior; pooling/spatial indexing lacks measured need. Normal cadence tests use updates shorter than the interval; stall tests explicitly exercise the no-burst policy.
 
 ## 7. Initial tuning
+
+**Subsequent owner-approved failure policy**: Unexpected spawn selection/instantiation failure consumes the scheduled opportunity, emits diagnostics and increments the per-run failure counter. Simulation continues at ordinary cadence with no catch-up, but the acceptance attempt is invalid. Full-cap skips are expected and do not increment failures. Invalid definitions instead disable simulation; recovery by correcting data and relaunching is sufficient, with no in-application retry. See [component contracts §Failure contract](contracts/gameplay-components.md#failure-contract) and [data model §Eligibility and scheduling](data-model.md#eligibility-and-scheduling) for planned interfaces/state.
 
 **Decision**: Use the positive values in [data-model.md](data-model.md): 40 m square arena, 6 m/s player, 3 m/s enemy, 1.5 s spawn, cap 50, 4 m weapon range, 10 damage/0.6 s, enemy 30 health, contact 1.2 m with 10 damage/1 s, player 100 health.
 
@@ -96,8 +98,12 @@ Research was delegated into engine/composition/validation and gameplay schedulin
 
 ## Remaining prerequisites and risks
 
+### Technical review follow-up — 2026-10-02
+
+The product owner approved the simulation-time survival clock, continue-but-invalidate spawn failure policy, and relaunch-only configuration recovery. Profiling uses separately recorded actual wall-clock duration/FPS and retains active stalls. These decisions supersede earlier unresolved policy questions. [Plan §Proposed resolutions for remaining technical gaps](plan.md#proposed-resolutions-for-remaining-technical-gaps) contains pending proposals for diagnostic lifecycle, camera/feedback phases, tick quantization, bounded pursuit/reachability validation, sample boundaries, continuation evidence, and suite/timeouts. These are not adopted decisions or executed research; technical checklist items remain open where their resolution still depends on proposal review.
+
 - Engine location/version check passed. Re-resolve `GODOT_BIN` in each validation session; verify filesystem confinement before project/editor execution. The version-only invocation establishes no project/cache-path confinement or gameplay acceptance.
 - Implement planned launcher/tests/instrumentation; current docs do not claim they exist.
 - Floating deadline/range boundaries and lethal-event order require focused automated fixtures.
 - Manual visibility, five-minute survivability and measured bottlenecks remain unverified.
-- No unresolved design clarification or scope/governance change is needed.
+- The three product-policy clarifications are resolved. Remaining technical proposals require review; no scope/governance change is proposed. No gameplay or validation implementation is authorized by this documentation follow-up.

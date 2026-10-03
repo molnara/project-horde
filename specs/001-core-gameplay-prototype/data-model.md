@@ -42,6 +42,8 @@ Mutable fields belong to an instance, not a shared Resource. Health clamps to `[
 
 ## Eligibility and scheduling
 
+Approved technical-review invariants: `active_time` counts only completed Active physics steps. Wall-clock stalls add no unsimulated survival time; profiling keeps a separate monotonic elapsed-wall clock. The coordinator owns `spawn_failure_count`, initially zero for each run, and a latched acceptance-invalid flag when that count becomes positive. Unexpected selection/instantiation failure consumes the due opportunity, increments the count once for that attempted spawn, and reports stage/cause/run generation/scheduled opportunity without halting simulation or retrying. Full-cap skips consume the opportunity but do not increment failures. Publish an enemy to the live registry only after successful instantiation/configuration; discard partial instances on failure so capacity and combat cannot observe a broken spawn. Detailed implementation is deferred.
+
 - Squared XZ center distance `d² = dx² + dz²`; weapon eligible iff live and `d² <= range²`; contact eligible iff live and `d² <= contact_distance²`. Do not enlarge the threshold with an arbitrary epsilon. Test equality, just-inside and just-outside with representable fixtures. Exact tied squared distances choose smaller spawn_id.
 - Actual attack at active time `t` advances only that attacker's deadline to `t + interval`. No-target/no-contact does not consume readiness. Re-entry never resets an active deadline. Each attacker performs at most one attack in an update.
 - Spawn opportunities belong to interval multiples starting at one interval. Consume cap-full opportunities. After an update crossing deadline(s), set next spawn to the first scheduled multiple strictly after `t`; produce at most one enemy. No queued missed opportunities or death-triggered replacement.
@@ -61,5 +63,7 @@ Mutable fields belong to an instance, not a shared Resource. Health clamps to `[
 | Active/Paused | Restart signal | unchanged | Ignore invalid/repeated activation |
 
 Configuration failure is a startup/restart diagnostic outside the valid three-state gameplay model: keep simulation disabled and show actionable error; tests exit failed. Never represent invalid configuration as a valid Active run. On a restart failure, do not revive the defeated encounter.
+
+Correct the invalid definition and relaunch the application to recover. No in-application configuration retry is required. Fresh valid runs reset the spawn-failure counter; a reset does not erase the previous attempt's failed acceptance record.
 
 Profile samples and acceptance records are evidence artifacts, not save-game entities. No network, database, upgrade, experience or persistence schema is introduced.

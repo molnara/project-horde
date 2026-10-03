@@ -29,5 +29,6 @@ Automatic attacks show a short visible line to the affected enemy and its hit fl
 - GameOver overlay says `Game Over`, shows final survival time and actionable `Restart`. Zero health remains on HUD. Escape cannot resume; freeze persists until restart.
 - Restart restores initial health/view/position, time zero, no enemies and fresh event timing in the same application. Five minutes triggers no victory/ending; active play continues until defeat.
 - Configuration failure shows the resource/field diagnostic; it must not look like a valid active encounter.
+- Configuration recovery requires correcting the definition and relaunching; no in-application retry control is required. The HUD survival clock measures completed, unpaused physics simulation time, not wall-clock time lost in stalls.
 
 Verify from normal 1920×1080 view: player/enemies/limits recognizable, HUD readable, affected enemy identifiable, and every overlay/button usable. Headless tests do not establish these outcomes.
