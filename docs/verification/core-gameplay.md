@@ -1,13 +1,15 @@
 # Core gameplay verification ledger
 
-**Current acceptance method/status — DX-001 Batch 5, 2026-10-03:** T051 is
-complete; T052 remains open pending sufficient combined evidence. SC-005 remains
-future/unverified. The DX-001 section at the end supersedes historical demands
+**Current acceptance method/status — T052 reconciliation, 2026-10-03:** T051 and
+T052 are complete. Independent owner-reported SC-004 acceptance is combined with
+retained DX-001 Full technical evidence; see the final T052 closure section.
+SC-005 remains future/unverified; SC-006/SC-007 remain pending survival/profiling
+qualification. The DX-001 sections below supersede historical demands
 for duplicate human technical measurements, not the recorded observations or
 gameplay criteria. Earlier checkpoint statements below are historical.
 
-Current checkpoint: DX-001 Batch 5 implemented, ready for final review; passing
-Fast/Targeted/Full and remaining gaps are recorded at the end of this ledger.
+Current checkpoint: T052 closed; stop for owner review before T053. Earlier
+T052-open statements describe the evidence available at those checkpoints.
 
 Historical checkpoint: Phase 5 Batch 3 final validation / T048 closure, 2026-10-03.
 All 82 required native cases pass with 5,843 assertions, including all 18 US3
@@ -2919,3 +2921,120 @@ passing receipts/partitions/duration cycles, source hashes and unchanged manifes
 entries/task requirements/production/acceptance boundaries, PowerShell syntax,
 whitespace and 69 local links; `git diff --check` passed (line-ending advisories
 only). No executable source changed after final Full validation.
+
+## Phase 6 — T052 integrated owner acceptance closure, 2026-10-03
+
+**Decision: T052 complete; SC-004 satisfied by owner-reported participation.**
+The product owner's October 3 report explicitly confirms an independent normal
+gameplay session with the entire named integrated journey and no developer
+intervention. No outstanding manual acceptance observations were reported.
+This new report supplies the human evidence missing at the DX-001 checkpoints;
+it does not relabel automated fixtures as human observations or rewrite earlier
+qualified feedback. The approved DX-001 Batch 1 acceptance method permits
+objective FR/edge and SC-002/003 proof through reproducible automation.
+
+Reconciliation baseline: clean committed HEAD
+`c55840953d6bc36d98e4e72c708364ccd9f94acd`; this change edits only this ledger
+and `tasks.md`. The owner reports DX-001 committed and pushed. The owner session
+is attributed to that report, not to a newly launched Codex playtest. Its exact
+launch command, binary/source receipt, hardware/settings, tuning measurements,
+duration and individual HUD readings were not supplied; no historical machine
+conditions or technical measurements are assigned to it. Those absent profiling
+metadata do not prevent this usability reconciliation and grant no SC-006/007
+qualification.
+
+### Owner-reported observations and clause attribution
+
+All results in this table are **OWNER-REPORTED PASSED**, not machine-verified.
+The report records general presentation acceptance; it does not assert new
+per-clause timings, internal values or additional unreported input variants.
+
+| Explicit owner confirmation | Acceptance contribution |
+|---|---|
+| Movement in all directions | SC-004 movement; FR-001 physical control usability |
+| Camera/view rotation and arena-perimeter traversal | SC-004 view; FR-002 traversal/view presentation and responsiveness |
+| Recognizable arena boundaries and readable HUD | SC-004 boundaries/health-time HUD; FR-003/009 presentation and readability |
+| Witnessed an automatic enemy kill | SC-004 kill; FR-005/007 observable automatic combat outcome |
+| Experienced contact damage | SC-004 damage; FR-008 observable contact-damage experience |
+| Successfully paused and resumed | SC-004 pause/resume; FR-012 usability and resumed responsiveness |
+| Reached defeat and successfully restarted | SC-004 defeat/restart; FR-010/011 usable end-of-run journey |
+| Completed without developer intervention | SC-004 actual independent human participation |
+| General usability, responsiveness, presentation and game feel accepted | Required human acceptance alongside technical correctness; no outstanding manual observations reported |
+
+Prior T033/T041/T048 owner acceptance remains separately attributed. Exact
+health/time formatting, camera limits, feedback state, resets and edge invariants
+come from the technical map below; no duplicate owner measurements are inferred.
+
+### Retained machine-verified evidence used for closure
+
+The [DX-001 Batch 3 clause map](dx-001-batch3.md#requirement-traceability-and-limits)
+maps every objective FR-001–012 clause and listed edge to actual component/scene
+cases, conditions and limits. [Batch 4](dx-001-batch4.md) preserves that coverage
+while consolidating 1,998 redundant API-presence assertions, and
+[Batch 5](dx-001-batch5.md) reruns the final executable source at Full scope.
+Counts corroborate these mappings; counts alone do not establish acceptance.
+
+Retained Full command (previously executed, **not rerun here**):
+
+```powershell
+C:\GameDev\project-horde\tools\validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240
+```
+
+Receipt: `.cache/validation/20261003T193507973-e6dea706ae574483b01e2d34ffc05ce9/`.
+Actual conditions are the Batch 3 controlled headless fixtures and Batch 5
+approved contained Standard `4.7.2.stable.official.ed1daf0bf` execution, not
+normal-tuning owner survival. Retained outputs include `results.json`,
+`suite.stdout.txt`, `timing.json` and `infrastructure-fixtures.json`.
+
+| Technical obligation | Retained executed result |
+|---|---|
+| Full technical gate / T051 continuity | PASSED exit 0: import, 38 parses, normal/Profile startups, 88/88 cases, 4,152 assertions, 163 infrastructure assertions; zero excluded/pending/deferred cases and four environment restorations |
+| FR-009 HUD clock/health | `technical.hud_clock`: 65.0333333333309 completed active seconds, 3,902 ticks, 01:05; next-update health assertion passed. Automatic driver interval 64.943427 wall seconds, separately measured |
+| FR-012 / SC-003 contact and between-event pauses | `technical.pause_contact/pause_between`: 10.000829 / 10.029978 real seconds, 97 samples each with WASD/mouse/held Escape; frozen state/signals, preserved deadlines, no resumed burst |
+| FR-009/010 defeated freeze | `technical.three_cycles`: 10.029359 real seconds, 97 samples; inactive input does not alter encounter/final values or resume defeat |
+| FR-011 / SC-002 cycles | Same Main ID 626494801950; three consecutive click/Enter/Space restarts, generations 2/3/4, full fresh-state isolation and exactly one first spawn at 1.5 each |
+| Other objective clauses/edges | Batch 3 clause map, unchanged six technical protocols and remaining required cases exercised by Batch 5 Full; movement/containment, targeting/contact/health/death, cadence/cap/faults and lifecycle guards |
+
+The real inactive waits are measured monotonic durations. Controlled resumed
+steps and deterministic deadline/geometry checks remain synthetic where specified
+in Batch 3; they prove those technical contracts, not physical feel or a normal
+300-second survival attempt. Prior failed runs and expected failing infrastructure
+children remain recorded; they are not converted into successful checks.
+
+### Validation scope and remaining gates
+
+This is documentation-only evidence reconciliation. The
+[DX-001 tier policy](../../tests/README.md#dx-001-batch-5-execution-workflow)
+requires static consistency/link/whitespace checks and repeats Full only for
+further executable changes, failures or unresolved technical evidence. The final
+Full above already executed after the last executable edits. This session
+inspects its receipts and source continuity; new engine import/parse/suite/startup,
+rendered smoke and Codex interactive playtesting are **UNRUN**, not newly passed.
+
+Static validation actually executed in this reconciliation (PowerShell inline
+checks; no new audit file or testing infrastructure):
+
+| Command/check | Actual result |
+|---|---|
+| `Get-FileHash -Algorithm SHA256` on the four Batch 5 executed files plus Batch 3 technical acceptance/Context and Batch 4 profile test | PASSED: seven hashes match the reports. `git diff --name-only a67eb7df6aeabef988d9c31869e9f4f014845050 HEAD -- scripts scenes resources tools project.godot tests ':!tests/README.md'` identifies exactly the four verified Batch 5 files; production and other test sources unchanged |
+| Checked `Test-Path`, `Get-Content` / `ConvertFrom-Json` on retained Full results/timing/suite/infrastructure receipts, with explicit count/outcome/duration/cycle assertions | PASSED: 50/50 top-level records, 38 parses, 88 cases / 4,152 assertions, 163 fixtures; completed HUD clock, three >=10-real-second waits and three same-Main generations/input paths agree with the report. This is a receipt audit, not re-execution |
+| Inline task/acceptance consistency and local link/heading audit against `git show HEAD:specs/001-core-gameplay-prototype/tasks.md` | PASSED: only T052 task entry changed, T053–T056 unchecked, profile report absent, future/pending gates retained, five new local links/anchors resolve |
+| `git diff --exit-code HEAD -- scripts scenes resources tools project.godot tests .specify/memory/constitution.md specs/001-core-gameplay-prototype/spec.md specs/001-core-gameplay-prototype/plan.md specs/001-core-gameplay-prototype/quickstart.md docs/development/dx-001-autonomous-qa.md docs/verification/dx-001-batch3.md docs/verification/dx-001-batch4.md docs/verification/dx-001-batch5.md` | PASSED exit 0: no changes to executable sources, requirements, reproduction instructions or historical evidence |
+| `git diff --check` and `git status --short` | PASSED exit 0: no whitespace errors; only ledger/tasks modified. LF-to-CRLF advisories are informational |
+| New engine/gameplay/profile runs | UNRUN by documentation-only tier policy; no failed, blocked or outstanding static check |
+
+An initial read-only `git diff --exit-code` from the pre-Batch-5 baseline included
+tests/tools and reported the expected Batch 5 implementation differences. It
+cannot establish unchanged executable source by itself. The corrected continuity
+audit checks unchanged production and verifies every changed executable file
+against Batch 5's executed hash; all checks pass. No engine regression or missing
+technical evidence was identified.
+
+**Remaining acceptance:** no T052 or SC-004 gap remains under the amended method.
+SC-002/003 technical obligations retain their executed duration/cycle evidence;
+human usability is now supplied by the owner. **SC-005 stays future/unverified.**
+**SC-006/SC-007 remain pending qualifying owner survival, continuation, source/
+conditions and profiling evidence**; historical captures are not promoted to
+current qualification. T053–T056 stay unchecked, `prototype-profile.md` remains
+absent, and full feature acceptance is not claimed. T053 has not started.
+No gameplay, testing infrastructure, tuning, commit or push; stop for owner review.
