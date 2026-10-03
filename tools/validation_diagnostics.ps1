@@ -12,10 +12,15 @@ function Get-ValidationDiagnostics {
     $cases = @{}
     $summary = $null
     $profileResults = @()
+    $certificateStoreFailure = $false
     # Severity records from either copy count, but duplicate stream/log copies
     # do not multiply application diagnostic expectations.
     foreach ($line in (($plain + "`n" + $logPlain) -split '\r?\n' | Select-Object -Unique)) {
-        if ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR):') { $errors.Add($line) }
+        if ($line -match 'Failed to read the root certificate store') {
+            $certificateStoreFailure = $true
+            $errors.Add($line)
+        }
+        elseif ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR):') { $errors.Add($line) }
         elseif ($line -match '^\s*WARNING:') { $warnings.Add($line) }
         elseif ($line -match '^\s*(?:SCRIPT ERROR|PARSE ERROR|RUNTIME ERROR|FATAL ERROR|ERROR|WARNING)\b' -or
                 $line -match '^\s*(?:Failed (?:loading|to load) resource|Parse Error|Exception|Unhandled exception)\s*[:(]') {
@@ -129,6 +134,7 @@ function Get-ValidationDiagnostics {
         Errors=@($errors.ToArray()); Warnings=@($warnings.ToArray()); Ambiguous=@($ambiguous.ToArray())
         ExpectedApplicationFaults=@($expectedFaults.ToArray())
         ProfileResults=@($profileResults)
+        CertificateStoreFailure=$certificateStoreFailure
         Failed=($errors.Count -gt 0 -or $ambiguous.Count -gt 0)
     }
 }

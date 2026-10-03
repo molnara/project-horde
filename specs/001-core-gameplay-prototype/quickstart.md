@@ -113,7 +113,8 @@ separate `test-validation.ps1` wrapper deliberately runs **Foundation scope
 It does not replace full All. Play/Profile do not import or run tests first:
 run All successfully before interactive use on a clean checkout or after code edits.
 
-The launcher selects first nonempty `GODOT_BIN` in Process → User → Machine
+Selection order is explicit `-GodotBin` → ignored workspace
+`.cache/godot-bin.txt` → first nonempty `GODOT_BIN` in Process → User → Machine
 scope, reporting absence/empty values. Inaccessible scope blocks discovery;
 sandbox registry isolation can hide persistent values. Supply an existing
 absolute console path when needed, without changing environment configuration:
@@ -134,6 +135,24 @@ override blocks, with no fallback. The launcher rechecks absolute path/existence
 PE console format, advertised flags, official stable 4.7.2 version and non-Mono
 Standard editor capability.
 
+After a successful explicit validation, optionally remember that approved path
+for fresh sessions in this workspace only. The file contains one unquoted absolute
+console path; no registry, PATH or persistent environment changes are needed:
+
+```powershell
+# From the workspace root, after All above succeeds. Preserve an existing selection.
+if (-not (Test-Path -LiteralPath './.cache/godot-bin.txt')) {
+    Set-Content -LiteralPath './.cache/godot-bin.txt' -Value $GodotBin -Encoding UTF8
+}
+./tools/validate.ps1 -Mode All -InfrastructureFixtures
+```
+
+The launcher checks selection-file containment/reparse ancestors before reading
+it and revalidates the executable every run. Missing file uses environment discovery;
+empty, unreadable or invalid local selection blocks without fallback. Explicit
+`-GodotBin` takes precedence even when the local selection is broken. Keep the file
+ignored; deleting local caches requires selecting the engine again.
+
 Before any engine command, the launcher redirects process APPDATA/LOCALAPPDATA/
 TEMP/TMP to unique ignored `.cache/validation/<session>/` directories. An isolated
 compatibility-renderer probe checks actual Godot user/data/config/cache and editor
@@ -150,6 +169,17 @@ A historical sandbox certificate-store error failed preflight despite child exit
 0; the ledger records the authorized retry outside isolation with containment
 preserved. If repeated, retain diagnostics and use the applicable execution
 approval mechanism; do not suppress the error or change certificates.
+
+Supported retry: retain the FAILED session and identify the failed subcommand
+(usually `paths`), its child exit and original streams/log. Request approval through
+the execution environment to run the **same launcher command** outside isolation,
+then run it only after approval. The fresh retry must pass version/help and actual
+path containment again before any real-project command. It creates separate evidence
+and does not erase the first failure. Certificate text in either streams or the
+engine log fails even at exit zero; dependent checks are explicitly UNRUN.
+If approval or that execution route is unavailable, record retry BLOCKED and dependent
+checks UNRUN. Do not run the binary directly, disable certificate verification,
+self-elevate, silently retry, change global certificate stores or create external markers.
 
 All executes these commands with a separate absolute `--log-file` each:
 

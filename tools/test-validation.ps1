@@ -45,9 +45,14 @@ function Invoke-ValidationInfrastructureFixtures {
         # Selection seam changes only scope reads; selected paths still pass the
         # exact production PE/version/path gates. No persistent registry writes.
         $noRead = { param($Scope) throw "Override must not inspect $Scope" }
-        Assert-Fixture ((Resolve-GodotExecutable -Explicit $true -Override $engine -ReadScope $noRead) -eq $engine) 'explicit override precedence'
+        $noLocal = { $null }
+        Assert-Fixture ((Resolve-GodotExecutable -Explicit $true -Override $engine -ReadScope $noRead -ReadLocalSelection $noRead) -eq $engine) 'explicit override precedence'
+        Assert-Fixture ((Resolve-GodotExecutable -Explicit $false -ReadScope $noRead -ReadLocalSelection { $engine }) -eq $engine) 'local selection precedes scope reads'
+        Assert-Rejection { Resolve-GodotExecutable -Explicit $false -ReadLocalSelection { '' } } 'godot-bin.txt is empty' 'empty local selection blocks'
+        Assert-Rejection { Resolve-GodotExecutable -Explicit $false -ReadLocalSelection { throw 'fixture access denied' } } 'cannot read workspace' 'inaccessible local selection blocks'
         Assert-Rejection { Resolve-GodotExecutable -Explicit $true -Override '' -ReadScope $noRead } 'explicit -GodotBin is empty' 'empty override no fallback'
         $badPath = Join-Path $fixtureRoot 'absent.exe'
+        Assert-Rejection { Assert-ConsoleExecutable (Resolve-GodotExecutable -Explicit $false -ReadScope $noRead -ReadLocalSelection { $badPath }) } 'does not exist' 'invalid local selection no fallback'
         Assert-Rejection { Assert-ConsoleExecutable (Resolve-GodotExecutable -Explicit $true -Override $badPath -ReadScope $noRead) } 'does not exist' 'invalid explicit override no fallback'
         Assert-Rejection { Assert-ConsoleExecutable 'relative.exe' } 'absolute Windows' 'relative executable rejected'
         $fakeExe = Join-Path $fixtureRoot 'invalid.exe'
@@ -62,10 +67,15 @@ function Invoke-ValidationInfrastructureFixtures {
                 if (@('Process', 'User', 'Machine').IndexOf($Scope) -gt @('Process', 'User', 'Machine').IndexOf($chosenScope)) { throw 'Read past first nonempty scope.' }
                 return @{GODOT_BIN=' '}
             }.GetNewClosure()
-            Assert-Fixture ((Resolve-GodotExecutable -Explicit $false -ReadScope $reader) -eq $engine) "first nonempty $chosenScope discovery"
+            Assert-Fixture ((Resolve-GodotExecutable -Explicit $false -ReadLocalSelection $noLocal -ReadScope $reader) -eq $engine) "first nonempty $chosenScope discovery"
         }
-        Assert-Rejection { Resolve-GodotExecutable -Explicit $false -ReadScope { param($Scope) @{} } } 'absent/empty in Process, User and Machine' 'all absent scopes explicit blocker'
-        Assert-Rejection { Resolve-GodotExecutable -Explicit $false -ReadScope { param($Scope) if ($Scope -eq 'User') { throw 'fixture access denied' }; @{} } } 'cannot inspect GODOT_BIN User scope' 'inaccessible scope explicit blocker'
+        Assert-Rejection { Resolve-GodotExecutable -Explicit $false -ReadLocalSelection $noLocal -ReadScope { param($Scope) @{} } } 'absent/empty in Process, User and Machine' 'all absent scopes explicit blocker'
+        Assert-Rejection { Resolve-GodotExecutable -Explicit $false -ReadLocalSelection $noLocal -ReadScope { param($Scope) @{GODOT_BIN=' '} } } 'absent/empty in Process, User and Machine' 'all empty scopes explicit blocker'
+        foreach ($deniedScope in @('Process', 'User', 'Machine')) {
+            $deniedReader = { param($Scope) if ($Scope -eq $deniedScope) { throw 'fixture access denied' }; @{} }.GetNewClosure()
+            Assert-Rejection { Resolve-GodotExecutable -Explicit $false -ReadLocalSelection $noLocal -ReadScope $deniedReader } "cannot inspect GODOT_BIN $deniedScope scope" "inaccessible $deniedScope scope explicit blocker"
+        }
+        Assert-Rejection { Assert-ConsoleExecutable (Resolve-GodotExecutable -Explicit $false -ReadLocalSelection $noLocal -ReadScope { param($Scope) if ($Scope -ne 'Process') { throw 'Read past invalid selected scope.' }; @{GODOT_BIN=$badPath} }) } 'does not exist' 'invalid first scope blocks without fallback'
         $outside = [IO.Path]::GetFullPath((Join-Path $workspace '../fixture-outside'))
         Assert-Rejection { Assert-ContainedPath $outside } 'outside' 'workspace path escape rejected without write'
         Assert-Rejection { Assert-ContainedPath 'relative' } 'absolute Windows path' 'relative containment rejected'
@@ -76,6 +86,13 @@ function Invoke-ValidationInfrastructureFixtures {
         }
         foreach ($text in @('SCRIPT ERROR: Parse Error: bad token', 'PARSE ERROR: bad token', 'ERROR: Failed loading resource: res://missing.tres', 'RUNTIME ERROR: bad call', 'FATAL ERROR: failure')) {
             Assert-Fixture (Get-ValidationDiagnostics -Text $text).Failed 'recognized severity rejected at exit zero'
+        }
+        foreach ($prefix in @('', 'ERROR: ')) {
+            $certificateText = $prefix + 'Failed to read the root certificate store.'
+            $certificate = Get-ValidationDiagnostics -Text $certificateText
+            Assert-Fixture ($certificate.Failed -and $certificate.CertificateStoreFailure -and $certificate.Errors -contains $certificateText) 'certificate stream failure retains original text'
+            $certificate = Get-ValidationDiagnostics -Text 'normal' -EngineLog $certificateText
+            Assert-Fixture ($certificate.Failed -and $certificate.CertificateStoreFailure) 'certificate log-only failure classified'
         }
         $ambiguous = Get-ValidationDiagnostics -Text 'ERROR malformed severity without colon'
         Assert-Fixture ($ambiguous.Failed -and $ambiguous.Ambiguous.Count -eq 1) 'ambiguous severity requires investigation'
@@ -291,6 +308,13 @@ func _initialize() -> void:
     push_error("HORDE fixture genuine zero-exit error")
     quit(0)
 '@ $true 'ERROR: HORDE fixture genuine zero-exit error'
+        $certificateChild = Invoke-FixtureScript 'fixture-certificate-zero' @'
+extends SceneTree
+func _initialize() -> void:
+    print("Failed to read the root certificate store.")
+    quit(0)
+'@ $true 'Failed to read the root certificate store.'
+        Assert-Fixture ($certificateChild.ExitCode -eq 0 -and $certificateChild.Diagnostics.CertificateStoreFailure) 'certificate child exit zero remains failed'
         Assert-Fixture ($zeroError.ExitCode -eq 0 -and $zeroError.Diagnostics.Errors.Count -gt 0) 'real error exit zero still fails'
         [void](New-ContainedDirectory (Join-Path $cacheRoot 'profile-fixtures'))
         $captureFailure = Invoke-FixtureScript 'fixture-capture-failure' @'

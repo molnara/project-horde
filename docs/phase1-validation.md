@@ -13,12 +13,26 @@ Run from the workspace root:
 & ./tools/validate.ps1 -GodotBin $verifiedConsolePath -Mode All
 ```
 
-Without an override, discovery selects the first nonempty `GODOT_BIN` in
+DX-001 Batch 2 adds an ignored workspace `.cache/godot-bin.txt` selection after
+explicit `-GodotBin` and before environment discovery. See
+[quickstart](../specs/001-core-gameplay-prototype/quickstart.md) for the reproducible
+setup and supported approved retry route. Empty/unreadable/invalid local selection
+blocks without fallback; the existing executable/version/containment gates remain.
+
+Without an override or local selection, discovery selects the first nonempty `GODOT_BIN` in
 Process → User → Machine order. An invalid explicit override never falls back.
 Inaccessible scope reads block with a diagnostic; supply an explicit path if
 sandbox registry isolation hides persistent values. The launcher verifies the
 PE console subsystem, official 4.7.2 stable version, Standard edition and CLI
 help. No installation or persistent environment change is made.
+
+Certificate-store text in streams or engine logs remains FAILED even at child exit
+zero. Retain the original failed subcommand/output; dependent checks are UNRUN.
+Only an explicitly approved execution-environment retry outside isolation may run
+the same launcher command, rechecking actual paths before the real project.
+Unavailable approval/route is a BLOCKED retry. No automatic retry, self-elevation,
+certificate-verification bypass, external marker or global host change is supported.
+Historical Phase 1 results below remain unchanged.
 
 Each invocation creates ignored `.cache/validation/<session>/` output. Process
 APPDATA, LOCALAPPDATA, TEMP and TMP are redirected there, then prior present/

@@ -26,6 +26,16 @@ Use the workspace-contained launcher, never a direct uncontained engine call:
 ```
 
 An optional `-GodotBin` absolute console path is supported by both launchers.
+For fresh sessions, both also use ignored `.cache/godot-bin.txt` before environment
+discovery; explicit selection takes precedence. See the
+[selection and authorized retry instructions](../specs/001-core-gameplay-prototype/quickstart.md#prerequisites-and-contained-commands)
+in quickstart. Empty/invalid/unreadable selection blocks without fallback.
+Certificate-store failures remain FAILED even at child exit zero, with original
+diagnostics and dependent UNRUN records. A separately approved retry outside
+isolation uses the same launcher and repeats actual-path containment; unavailable
+retry is BLOCKED. Infrastructure fixtures cover local/explicit precedence,
+absent/empty/inaccessible scopes, invalid selections and certificate stream/log/
+exit-zero classification without changing global configuration.
 `Foundation` is an explicit limited suite, not gameplay acceptance. It still
 discovers/reconciles the entire manifest before selecting its 13 cases. The
 infrastructure wrapper uses that scope so its diagnostic/timeout/environment

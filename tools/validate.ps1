@@ -29,6 +29,7 @@ $results = [Collections.Generic.List[object]]::new()
 $savedEnvironment = @{}
 $sessionDir = $null
 $exitStatus = 1
+$parsesCompleted = $false
 $utf8 = [Text.UTF8Encoding]::new($false)
 . (Join-Path $PSScriptRoot 'validation_diagnostics.ps1')
 
@@ -73,12 +74,28 @@ function Write-ContainedText([string] $Path, [string] $Text) {
 
 function Resolve-GodotExecutable {
     param([bool] $Explicit = $script:explicitGodotBin, [string] $Override = $GodotBin,
+          [scriptblock] $ReadLocalSelection = {
+              $selectionFile = Assert-ContainedPath (Join-Path $cacheRoot 'godot-bin.txt') $cacheRoot
+              if (Test-Path -LiteralPath $selectionFile) {
+                  if (-not (Test-Path -LiteralPath $selectionFile -PathType Leaf)) { throw 'Selection file must be a regular file.' }
+                  return [IO.File]::ReadAllText($selectionFile).Trim()
+              }
+              return $null
+          },
           [scriptblock] $ReadScope = { param($Scope) [Environment]::GetEnvironmentVariables($Scope) })
     if ($Explicit) {
         if ([string]::IsNullOrWhiteSpace($Override)) { throw 'BLOCKED: explicit -GodotBin is empty; no fallback is permitted.' }
         Write-Host 'Executable selection: explicit -GodotBin override.'
         return $Override
     }
+    try { $localSelection = & $ReadLocalSelection }
+    catch { throw "BLOCKED: cannot read workspace .cache/godot-bin.txt: $($_.Exception.Message). Supply -GodotBin explicitly." }
+    if ($null -ne $localSelection) {
+        if ([string]::IsNullOrWhiteSpace($localSelection)) { throw 'BLOCKED: workspace .cache/godot-bin.txt is empty; no fallback is permitted.' }
+        Write-Host 'Executable selection: workspace .cache/godot-bin.txt (ignored local selection).'
+        return $localSelection
+    }
+    Write-Host 'Workspace .cache/godot-bin.txt: absent; inspecting GODOT_BIN scopes.'
     foreach ($scope in @('Process', 'User', 'Machine')) {
         try {
             $variables = & $ReadScope $scope
@@ -92,7 +109,7 @@ function Resolve-GodotExecutable {
             throw "BLOCKED: cannot inspect GODOT_BIN $scope scope: $($_.Exception.Message). Supply -GodotBin explicitly."
         }
     }
-    throw 'BLOCKED: GODOT_BIN absent/empty in Process, User and Machine scopes, or hidden by registry isolation. Supply an absolute console executable with -GodotBin; no installation was attempted.'
+    throw 'BLOCKED: GODOT_BIN absent/empty in Process, User and Machine scopes, or hidden by registry isolation. Supply an absolute console executable with -GodotBin or record it in workspace .cache/godot-bin.txt; no installation was attempted.'
 }
 
 function Assert-ConsoleExecutable([string] $Path) {
@@ -253,6 +270,9 @@ function Invoke-GodotCheck {
         foreach ($record in $diagnostics.Ambiguous) { Write-Host "INVESTIGATE: ambiguous diagnostic: $record" }
         if ($outcome -ne 'PASSED') {
             Write-Host $plain
+            if ($diagnostics.CertificateStoreFailure) {
+                Write-Host "Certificate-store failure in [$Name], including at exit zero. Retain this failed session. Request applicable approval to rerun the same launcher command outside isolation; no automatic retry or elevation occurs. The retry must verify actual paths again before the real project runs. If approval/execution is unavailable, report retry BLOCKED. Do not disable certificate verification or change host configuration."
+            }
             if ($timedOut) { throw "FAILED: $Name exceeded its ${TimeoutSeconds}s limit; launched child terminated. Inspect retained logs, then explicitly override the limit to retry." }
             throw "FAILED: $Name exited $($child.ExitCode) or reported an engine/application error or incomplete capture; dependent checks were not run. Inspect $logPath and captured streams."
         }
@@ -379,6 +399,7 @@ func _enter_tree() -> void:
             $index++
             [void](Invoke-GodotCheck ("parse-{0:D3}" -f $index) @('--headless', '--path', $workspace, '--script', $scriptFile.FullName, '--check-only') $workspace $ParseTimeoutSeconds)
         }
+        $parsesCompleted = $true
         $runner = Join-Path $workspace 'tests/run_tests.gd'
         if (Test-Path -LiteralPath $runner -PathType Leaf) {
             [void](Assert-ContainedPath $runner)
@@ -411,6 +432,16 @@ func _enter_tree() -> void:
     $failure = $_.Exception.Message
     Write-Host $failure
     $results.Add([pscustomobject]@{Name='launcher';Outcome=if ($failure.StartsWith('BLOCKED:')) {'BLOCKED'} else {'FAILED'};Reason=$failure})
+    $dependentChecks = if ($Mode -eq 'All') { @('import', 'parse', 'suite', 'startup', 'profile-startup') } else { @($Mode.ToLowerInvariant()) }
+    if ($InfrastructureFixtures -and $Mode -eq 'All') { $dependentChecks += 'infrastructure' }
+    foreach ($name in $dependentChecks) {
+        # Parse is a group: after a partial parse failure remaining scripts are unrun.
+        if (($name -eq 'parse' -and -not $parsesCompleted) -or
+            ($name -ne 'parse' -and $name -notin @($results | ForEach-Object { $_.Name }))) {
+            $results.Add([pscustomobject]@{Name=if ($name -eq 'parse') {'remaining-parses'} else {$name};Outcome='UNRUN';Reason=$failure})
+            Write-Host "RESULT [$name]: UNRUN; launcher stopped: $failure"
+        }
+    }
     $exitStatus = 1
 } finally {
     foreach ($name in $savedEnvironment.Keys) {

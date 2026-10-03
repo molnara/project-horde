@@ -2756,3 +2756,36 @@ No engine, suite, interactive playtest or profile session ran for this amendment
 those checks are UNRUN here because only documentation changed. No production,
 test implementation, tooling, scene/resource or tuning changes; no T053–T056,
 staging, commit or push. DX-001 Batches 2–5 remain unstarted. Stop for review.
+
+## DX-001 Batch 2 — environment reliability, 2026-10-03
+
+**Authority:** separate product-owner Batch 2 request. Batch 2 is implemented and
+ready for review; Batches 3–5 and T053–T056 remain unstarted. Full commands,
+source revision, exact ignored evidence paths, corrected harness failures and
+next-session instructions are in the
+[Batch 2 handoff](../development/dx-001-autonomous-qa.md#batch-2-session-outcome-and-next-handoff--2026-10-03).
+
+Engine selection now supports ignored workspace `.cache/godot-bin.txt` after
+explicit `-GodotBin` and before Process/User/Machine discovery. Invalid selection
+blocks without fallback; console/4.7.2 Standard/help/actual-path gates remain.
+Root certificate-store failures retain original diagnostics and fail at child
+exit zero; dependent checks are UNRUN. Supported retries require applicable
+execution-environment approval outside isolation and repeat containment; no
+automatic retry, self-elevation, certificate bypass or global change is introduced.
+
+| Executed check | Actual result |
+|---|---|
+| Explicit All + infrastructure inside isolation | FAILED exit 1: `paths` exit 0 with root certificate-store error; version/help passed, dependent project checks UNRUN, four environment restorations passed. |
+| Same explicit All + infrastructure with approved execution outside isolation | PASSED exit 0: containment, import, 37 parses, 82 cases / 5,843 assertions, normal/Profile startup, 159 infrastructure assertions, environment restoration. |
+| `./tools/test-validation.ps1` outside isolation with separate approval and local-file selection | PASSED exit 0: containment/import/37 parses, Foundation 13 cases / 575 assertions, startups, final 163 infrastructure assertions and wrapper present/absent restoration (TEMP/GODOT_BIN absent). Foundation excludes 69 cases and is not full gameplay acceptance. |
+| Ignored `./.cache/dx001-environment-check.ps1` | PASSED exit 0: 12 checks, actual local selection/invalid file/explicit bypass; real failed isolated preflight restores all four initially absent variables, preserves error and six UNRUN records, never writes verified paths. |
+| Three tool scripts parsed; ignored local selection | PASSED: zero PowerShell parse errors; `git check-ignore .cache/godot-bin.txt` exit 0. |
+| `./.cache/dx001-batch2-doc-check.ps1`; `git diff --check`; unchanged-scope Git diff (exact path list in handoff) | PASSED, exit 0: 28 local links/anchors, five documents whitespace, three script parses; no diff whitespace errors; gameplay/test implementation/constitution/spec/plan/tasks unchanged. Git LF→CRLF advisories only. |
+| Owner playtest, rendered profile smoke, survival/performance and Batch 3 clause audit | UNRUN; outside Batch 2. No new manual or feature acceptance is claimed. |
+
+The certificate restriction persists inside isolation; the approved contained
+route successfully executes. Future sessions need their own applicable approval
+or must report retry BLOCKED/project checks UNRUN. Historical failure evidence
+remains. T051 stays complete, T052 stays open; independent SC-004 and the Batch 3
+technical evidence audit remain pending. SC-005 is future/unverified and no new
+SC-006/007 evidence or prototype-profile report was created. Stop for review.
