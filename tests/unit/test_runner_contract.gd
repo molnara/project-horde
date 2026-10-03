@@ -18,6 +18,17 @@ func prerequisites(ctx) -> void:
 	ctx.check(selected.size() == 13 and entries.size() == 88, "explicit foundation scope preserves all registered required cases")
 	var technical := entries.filter(func(entry): return entry.id.begins_with("technical."))
 	ctx.check(technical.size() == 6 and technical.all(func(entry): return not selected.has(entry)), "all six Batch 3 acceptance cases required and excluded only by explicit Foundation scope")
+	var fast := Manifest.select_tier(entries, true)
+	ctx.check(fast.size() == 84 and fast.has(technical[4]) and fast.has(technical[5]), "Fast retains both inexpensive technical cases and all 82 earlier cases")
+	ctx.check(technical.slice(0, 4).all(func(entry): return not fast.has(entry)), "Fast explicitly omits four duration protocols; never shortens them")
+	var groups: Array[String] = ["definitions", "runner", "movement", "combat", "survival", "profile", "defeat", "restart_evidence", "pause", "pause_profile", "technical"]
+	ctx.check(Manifest.selection_errors(entries, groups).is_empty() and Manifest.select_tier(entries, false, groups) == entries, "union of exact targeted groups preserves all 88 cases in manifest order")
+	var pause_groups: Array[String] = ["pause", "pause_profile"]
+	ctx.check(Manifest.select_tier(entries, false, pause_groups).size() == 18, "pause selection includes all subsystem and evidence integration cases")
+	for values in [[], ["absent"], ["pause", "pause"], [""]]:
+		var invalid: Array[String] = []
+		invalid.assign(values)
+		ctx.check(not Manifest.selection_errors(entries, invalid).is_empty(), "empty unknown or duplicate selection fails: " + str(invalid))
 	var staged := Manifest.staged_entries()
 	ctx.check(staged.is_empty() and entries.filter(func(entry): return entry.id.begins_with("pause.") or entry.id.begins_with("pause_profile.")).size() == 18, "all eighteen US3 cases required; no implementation-dependent deferrals remain")
 	var phase4 := entries.filter(func(entry): return entry.id.begins_with("defeat.") or entry.id.begins_with("restart_evidence."))

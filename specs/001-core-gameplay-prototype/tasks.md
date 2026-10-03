@@ -274,3 +274,10 @@ No production or test implementation is authorized by this amendment.
 ### Verification and completion
 
 Run proportional checks at each story checkpoint, then the final required suite and actual owner profile. Investigate failures before marking a task complete. T054/T055 require one real normal attempt, recorded separately from diagnostic/fault/paused fixtures. Full prototype acceptance requires all SC-001–004/006–007 evidence, zero unexpected spawn failures in the qualifying attempt, required continuation/capture, and recorded manual outcomes. No automatic commit, external installation/cache writes, production assets, progression or 200-enemy benchmark is authorized by this task-generation operation.
+
+DX-001 Batch 5 implements the separate [execution workflow](../../tests/README.md#dx-001-batch-5-execution-workflow)
+and records [actual tier evidence](../../docs/verification/dx-001-batch5.md).
+Fast/Targeted are proportional development checks; final required Full retains
+all 88 cases and infrastructure/import/parsing/startups. No task checkbox or
+acceptance criterion is changed. T052 remains open for independent owner SC-004;
+T053–T056 remain unstarted/outside DX-001; SC-005 is future/unverified.

@@ -88,8 +88,76 @@ assertions become 4,144 (from 6,142). All six Batch 3 cases and their durations,
 three restart cycles and thresholds are unchanged. See the
 [Batch 4 measurement and coverage report](../docs/verification/dx-001-batch4.md)
 for actual before/after costs and limits; fewer assertions do not establish a
-speedup. No execution tier is introduced here. T052 still requires independent
+speedup. Batch 4 introduced no execution tier; Batch 5 below supplies the workflow. T052 still requires independent
 owner SC-004 evidence; use the existing quickstart controls/presentation journey.
+
+## DX-001 Batch 5 execution workflow
+
+Run through the established approval-mediated launcher route. Existing selection,
+version/help, actual-path containment, import, all script parses, normal/Profile
+headless startups, genuine-error classification and environment restoration apply
+to every tier. No new dependency or launcher watchdog default is introduced.
+
+| Tier | Exact PowerShell command | Native scope / exclusions |
+|---|---|---|
+| Fast | `./tools/validate.ps1 -Mode All -SuiteScope Fast` | 84/88 cases: all 82 earlier cases plus `technical.configurable_eligibility` and `technical.mapped_input`. Excludes only `technical.hud_clock`, `technical.pause_contact`, `technical.pause_between`, `technical.three_cycles`; infrastructure excluded unless requested. |
+| Targeted example | `./tools/validate.ps1 -Mode All -SuiteScope Targeted -CaseGroups movement,combat,survival` | 26/88 cases; all other groups excluded, infrastructure excluded unless requested. Choose groups by the impact table below, not by this example alone. |
+| Full | `./tools/validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240` | All 88 required cases, all infrastructure fixtures, import, every parse and both startups. Zero allowed pending/deferred/excluded required checks. |
+
+Fast is routine regression during small localized edits, after assessing impact.
+It is not complete acceptance: the four omitted duration protocols remain required.
+Batch 4 final native suite cost was 96.815639 s; those four cases totaled 95.072910 s.
+Selecting around that measured cost is useful; shortening their durations is forbidden.
+All 65 completed active seconds, three ten-real-second waits, three consecutive
+same-Main click/Enter/Space cycles and original thresholds remain in Full.
+Foundation remains a separate 13-case harness selection, excluding all gameplay;
+it is never Fast or complete gameplay acceptance. The existing infrastructure wrapper
+still uses Foundation. Full requires both `All` scope and `-InfrastructureFixtures`.
+
+Targeted uses exact ID groups, in manifest order, with no wildcard/fallback.
+Valid groups: `definitions` (8), `runner` (5), `movement` (6), `combat` (7),
+`survival` (13), `profile` (9), `defeat` (9), `restart_evidence` (7), `pause` (10),
+`pause_profile` (8), `technical` (6). Empty, unknown or duplicate selections fail;
+`-CaseGroups` is valid only with Targeted. Include `definitions,runner` when
+their contracts are affected. `technical` executes all six acceptance cases
+with original durations; use `-SuiteTimeoutSeconds 240` for any such selection.
+
+| Actual impact | Relevant Targeted groups during development | Final gate |
+|---|---|---|
+| Local movement/arena geometry or combat behavior | `movement,combat,survival,technical` plus `definitions` for definition changes | Full for input, scheduling, shared data or integrated acceptance changes |
+| Isolated HUD formatter/presentation contract | `survival,defeat,pause,technical` | Full for shared clock/lifecycle changes; manual readability remains required |
+| Pause/resume behavior | `pause,pause_profile,survival,defeat,technical` | Full: shared lifecycle/input/scheduling |
+| Defeat/restart behavior | `defeat,restart_evidence,survival,pause,technical` | Full: shared lifecycle |
+| Local capture/statistics/storage contract | `profile,restart_evidence,pause_profile` | Full if shared capture lifecycle/output or launcher validation changes |
+| Runner, manifest, selection, diagnostics, launcher/containment | `definitions,runner` with `-InfrastructureFixtures` for exploration | Full mandatory |
+
+Select the union of all affected groups after inspecting callers/signals/resources
+and integration seams. If impact is uncertain or crosses subsystems, use Full.
+Full is mandatory for integrated technical acceptance, final feature/release review,
+shared lifecycle/scheduling/input changes, runner/manifest/selection/diagnostics/
+launcher changes, or recovery when a limited run exposes a wider regression.
+Run it once after the final executable changes; rerun only for further executable
+changes, failures or unresolved evidence. Documentation-only edits need static
+consistency/link/whitespace checks, not a repeated engine Full run.
+
+Every scope discovers/reconciles all authored IDs/scripts/methods before selection
+and reconciles selected execution after it. `HORDE_CASE_EXCLUDED` reports each omitted
+ID; omissions are UNRUN with acceptance pending, never passing checks. Case BEGIN/END
+reports actual execution/pass/completion; PENDING reports missing prerequisites and
+fails required execution reconciliation. Deferred records remain explicit (currently
+zero). `results.json` reports executed PASSED/FAILED checks, BLOCKED setup and dependent
+UNRUN checks; infrastructure is EXCLUDED when not requested. Native summary records
+registered/required/executed/excluded/pending/deferred and scope/groups. Genuine errors,
+incomplete cases and unexpected nonzero exits still fail. Expected negative
+infrastructure children stay FAILED with an independently passing expectation.
+
+Record revision/diff, exact commands, chosen groups and impact rationale, receipt
+directory, actual native/child/aggregate times, statuses and acceptance gaps in the
+ledger. Timings are observations on this host, not speed guarantees or gameplay FPS.
+Actual Batch 5 commands, costs, failure correction and final source provenance are
+in [Batch 5 evidence](../docs/verification/dx-001-batch5.md).
+T052 remains open for independent SC-004 owner evidence; SC-005 remains future/
+unverified; SC-006/007 qualification and T053–T056 are outside DX-001.
 
 Phase 3B profiling repair: `profile.bounded_late_failure` now persists and rereads
 all 1,050,001 synthetic callbacks exactly, including every chunk boundary/tail,

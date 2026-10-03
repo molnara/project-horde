@@ -82,6 +82,31 @@ static func select_scope(manifest: Array[Dictionary], foundation_only: bool) -> 
 			selected.append(entry)
 	return selected
 
+# Exact group names (the ID before its dot); no wildcards or implicit fallback.
+static func selection_errors(manifest: Array[Dictionary], groups: Array[String]) -> Array[String]:
+	var errors: Array[String] = []
+	if groups.is_empty():
+		errors.append("targeted selection requires at least one case group")
+	var seen := {}
+	for group in groups:
+		if seen.has(group):
+			errors.append("duplicate case group: " + group)
+		seen[group] = true
+		if not manifest.any(func(entry): return entry.id.get_slice(".", 0) == group):
+			errors.append("unknown case group: " + group)
+	return errors
+
+static func select_tier(manifest: Array[Dictionary], fast: bool, groups: Array[String] = []) -> Array[Dictionary]:
+	var selected: Array[Dictionary] = []
+	for entry in manifest:
+		if fast:
+			if entry.id in ["technical.hud_clock", "technical.pause_contact", "technical.pause_between", "technical.three_cycles"]:
+				continue
+		elif not groups.has(entry.id.get_slice(".", 0)):
+			continue
+		selected.append(entry)
+	return selected
+
 static func discover(directory: String) -> Array[String]:
 	var result: Array[String] = []
 	if not (directory == "res://tests/unit" or directory.begins_with("res://tests/unit/") or directory == "res://tests/integration" or directory.begins_with("res://tests/integration/")):

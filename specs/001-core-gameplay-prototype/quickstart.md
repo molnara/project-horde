@@ -223,10 +223,10 @@ attempt and sealed segment; missing output fails even at child exit zero.
 
 ## Actual manifest and automated coverage
 
-`tests/case_manifest.gd` registers all 82 authored cases; `staged_entries()`
+`tests/case_manifest.gd` registers all 88 authored cases; `staged_entries()`
 is empty. `ready_after` describes implemented prerequisites, not deferral.
 The runner discovers `test_*.gd` in `tests/unit/` and `tests/integration/`
-(five files each), reconciles IDs/script paths/methods and executed IDs, uses fixed
+(five unit and six integration files), reconciles IDs/script paths/methods and executed IDs, uses fixed
 reported seeds, requires positive assertions and explicit completion, and fails
 missing/duplicate/unknown/zero/unexecuted cases. Support helpers are not case files.
 Fixtures instantiate actual components/scenes with independent definitions and
@@ -245,12 +245,48 @@ normal owner acceptance.
 | `integration/test_restart_evidence.gd` | 7 / 4702035 | Seal before teardown, stale generations, valid/invalid opening, shutdown/write faults, post-300 survival preservation |
 | `integration/test_pause_resume.gd` | 10 / 4702042 | FR-012 Escape/inactive callbacks/frozen encounter, remaining delays, discarded input/HUD, terminal defeat |
 | `integration/test_pause_profile.gd` | 8 / 4702043 | Segment flush/origin/gap exclusion, same attempt/outcomes, paused endpoint, retained diagnostics, interruption before/after 300 |
+| `integration/test_technical_acceptance.gd` | 6 / 4702052 | Automatic 65-active-second HUD, two ten-real-second pauses, ten-real-second defeated freeze and three same-application input restarts, configurable eligibility and physical mapped input |
 
 T048 previously passed 48 Phase 3B/foundation cases (3,719 assertions), 16 Phase 4
 (984), and 18 Phase 5 (1,140): **82 / 5,843** total. Infrastructure's 146 assertions
 are separate. This audit checks source inventory and prior evidence, without
 rerunning those tests. See [tests/README.md](../../tests/README.md) for case details
 and [component contracts](contracts/gameplay-components.md) for obligations.
+
+## Proportionate validation — DX-001 Batch 5
+
+Use the same approved contained Godot route for each command:
+
+```powershell
+# Fast: routine regression, 84 cases; four duration protocols remain pending.
+./tools/validate.ps1 -Mode All -SuiteScope Fast
+# Targeted: example for movement/combat/survival seams, 26 cases.
+./tools/validate.ps1 -Mode All -SuiteScope Targeted -CaseGroups movement,combat,survival
+# Full: complete required technical scope, all 88 cases and infrastructure.
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240
+```
+
+All tiers import, parse every script, reconcile the complete authored manifest,
+run their selected cases, and check normal/Profile headless startup. Fast omits
+only `technical.hud_clock/pause_contact/pause_between/three_cycles`; Targeted
+reports every omitted ID. Neither establishes omitted acceptance. Foundation is
+still the limited 13-case harness scope, not gameplay acceptance. Infrastructure
+is excluded unless requested. Missing prerequisites, failed/genuine errors,
+blocked setup and dependent unrun checks remain explicit in evidence.
+
+Select groups using the [impact table and exact group inventory](../../tests/README.md#dx-001-batch-5-execution-workflow).
+Full is mandatory for integrated acceptance/final feature or release review,
+shared lifecycle/scheduling/input changes, runner/manifest/selection/diagnostics/
+launcher changes, uncertain cross-subsystem impact or wider regression recovery.
+Targeted `technical` includes all six protocols; use a 240-second suite limit.
+Do not shorten the 65-active-second clock, ten-real-second inactive waits or
+three same-application restart cycles. Run Full after final executable edits;
+repeat only for new executable changes, failures or unresolved evidence.
+Documentation-only changes use static checks. Record exact commands, revision/
+diff, impact, receipt paths, costs and executed/excluded/pending/blocked/failed/
+unrun statuses. [Batch 5 results](../../docs/verification/dx-001-batch5.md) provide
+measured examples, not performance guarantees. All manual owner steps below
+remain necessary; DX-001 does not close T052 or prototype acceptance.
 
 ## Controls and Phase 6 owner journey (T052 — feedback received, closure open)
 

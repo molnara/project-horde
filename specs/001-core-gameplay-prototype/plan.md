@@ -276,3 +276,16 @@ All seven resolutions and owner refinements are propagated across specification,
 ## Complexity Tracking (unchanged)
 
 None. No violations or added dependencies requiring justification.
+
+## DX-001 Batch 5 validation execution
+
+The [tests workflow](../../tests/README.md#dx-001-batch-5-execution-workflow)
+and [quickstart](quickstart.md#proportionate-validation--dx-001-batch-5)
+define Fast (84 cases, four duration protocols excluded), Targeted (explicit
+impact-selected groups) and Full (all 88 cases/infrastructure/import/parsing/
+normal and Profile startup). This operational selection does not amend any
+acceptance obligation, real-duration protocol, restart count or watchdog default.
+All authored discovery and selected execution still reconcile. Full is mandatory
+for integrated acceptance and shared lifecycle/scheduling/input or validation
+infrastructure changes. Limited passes leave omitted acceptance pending.
+T052 remains open; SC-005 is future/unverified; T053–T056 are not started by DX-001.

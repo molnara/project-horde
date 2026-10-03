@@ -1,12 +1,15 @@
 # Core gameplay verification ledger
 
-**Current acceptance method/status — DX-001 Batch 3, 2026-10-03:** T051 is
+**Current acceptance method/status — DX-001 Batch 5, 2026-10-03:** T051 is
 complete; T052 remains open pending sufficient combined evidence. SC-005 remains
 future/unverified. The DX-001 section at the end supersedes historical demands
 for duplicate human technical measurements, not the recorded observations or
 gameplay criteria. Earlier checkpoint statements below are historical.
 
-Current checkpoint: Phase 5 Batch 3 final validation / T048 closure, 2026-10-03.
+Current checkpoint: DX-001 Batch 5 implemented, ready for final review; passing
+Fast/Targeted/Full and remaining gaps are recorded at the end of this ledger.
+
+Historical checkpoint: Phase 5 Batch 3 final validation / T048 closure, 2026-10-03.
 All 82 required native cases pass with 5,843 assertions, including all 18 US3
 cases with 1,140 assertions and zero deferrals. Phase 3B remains 48/48 with 3,719
 assertions; Phase 4 remains 16/16 with 984 assertions. Final contained validation
@@ -2860,3 +2863,59 @@ UNRUN, SC-006/007 and T053–T056 unstarted, SC-005 future/unverified. Productio
 tuning/requirements/task states unchanged; no commit or push. The latest
 [DX-001 handoff](../development/dx-001-autonomous-qa.md) supplies exact separately
 authorized Batch 5 instructions.
+
+## DX-001 Batch 5 — final execution workflow, 2026-10-03
+
+Batch 5 implemented; stop for final DX-001 review. Initial status clean, HEAD
+`a67eb7df6aeabef988d9c31869e9f4f014845050`; Batch 4 source hashes matched.
+[Batch 5 report](dx-001-batch5.md) records exact commands, scope, costs,
+error correction, receipts and source provenance. The [tests workflow](../../tests/README.md#dx-001-batch-5-execution-workflow)
+and quickstart now define Fast, impact-selected Targeted and mandatory Full.
+Full remains all 88 required cases plus infrastructure/import/all parses/startups.
+Foundation remains 13 harness cases, never gameplay acceptance. Complete authored
+discovery and selected execution reconcile at every scope; genuine errors fail.
+
+| Actual command suffix after `C:\GameDev\project-horde\tools\validate.ps1` | Outcome | Cases / exclusions / assertions | Aggregate / native seconds |
+|---|---|---|---|
+| `-Mode All -SuiteScope Fast` (corrected run) | PASSED exit 0 | 84 / 4 / 3,917 | 17.0179292 / 1.792539 |
+| `-Mode All -SuiteScope Targeted -CaseGroups movement,combat,survival` | PASSED exit 0 | 26 / 62 / 808 | 15.6708611 / 0.532855 |
+| `-Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240` | PASSED exit 0 | 88 / 0 / 4,152 | 118.1939238 / 96.952284 |
+
+Each passing run executes 38 parses, import/load, actual-path containment,
+normal/Profile headless startup and all four restorations, with zero pending/
+deferred/blocked/failed required checks within selected scope. Limited tiers
+explicitly exclude infrastructure and report every omitted case as unrun with
+acceptance pending. Full passes 163 infrastructure assertions, zero omissions;
+expected negative fixture children still fail as designed. Eight new assertions
+test selection contracts; no case or original threshold removed. Full's HUD
+65.0333333333309 active seconds/01:05, real waits 10.000829/10.029978/10.029359
+seconds and three same-Main click/Enter/Space cycles all pass unchanged.
+
+Initial Fast FAILED exit 1 (15.0824425 aggregate/1.789110 native seconds): a new
+test attempted an untyped-to-typed array assignment, causing a genuine suite
+runtime error and failed completion/reconciliation; both startups UNRUN. Fixed
+by typed `assign()`; passing runs use corrected source. Failed evidence remains
+`20261003T193227993-98368e9d516b473bbdba0ec1f658aa92`. Passing evidence respectively
+`20261003T193300686-2d4c56537d544ed8a3265f37f1f9634b`,
+`20261003T193448534-feee4a5066c44e5a9851e668408e3e7e`,
+`20261003T193507973-e6dea706ae574483b01e2d34ffc05ce9` under `.cache/validation/`.
+Only one Full run; no causal speedup or gameplay FPS claim.
+
+Full mandatory for integrated/final feature/release review, shared lifecycle/
+scheduling/input or runner/selection/diagnostic/launcher changes, uncertain
+cross-subsystem impact and wider regression recovery. Fast omits only four
+duration protocols; those obligations stay mandatory at Full. Targeted selects
+the union of actual impacted subsystem/integration groups, including the full
+`technical` group with 240-second watchdog when needed. No shortened waits/cycles.
+
+T051 complete; T052 still open for independent owner SC-004. Human controls/
+rendered presentation/responsiveness/feel and rendered profile smoke UNRUN.
+SC-005 future/unverified; no new SC-006/007 qualification or T053–T056 work.
+Spec criteria, task checkbox states, production/tuning and constitution unchanged.
+No commit or push. DX-001 readiness is separate from prototype acceptance.
+
+Final static checks PASSED exit 0: `./.cache/dx001-batch5-audit.ps1` verifies
+passing receipts/partitions/duration cycles, source hashes and unchanged manifest
+entries/task requirements/production/acceptance boundaries, PowerShell syntax,
+whitespace and 69 local links; `git diff --check` passed (line-ending advisories
+only). No executable source changed after final Full validation.

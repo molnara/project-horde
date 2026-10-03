@@ -16,7 +16,13 @@ func run() -> void:
 	var authored: Array[Dictionary] = manifest.duplicate()
 	authored.append_array(staged)
 	var foundation_only := OS.get_cmdline_user_args().has("--foundation-only")
-	print("HORDE_SUITE_SCOPE=" + ("foundation-only (gameplay excluded, not feature acceptance)" if foundation_only else "all required cases"))
+	var fast := OS.get_cmdline_user_args().has("--fast")
+	var groups: Array[String] = []
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--case-group="):
+			groups.append(argument.trim_prefix("--case-group="))
+	var scope := "foundation" if foundation_only else ("fast" if fast else ("targeted" if not groups.is_empty() else "all"))
+	print("HORDE_SUITE_SCOPE=" + scope + " (only all required cases can establish complete technical acceptance)")
 	var discovered: Array[Dictionary] = []
 	var fixtures := {}
 	var failures: Array[String] = []
@@ -42,12 +48,21 @@ func run() -> void:
 	# Reconcile every authored method, including the explicit, unregistered story
 	# inventory. Missing/duplicate/unknown cases remain failures before scoping.
 	failures.append_array(Manifest.reconcile(authored, discovered))
+	if int(foundation_only) + int(fast) + int(not groups.is_empty()) > 1:
+		failures.append("conflicting native suite selections")
+	if not groups.is_empty():
+		failures.append_array(Manifest.selection_errors(manifest, groups))
 	for entry in staged:
 		if entry.get("ready_after", []).is_empty():
 			failures.append("staged case lacks implementation gate: " + entry.id)
 		print("HORDE_CASE_DEFERRED=" + JSON.stringify({"case": entry.id, "script": entry.script, "ready_after": entry.get("ready_after", []), "status": "authored, unregistered, unrun", "seed": entry.seed}))
 	# Always reconcile ALL authored cases before selecting an explicit limited run.
 	var selected := Manifest.select_scope(manifest, foundation_only)
+	if fast or not groups.is_empty():
+		selected = Manifest.select_tier(manifest, fast, groups)
+	for entry in manifest:
+		if not selected.has(entry):
+			print("HORDE_CASE_EXCLUDED=" + JSON.stringify({"case": entry.id, "scope": scope, "status": "excluded, unrun; acceptance pending"}))
 	var executed: Array[String] = []
 	var pending: Array[Dictionary] = []
 	var assertion_count := 0
@@ -93,6 +108,6 @@ func run() -> void:
 		print("HORDE_RECORDED_WARNING=" + warning)
 	for failure in failures:
 		print("HORDE_SUITE_FAILURE=" + failure)
-	print("HORDE_SUITE_END=" + JSON.stringify({"required": selected.size(), "registered": manifest.size(), "authored": authored.size(), "deferred": staged.size(), "excluded": manifest.size() - selected.size(), "scope": "foundation" if foundation_only else "all", "pending": pending.size(), "executed": executed.size(), "assertions": assertion_count, "passed": failures.is_empty(), "elapsed_seconds": (Time.get_ticks_usec() - suite_started) / 1000000.0}))
+	print("HORDE_SUITE_END=" + JSON.stringify({"required": selected.size(), "registered": manifest.size(), "authored": authored.size(), "deferred": staged.size(), "excluded": manifest.size() - selected.size(), "scope": scope, "groups": groups, "pending": pending.size(), "executed": executed.size(), "assertions": assertion_count, "passed": failures.is_empty(), "elapsed_seconds": (Time.get_ticks_usec() - suite_started) / 1000000.0}))
 	OS.remove_logger(error_monitor)
 	quit(0 if failures.is_empty() else 1)

@@ -5,9 +5,9 @@ reliability → Batch 3 autonomous technical acceptance → Batch 4 assertion cl
 and execution measurement → Batch 5 execution tiers and final reconciliation.
 **Authority:** product-owner DX-001 Bootstrap + Batch 1 request, 2026-10-03;
 [constitution v1.0.0](../../.specify/memory/constitution.md) remains unchanged.
-Current authority: product-owner **DX-001 Batch 4: Assertion Cleanup and Execution
-Measurement** request, 2026-10-03. Batch 4 only is authorized in this session;
-stop for review. Current results and exact Batch 5 instructions are appended below;
+Current authority: product-owner **DX-001 Batch 5: Execution Tiers and Final
+Reconciliation** request, 2026-10-03. Batch 5 only is authorized in this session;
+stop for final DX-001 review. Current results are appended below;
 earlier session handoffs remain historical.
 
 ## Repository baseline and evidence
@@ -734,3 +734,78 @@ task boundaries, whitespace and 29 local links), and `git diff --check`.
 No executable source changed after the passing final run. Search/rejected
 documentation-context mistakes are recorded in the report; no engine failure
 or hidden acceptance result occurred.
+
+## Batch 5 final workflow and review handoff — 2026-10-03
+
+**Batch 5 implemented; stop for final DX-001 review.** This owner's Batch 5
+request supersedes earlier authorization/status text. Initial tree clean at
+`a67eb7df6aeabef988d9c31869e9f4f014845050`; Batch 4 final source hashes match.
+The [Batch 5 report](../verification/dx-001-batch5.md) records exact commands,
+costs, scopes, error correction, receipts and final source provenance.
+
+Future sessions use the [tests workflow](../../tests/README.md#dx-001-batch-5-execution-workflow)
+and [quickstart](../../specs/001-core-gameplay-prototype/quickstart.md#proportionate-validation--dx-001-batch-5).
+Read active requirements and inspect revision/diff and actual dependency impact
+first. Use ignored local selection or explicit console override, and the same
+approval-mediated contained execution route; do not reinvestigate Windows
+isolation/certificates. If the route is unavailable, report BLOCKED and dependent
+UNRUN, continuing static work. No engine route or installation bypass.
+
+```powershell
+# Routine development regression: 84 cases; four duration obligations omitted.
+./tools/validate.ps1 -Mode All -SuiteScope Fast
+# Representative Targeted command; choose the union of actually affected groups.
+./tools/validate.ps1 -Mode All -SuiteScope Targeted -CaseGroups movement,combat,survival
+# Complete technical gate, unchanged mandatory protocols.
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240
+```
+
+Actual passing aggregate/native costs: Fast 17.0179292/1.792539 s (84 cases,
+3,917 assertions, four exclusions); Targeted example 15.6708611/0.532855 s
+(26 cases, 808 assertions, 62 exclusions); Full 118.1939238/96.952284 s
+(88 cases, 4,152 assertions, no exclusions). All pass 38 parses/import/both
+startups/four restorations. Limited commands explicitly exclude infrastructure;
+Full passes 163 infrastructure assertions. Foundation still selects 13 harness
+cases and never establishes gameplay acceptance. No measured speed guarantee.
+
+Fast keeps all 82 earlier cases and two inexpensive technical cases; omits only
+`technical.hud_clock/pause_contact/pause_between/three_cycles`. Targeted accepts
+exact ID groups, rejects empty/unknown/duplicate selection, and reports every
+excluded ID. All authored discovery reconciles before selection; selected
+execution reconciles afterward. Pending/deferred/blocked/failed/unrun evidence
+remains explicit and genuine-error classification unchanged. Eight selector
+assertions added to an existing case; all 88 required cases and six technical
+protocols are preserved. The initial Fast runtime test error failed honestly
+with both startups UNRUN; corrected before passing Fast/Targeted/Full. Failed
+receipt and exact correction are retained in the report. Only one Full ran.
+
+Full is mandatory for integrated acceptance/final feature/release review,
+shared lifecycle/scheduling/input, runner/manifest/selection/diagnostic/launcher
+changes, uncertain cross-subsystem impact and wider regression recovery. Run
+once after final executable changes; repeat only for further executable edits,
+failures or unresolved evidence. Documentation-only edits need static checks.
+Record exact command/impact/groups/revision/diff, original receipt paths,
+aggregate/native/child costs, outcomes and omissions in the ledger. A limited
+pass cannot complete omitted acceptance. Selecting `technical` runs all six
+original cases; use the 240-second suite override without changing defaults.
+
+Full preserved >=65 active seconds, three >=10-real-second waits and three
+consecutive same-Main click/Enter/Space restarts with all reset/deadline/health/
+range thresholds. No gameplay/tuning/new dependency/constitution or acceptance
+change. Plan/tasks add operational links only; task checkboxes are untouched.
+T051 complete; **T052 stays open** pending independent complete SC-004 owner
+actions without developer intervention and controls/rendered presentation/
+responsiveness/feel. Existing manual quickstart journey remains. Human/rendered
+checks UNRUN; no new SC-006/007 qualifying evidence. SC-005 future/unverified;
+T053–T056 remain outside DX-001. No Phase 6 profiling, commit or push.
+No executable source changed after final passing Full. Final static outcomes
+are recorded below. DX-001 review readiness does not imply prototype acceptance.
+
+Final `./.cache/dx001-batch5-audit.ps1` PASSED exit 0: all passing tier receipts,
+88-ID partitions, counts/statuses, import/38 parses/startups/restorations/163
+infrastructure assertions, automatic HUD/real waits/same-Main cycles, source
+hashes, unchanged manifest entries/maps/task checkboxes/production/spec criteria,
+PowerShell syntax, whitespace and 69 local links. `git diff --check` PASSED exit
+0, line-ending advisories only. Source snapshots/patch retained in ignored
+`.cache/dx001-batch5-source/`; no generated evidence is tracked. The final
+workflow is ready for owner DX-001 review; no further batch is started.

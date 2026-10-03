@@ -13,7 +13,8 @@ param(
     [ValidateSet('All', 'Play', 'Profile')][string] $Mode = 'All',
     [switch] $InfrastructureFixtures,
     [switch] $RenderedProfileSmoke,
-    [ValidateSet('All', 'Foundation')][string] $SuiteScope = 'All',
+    [ValidateSet('All', 'Foundation', 'Fast', 'Targeted')][string] $SuiteScope = 'All',
+    [string[]] $CaseGroups = @(),
     [ValidateRange(1, 86400)][int] $PreflightTimeoutSeconds = 30,
     [ValidateRange(1, 86400)][int] $ImportTimeoutSeconds = 180,
     [ValidateRange(1, 86400)][int] $ParseTimeoutSeconds = 30,
@@ -407,8 +408,15 @@ func _enter_tree() -> void:
         if (Test-Path -LiteralPath $runner -PathType Leaf) {
             [void](Assert-ContainedPath $runner)
             $suiteArguments = @('--headless', '--path', $workspace, '--script', 'res://tests/run_tests.gd')
+            if ($CaseGroups.Count -gt 0 -and $SuiteScope -ne 'Targeted') { throw 'BLOCKED: -CaseGroups requires -SuiteScope Targeted.' }
+            if ($SuiteScope -eq 'Targeted' -and $CaseGroups.Count -eq 0) { throw 'BLOCKED: Targeted requires explicit -CaseGroups.' }
             if ($SuiteScope -eq 'Foundation') { $suiteArguments += @('--', '--foundation-only') }
-            Write-Host "Native suite scope: $SuiteScope (Foundation does not validate gameplay)."
+            if ($SuiteScope -eq 'Fast') { $suiteArguments += @('--', '--fast') }
+            if ($SuiteScope -eq 'Targeted') {
+                $suiteArguments += '--'
+                foreach ($group in $CaseGroups) { $suiteArguments += "--case-group=$group" }
+            }
+            Write-Host "Native suite scope: $SuiteScope (limited selections do not establish complete acceptance)."
             [void](Invoke-GodotCheck 'suite' $suiteArguments $workspace $SuiteTimeoutSeconds)
         } else { Add-BlockedCheck 'suite' 'tests/run_tests.gd is not supplied until T010 (Phase 2).' }
         # A missing suite does not prevent independent bootstrap startup evidence.
@@ -421,6 +429,8 @@ func _enter_tree() -> void:
         if ($InfrastructureFixtures) {
             . (Join-Path $PSScriptRoot 'test-validation.ps1') -DefineOnly -RenderedProfileSmoke:$RenderedProfileSmoke
             Invoke-ValidationInfrastructureFixtures
+        } else {
+            $results.Add([pscustomobject]@{Name='infrastructure';Outcome='EXCLUDED';Reason='Not requested; Full requires -InfrastructureFixtures.'})
         }
     } else {
         if ($Mode -eq 'Profile' -and -not (Test-Path -LiteralPath (Join-Path $workspace 'scripts/run/profile_capture.gd') -PathType Leaf)) {
@@ -462,7 +472,7 @@ func _enter_tree() -> void:
     if ($null -ne $sessionDir) {
         Write-ContainedText (Join-Path $sessionDir 'results.json') (ConvertTo-Json -InputObject @($results.ToArray()) -Depth 20)
         $validationTimer.Stop()
-        Write-ContainedText (Join-Path $sessionDir 'timing.json') (ConvertTo-Json -InputObject @{ElapsedSeconds=$validationTimer.Elapsed.TotalSeconds; ExitCode=$exitStatus; Mode=$Mode; SuiteScope=$SuiteScope; InfrastructureFixtures=[bool]$InfrastructureFixtures})
+        Write-ContainedText (Join-Path $sessionDir 'timing.json') (ConvertTo-Json -InputObject @{ElapsedSeconds=$validationTimer.Elapsed.TotalSeconds; ExitCode=$exitStatus; Mode=$Mode; SuiteScope=$SuiteScope; CaseGroups=$CaseGroups; InfrastructureFixtures=[bool]$InfrastructureFixtures})
         Write-Host "Validation evidence: $sessionDir"
     }
 }
