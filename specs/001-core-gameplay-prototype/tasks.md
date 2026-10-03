@@ -143,14 +143,49 @@ SC-003 are satisfied; full feature/integrated acceptance remains Phase 6 work.
 
 **Purpose**: Complete reproducible documentation and integrated prototype acceptance; optimize only measured present problems.
 
-- [ ] T049 Reconcile `specs/001-core-gameplay-prototype/quickstart.md` with implemented files/modes/commands, exact default tuning, controls, containment prerequisites/timeouts/overrides/error policy, actual test manifest/coverage and manual procedures; distinguish implemented behavior from unverified acceptance and keep SC-005 explicitly future/unverified.
-- [ ] T050 [P] Reconcile `docs/asset-provenance.md` against every actual mesh/material/font/audio source and visual replacement interface; record license/source for any unavoidable third-party item and remove undocumented or distinctive copied content without adding production art.
+- [X] T049 Reconcile `specs/001-core-gameplay-prototype/quickstart.md` with implemented files/modes/commands, exact default tuning, controls, containment prerequisites/timeouts/overrides/error policy, actual test manifest/coverage and manual procedures; distinguish implemented behavior from unverified acceptance and keep SC-005 explicitly future/unverified.
+- [X] T050 [P] Reconcile `docs/asset-provenance.md` against every actual mesh/material/font/audio source and visual replacement interface; record license/source for any unavoidable third-party item and remove undocumented or distinctive copied content without adding production art.
 - [ ] T051 Execute clean reproducible contained import, every-script parse, complete manifest-reconciled suite and main startup using `tools/validate.ps1 -Mode All`, including `tools/test-validation.ps1`; inspect logs/exit codes, investigate every unexpected failure, verify source UID tracking/generated exclusions and record exact results and unresolved blockers in `docs/verification/core-gameplay.md`.
 - [ ] T052 Have the product owner execute the integrated controls/boundaries/HUD/kill/contact/pause/resume/defeat/restart journey in `specs/001-core-gameplay-prototype/quickstart.md` without developer intervention; record observations for each FR clause/edge and SC-002–004 in `docs/verification/core-gameplay.md`, leaving unavailable owner participation/controls/visual/game-feel checks outstanding rather than substituting headless evidence.
 - [ ] T053 Pre-record actual engine/OS/GPU/driver/hardware/source revision/tuning and plan deviations in `docs/verification/prototype-profile.md` before `tools/validate.ps1 -Mode Profile`: standalone debug/no editor or debugger, Forward+ 1920×1080/100% scale, AA/VSync/frame cap/shadows/SSAO/SSIL/glow off, one directional light, 60 Hz physics; perform a separate 30-active-second warm-up, retain unsuccessful attempts and restart cleanly with normal vulnerability/default cap 50 unless changed tuning is explicitly recorded.
 - [ ] T054 Have the owner perform one uninterrupted normal Profile attempt reaching >=300 completed physics simulation seconds alive and continue it normally; in `docs/verification/core-gameplay.md` record actual simulation/tick/wall endpoint, normal spawning/pursuit/combat/vulnerability, later advancing time/responsive movement/view/unchanged tuning and a later scheduled spawn opportunity with timestamps, attacks when eligible and zero unexpected spawn failures throughout continuation; preserve partial window success after later death without claiming unobserved continuation or splicing attempts (SC-006).
 - [ ] T055 Summarize actual T054 raw workspace `.cache/` capture in `docs/verification/prototype-profile.md` with whole-window wall FPS, full-interval distribution/minimum/coverage/stalls, partial-boundary gaps, enemy counts/timestamps, available monitors/overhead/bottlenecks, actual conditions/deviations and unavailable reasons; separate survival/continuation/capture/invalidity outcomes, retain failed attempts, and claim neither a new numerical prototype threshold nor 200-enemy/60-FPS compliance (SC-007).
 - [ ] T056 Review `docs/verification/core-gameplay.md` and `docs/verification/prototype-profile.md` against every FR-001–012 clause/edge and SC-001–004/006–007 plus constitution v1.0.0; resolve observed in-scope issues in their owning files, rerun affected technical/manual/profile checks after tuning or behavior changes, and mark feature acceptance only with executed evidence for all prototype gates; preserve outstanding checks/SC-005 future status and make no automatic Git commit.
+
+Phase 6 Batch 1 reconciliation — 2026-10-03: T049/T050 are complete against
+baseline `f9d9273031c03d8775ff8c5b68c170305a3c9380`. Quickstart now records actual
+files/modes/parameters, all production resource tuning, controls/lifecycle,
+containment/error policy and separate future owner/profile procedures. It
+distinguishes the 13-case Foundation infrastructure wrapper from full All's
+82 cases. Provenance accounts for every runtime mesh, scene/runtime material,
+HUD/overlay/theme/font and absent audio, including visual construction/material
+coupling. The approved engine revision's runtime font is Open Sans SemiBold
+(Open Sans Project Authors, OFL-1.1), correcting the former Noto attribution.
+No undocumented imported/copied content was found; no removal or executable
+change was needed, and no production artwork was added.
+
+Lightweight verification passed: static links/headings/paths, every resource
+value and scalar class default, 82 manifest/authored IDs/paths/methods across ten
+case files, production references/asset construction inventory and documented
+PowerShell syntax/parameter names including aliases. Retained T048 evidence was
+inspected (49/49 recorded checks, 82/82 cases, 5,843 assertions); it was not rerun.
+The initial command-parameter audit rejected the wrapper's valid GodotBin alias;
+including aliases corrected the audit and its rerun passed. The first document
+patch was rejected before writes and reapplied successfully. Neither failure
+identified a production regression. Final `git diff --check` passed.
+
+Known limits are explicit in the reconciled docs: historical profile source
+snapshot provenance/full SC-006/007 acceptance remains unresolved; the future
+`docs/verification/prototype-profile.md` report is absent; planning introductions
+in spec/plan/contracts still describe their historical stage. Original project
+content has no separately established public redistribution license/specific
+human attribution; engine/font attribution uses the approved official revision's
+source, without binary font extraction. These do not hide an unidentified
+third-party production asset or block this documentation/provenance reconciliation.
+T051–T056 remain unchecked/unrun in this batch. SC-005 remains future/unverified;
+the cap-50 evidence is not extrapolated. Ready for Batch 2 T051–T052 after owner
+review, with no integrated Phase 6 acceptance, new five-minute session, commit
+or push. Stop after Batch 1.
 
 ## Dependencies & Execution Order
 
