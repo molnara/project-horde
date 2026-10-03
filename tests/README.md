@@ -1,0 +1,503 @@
+# Core gameplay test handoff — Phase 5 complete
+
+T014–T017 authored the tests before implementation. T018–T032 now supply the
+production components and technical verification. The original 48 registered
+cases remain required: 13 foundation/fixture and 35 gameplay cases (6 movement,
+7 combat, 13 survival-loop, 9 profile/continuation). Batch 2 registers all nine
+defeat/restart and seven restart-evidence cases. Phase 5 Batch 2 requires all 18
+US3 cases as well: 82 historical required cases, zero deferred. DX-001 Batch 3
+adds six missing technical acceptance cases, bringing the current inventory to 88.
+T048's final All/infrastructure rerun passes all 82 cases with 5,843 assertions,
+including 18 US3 cases with 1,140 assertions and 146 infrastructure assertions.
+The owner reports all six Phase 5 manual acceptance groups passed; T042–T048 are
+complete. Full feature/integrated acceptance remains separate.
+Actual commands/results are in the [verification ledger](../docs/verification/core-gameplay.md).
+A pending case is not executed, passed or silently skipped. If a prerequisite
+is missing, it is printed per ID as
+`HORDE_CASE_PENDING` and still fail required execution reconciliation.
+Presence is checked on every run; no permanent skip marker must be removed.
+A present but broken component produces a real assertion/engine failure.
+
+Use the workspace-contained launcher, never a direct uncontained engine call:
+
+```powershell
+& ./tools/validate.ps1 -Mode All -SuiteScope Foundation
+& ./tools/test-validation.ps1
+& ./tools/validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240
+```
+
+An optional `-GodotBin` absolute console path is supported by both launchers.
+For fresh sessions, both also use ignored `.cache/godot-bin.txt` before environment
+discovery; explicit selection takes precedence. See the
+[selection and authorized retry instructions](../specs/001-core-gameplay-prototype/quickstart.md#prerequisites-and-contained-commands)
+in quickstart. Empty/invalid/unreadable selection blocks without fallback.
+Certificate-store failures remain FAILED even at child exit zero, with original
+diagnostics and dependent UNRUN records. A separately approved retry outside
+isolation uses the same launcher and repeats actual-path containment; unavailable
+retry is BLOCKED. Infrastructure fixtures cover local/explicit precedence,
+absent/empty/inaccessible scopes, invalid selections and certificate stream/log/
+exit-zero classification without changing global configuration.
+`Foundation` is an explicit limited suite, not gameplay acceptance. It still
+discovers/reconciles the entire manifest before selecting its 13 cases. The
+infrastructure wrapper uses that scope so its diagnostic/timeout/environment
+fixtures can run before gameplay exists. Default `All` requires all 88 registered cases,
+returns nonzero for any pending or failed case, and stops dependent startup checks.
+Both commands exercise real main-scene startup; when the capture helper exists,
+they also run a short headless `--profile` startup/shutdown. The resulting sparse
+capture is diagnostic evidence, not rendered profiling or survival acceptance.
+
+DX-001 Batch 3 uses the unchanged native runner and complete discovery/execution
+reconciliation. `technical.hud_clock` runs the actual 60 Hz driver from zero to
+at least 65 active seconds; `technical.pause_contact/pause_between` each measure
+at least ten real seconds with live inactive callbacks and attempted movement,
+mouse and held/echo Escape; `technical.three_cycles` measures ten defeated real
+seconds, then delivers click/Enter/Space across three consecutive cycles in one
+Main. `technical.configurable_eligibility/mapped_input` fill fresh range/contact
+and actual configured key-delivery gaps. Existing cases/thresholds are preserved.
+The explicit 240-second suite watchdog accommodates required waits and startup
+overhead; the launcher's default 120 seconds and all acceptance durations remain
+unchanged. This is a per-invocation timeout, not a new validation tier or benchmark.
+Foundation excludes these six along with all other gameplay cases.
+
+Receipts are `HORDE_TECHNICAL_EVIDENCE` lines in retained suite stdout/engine log.
+Controlled definitions isolate scheduling: HUD uses enemy speed 0.000001 and
+weapon range 0.01; pause/cycles use enemy health 1000 and speed 0.000001 with
+default spawn/weapon/contact/feedback timing. Resume deadlines are checked with
+controlled 1/64-second steps after real waits. These are technical fixtures;
+headless visibility flags and injected input cannot establish rendered
+readability, physical usability, independent SC-004 or owner survival/profile.
+See the [Batch 3 audit and clause map](../docs/verification/dx-001-batch3.md)
+for actual evidence and outstanding human requirements.
+There is no engine-diagnostic suppression or reduced gameplay expectation.
+
+DX-001 Batch 4 adds passive monotonic timing: native `HORDE_CASE_END` and
+`HORDE_SUITE_END` receipts include `elapsed_seconds`; launcher child records in
+`results.json` include `ElapsedSeconds`, and `timing.json` records aggregate
+validation elapsed seconds/exit/scope. Native case timing includes setup/body/
+cleanup/diagnostics; suite timing includes discovery and reconciliation. Child
+timing includes process launch, stream/log handling and diagnostic classification.
+Aggregate timing includes setup, checks, infrastructure and restoration through
+writing `results.json`, excluding its own timing-receipt write and shell startup.
+Timing is observational and never affects pass/fail or timeouts.
+
+Batch 4 consolidates only the repeated `record_frame`/`record_step` API assertions
+in `profile.bounded_late_failure`: each exact method diagnostic remains once,
+while all 1,000 continuation callback pairs, the 1,050,001-callback stress stream
+and every behavioural assertion remain. Full scope still requires 88 cases;
+assertions become 4,144 (from 6,142). All six Batch 3 cases and their durations,
+three restart cycles and thresholds are unchanged. See the
+[Batch 4 measurement and coverage report](../docs/verification/dx-001-batch4.md)
+for actual before/after costs and limits; fewer assertions do not establish a
+speedup. Batch 4 introduced no execution tier; Batch 5 below supplies the workflow. T052 still requires independent
+owner SC-004 evidence; use the existing quickstart controls/presentation journey.
+
+## DX-001 Batch 5 execution workflow
+
+Run through the established approval-mediated launcher route. Existing selection,
+version/help, actual-path containment, import, all script parses, normal/Profile
+headless startups, genuine-error classification and environment restoration apply
+to every tier. No new dependency or launcher watchdog default is introduced.
+
+| Tier | Exact PowerShell command | Native scope / exclusions |
+|---|---|---|
+| Fast | `./tools/validate.ps1 -Mode All -SuiteScope Fast` | 84/88 cases: all 82 earlier cases plus `technical.configurable_eligibility` and `technical.mapped_input`. Excludes only `technical.hud_clock`, `technical.pause_contact`, `technical.pause_between`, `technical.three_cycles`; infrastructure excluded unless requested. |
+| Targeted example | `./tools/validate.ps1 -Mode All -SuiteScope Targeted -CaseGroups movement,combat,survival` | 26/88 cases; all other groups excluded, infrastructure excluded unless requested. Choose groups by the impact table below, not by this example alone. |
+| Full | `./tools/validate.ps1 -Mode All -InfrastructureFixtures -SuiteTimeoutSeconds 240` | All 88 required cases, all infrastructure fixtures, import, every parse and both startups. Zero allowed pending/deferred/excluded required checks. |
+
+Fast is routine regression during small localized edits, after assessing impact.
+It is not complete acceptance: the four omitted duration protocols remain required.
+Batch 4 final native suite cost was 96.815639 s; those four cases totaled 95.072910 s.
+Selecting around that measured cost is useful; shortening their durations is forbidden.
+All 65 completed active seconds, three ten-real-second waits, three consecutive
+same-Main click/Enter/Space cycles and original thresholds remain in Full.
+Foundation remains a separate 13-case harness selection, excluding all gameplay;
+it is never Fast or complete gameplay acceptance. The existing infrastructure wrapper
+still uses Foundation. Full requires both `All` scope and `-InfrastructureFixtures`.
+
+Targeted uses exact ID groups, in manifest order, with no wildcard/fallback.
+Valid groups: `definitions` (8), `runner` (5), `movement` (6), `combat` (7),
+`survival` (13), `profile` (9), `defeat` (9), `restart_evidence` (7), `pause` (10),
+`pause_profile` (8), `technical` (6). Empty, unknown or duplicate selections fail;
+`-CaseGroups` is valid only with Targeted. Include `definitions,runner` when
+their contracts are affected. `technical` executes all six acceptance cases
+with original durations; use `-SuiteTimeoutSeconds 240` for any such selection.
+
+| Actual impact | Relevant Targeted groups during development | Final gate |
+|---|---|---|
+| Local movement/arena geometry or combat behavior | `movement,combat,survival,technical` plus `definitions` for definition changes | Full for input, scheduling, shared data or integrated acceptance changes |
+| Isolated HUD formatter/presentation contract | `survival,defeat,pause,technical` | Full for shared clock/lifecycle changes; manual readability remains required |
+| Pause/resume behavior | `pause,pause_profile,survival,defeat,technical` | Full: shared lifecycle/input/scheduling |
+| Defeat/restart behavior | `defeat,restart_evidence,survival,pause,technical` | Full: shared lifecycle |
+| Local capture/statistics/storage contract | `profile,restart_evidence,pause_profile` | Full if shared capture lifecycle/output or launcher validation changes |
+| Runner, manifest, selection, diagnostics, launcher/containment | `definitions,runner` with `-InfrastructureFixtures` for exploration | Full mandatory |
+
+Select the union of all affected groups after inspecting callers/signals/resources
+and integration seams. If impact is uncertain or crosses subsystems, use Full.
+Full is mandatory for integrated technical acceptance, final feature/release review,
+shared lifecycle/scheduling/input changes, runner/manifest/selection/diagnostics/
+launcher changes, or recovery when a limited run exposes a wider regression.
+Run it once after the final executable changes; rerun only for further executable
+changes, failures or unresolved evidence. Documentation-only edits need static
+consistency/link/whitespace checks, not a repeated engine Full run.
+
+Every scope discovers/reconciles all authored IDs/scripts/methods before selection
+and reconciles selected execution after it. `HORDE_CASE_EXCLUDED` reports each omitted
+ID; omissions are UNRUN with acceptance pending, never passing checks. Case BEGIN/END
+reports actual execution/pass/completion; PENDING reports missing prerequisites and
+fails required execution reconciliation. Deferred records remain explicit (currently
+zero). `results.json` reports executed PASSED/FAILED checks, BLOCKED setup and dependent
+UNRUN checks; infrastructure is EXCLUDED when not requested. Native summary records
+registered/required/executed/excluded/pending/deferred and scope/groups. Genuine errors,
+incomplete cases and unexpected nonzero exits still fail. Expected negative
+infrastructure children stay FAILED with an independently passing expectation.
+
+Record revision/diff, exact commands, chosen groups and impact rationale, receipt
+directory, actual native/child/aggregate times, statuses and acceptance gaps in the
+ledger. Timings are observations on this host, not speed guarantees or gameplay FPS.
+Actual Batch 5 commands, costs, failure correction and final source provenance are
+in [Batch 5 evidence](../docs/verification/dx-001-batch5.md).
+T052 remains open for independent SC-004 owner evidence; SC-005 remains future/
+unverified; SC-006/007 qualification and T053–T056 are outside DX-001.
+
+Phase 3B profiling repair: `profile.bounded_late_failure` now persists and rereads
+all 1,050,001 synthetic callbacks exactly, including every chunk boundary/tail,
+one injected stall and an endpoint gap. Statistics cases compare streamed
+results against the original array reference for boundaries, sparse captures,
+distributions and enemy counts. The original 48-case inventory remains intact.
+Infrastructure fixtures cover missing/incomplete/duplicate receipts, actual
+output-directory failure, truncated raw evidence and failed outcomes output;
+each actual capture fault fails the launcher despite engine exit zero.
+
+For a brief independent rendered callback audit, run:
+
+```powershell
+& ./tools/test-validation.ps1 -RenderedProfileSmoke
+```
+
+The optional smoke starts graphical Main for 6,000 engine iterations and checks
+one raw callback per successive engine draw ID. It proves capture wiring, not
+five-minute survival, visual acceptance or SC-007 completion. Default tests stay
+headless. All generated files remain in the ignored workspace cache.
+
+Profile output now consists of a JSON manifest/summary, `.json.frames.bin` raw
+stream, and `.json.outcomes.json` shutdown outcomes. Preserve all three. Read the
+manifest's `frame_stream` descriptor: raw data contains little-endian float64
+wall seconds in original callback order, exactly eight bytes per sample; no JSON
+`frame_timestamps` array is emitted. The sampler holds at most 4,096 timestamps
+and flushes every chunk without decimation or overwrite. Exact source-clock
+microsecond frequency counts keep percentile calculations independent of raw
+callback volume. Chunk I/O is included in sampler overhead and wall-time stalls.
+Profile launcher success means complete application capture, with survival and
+continuation reported separately; it never grants owner/performance acceptance.
+
+## Coverage and prerequisites
+
+Each ID below has a real assertion body, a fixed reported seed, a script path
+and requirement mappings in `case_manifest.gd`. Some cases have several boundary
+fixtures. The runner discovers every designated unit/integration script.
+
+## Phase 4 authored coverage and registration
+
+At the Phase 4 checkpoint, all 64 cases were executable and `staged_entries()`
+was empty after T036–T040 implementation. The runner loads every fixture, checks every
+declared method and reconciles discovery before selecting cases. Unknown,
+duplicate, missing, malformed or unexecuted required cases still fail. Actual All
+results: 64/64 cases, 4,703 assertions; all 16 Phase 4 cases pass (984 assertions).
+No T034/T035 assertion was changed. The owner subsequently confirmed Phase 4
+acceptance passed; T041 and all Phase 4 tasks are complete (see the ledger).
+
+| Case ID | Requirements covered | Current status / prerequisite |
+|---|---|---|
+| `defeat.lethal_commit` | FR-010: one health death/state transition, abort later contacts, final t_end/tick/time signal once, repeated lethal notifications | PASSED in Batch 2 |
+| `defeat.freeze_escape` | FR-009/010: 600 inactive 60 Hz steps, WASD/mouse/Escape/echo, unchanged state/positions/view/health/time/ticks/IDs/deadlines/enemy health/feedback/outcomes, no spawn/attack/commit events; UI tree unpaused | PASSED in Batch 2; ten-second equivalent, not a real-time playtest |
+| `defeat.final_hud` | FR-009/010: visible zero health and final 01:05 by lethal update | PASSED; Game Over control verified by the following case |
+| `defeat.game_over_control` | FR-010/011: visible Game Over/final time, exactly one labeled actionable focused Restart, hidden in Active, presentation signal reaches real restart | PASSED in Batch 2 |
+| `defeat.three_cycles` | FR-011/SC-002: dirty movement/view/health/time/IDs/cooldowns/population/feedback/outcomes, complete fresh state across three cycles, new ID zero/contact-ready/full-health enemies, full spawn delay and one event, unchanged definitions; normal Play has no sampler | PASSED in Batch 2 |
+| `defeat.guarded_requests` | FR-011: Active/Paused invalid requests/signals, immediate reentrant teardown guard, repeated activations, one generation/coordinator | PASSED in Batch 2; Paused is injected as an invalid precondition, not US3 implementation |
+| `defeat.stale_callbacks_removal` | FR-011: synchronous detach/registry cleanup, old signals and saved real connected Callables after restart, deferred disposal by next update | PASSED in Batch 2 |
+| `defeat.invalid_restart` | FR-011/configuration edge: discard old encounter, increment generation, block fresh invalid health, actionable visible diagnostics, no revival/retry/simulation | PASSED in Batch 2 |
+| `defeat.failure_isolation` | FR-011/spawn edge: two fault records count as one old failed opportunity; fresh counter/invalidity/diagnostics/selector reset, normal cadence | PASSED in Batch 2 |
+| `restart_evidence.seal_before_teardown` | T035: actual raw/count buffers closed, files and committed outcomes checked during spawner tree exit, retained once before new generation | PASSED in Batch 2 |
+| `restart_evidence.stale_generations` | T035: old frame/step/failure/continuation callbacks cannot modify new buffers, metadata, audit or retained attempt; new callback works | PASSED in Batch 2 |
+| `restart_evidence.valid_open` | T035: valid edited definitions applied before new evidence, unique path/serial, fresh buffers/counters/outcomes/conditions, old invalidity/failure evidence retained | PASSED in Batch 2 |
+| `restart_evidence.invalid_no_open` | T035: invalid fresh definitions publish no encounter/new buffer/serial; sealed old files/metadata survive; late frame cannot reopen capture | PASSED in Batch 2 |
+| `restart_evidence.shutdown_fault` | T035: real required-sidecar file-open failure in Main shutdown, outstanding capture and diagnostics, partial artifacts retained, unfinished survival never accepted | PASSED in Batch 2; exact launcher diagnostic matching passed |
+| `restart_evidence.write_fault` | T035: real endpoint manifest file-open failure retained in old metadata/sidecar across restart; clean fresh diagnostics never rewrite old failure | PASSED in Batch 2; exact launcher diagnostic matching passed |
+| `restart_evidence.post300_death` | SC-006/007: actual coordinator 300 crossing alive then lethal 300.125 step; endpoint manifest/time/ticks preserved; missing continuation stays outstanding, no full acceptance; old outcomes survive restart | PASSED in Batch 2 |
+
+All T035 cases execute the actual restart wiring. Existing `profile.generations`,
+`profile.lethal_endpoint`, `profile.bounded_late_failure` and `profile.continuation`
+remain required and passing.
+
+Fixtures reuse native Context/F, isolated definitions, seeds 4702034/4702035,
+real scenes and callbacks. Only automatic physics driving is disabled. Slow
+positive enemy speed/high enemy health isolate scheduling without copying any
+gameplay algorithm. Evidence fixtures inject the real Main-owned capture and
+frame callback exactly as the existing integrated lethal fixture injects capture.
+All fault directories/files remain under ignored `.cache/restart-evidence-fixtures/`.
+
+The semantic contract supplies `request_restart()` and `restart_requested()`;
+new HUD node paths are deliberately not assumed (controls are inspected only
+inside the HUD). The synchronous fresh-run fixture seam assumes a stable
+coordinator, a reused Main-owned capture helper, and fresh state on return from
+`request_restart()`. The spec explicitly requires synchronous old removal and an
+immediate guard, but does not fix fresh-construction scheduling or helper identity.
+Batch 2 uses that synchronous seam. Only a restart requested inside the lethal
+step waits for its final commit; its guard still latches immediately.
+
+Production callbacks bind the originating generation and disconnect on disposal;
+saved queued Callables are rejected too. The launcher correlates each intentional
+printed capture fault with one exact case-tagged native diagnostic and checks
+source/constraint/count plus all five payload fields. Extra records, unmatched
+log-only faults, ordinary capture failures and genuine engine errors remain fatal.
+Infrastructure fixtures test these rules, actual keyboard/mouse activation,
+reentrant lethal restart, normal Play failure retention, three production Profile
+restarts with saved old frame Callables, and invalid restart in a real application
+scene with exit 1. Profile shutdown emits one application receipt and the launcher
+checks current and retired manifests/raw streams/outcome sidecars independently.
+
+The T041 automated registration/validation portion ran within the owner's Batch 2
+authorization. Owner visual/control acceptance subsequently passed, completing
+T041; the ledger records the owner's confirmation separately from automated tests.
+
+## Phase 5 — pause/resume implementation and T048 closure
+
+T042/T043 authored **18 cases**, with seeds 4702042/4702043. T044–T047 now supply
+their production dependencies; all 18 are registered, required and passing.
+Default execution and full authored discovery both contain 82 cases.
+`staged_entries()` is empty. Missing/duplicate/unknown/unexecuted cases still fail
+reconciliation; no implementation-dependent US3 case is deferred.
+
+| Case ID | Behaviour asserted | Final automated status |
+|---|---|---|
+| `pause.game_over_escape` | Real Escape press/echo/release and mouse after lethal contact: immutable result, no transition or gameplay signals | PASSED; existing defeat behaviour only |
+| `pause.escape_edges` | Three Active↔Paused press pairs; echo/release/unrelated key rejection; pause intent prevents simulation step | PASSED T044–T046 |
+| `pause.freeze_combat` | Actual attack/contact, 600 inactive ticks plus real process/physics frames: frozen actors/view/health/time/ticks/IDs/generation/deadlines/line/flash; no signals; UI tree runs | PASSED T044–T046 |
+| `pause.inactive_callbacks` | Saved real health/death/spawn/feedback Callables cannot change inactive gameplay/HUD/outcomes | PASSED T044–T046 |
+| `pause.spawn_delay` | Before/at/after original spawn deadline: one spawn, ordinary cadence, no reset/early/burst event | PASSED T044–T046 |
+| `pause.weapon_delay` | Actual hit creates cooldown; preserved delay, exactly one later hit and next normal deadline | PASSED T044–T046 |
+| `pause.contact_delays` | Two actual staggered attackers retain independent cooldowns; no early or catch-up damage | PASSED T044–T046 |
+| `pause.feedback_delay` | Real line/target flash survives Pause, expires at original active-time deadline | PASSED T044–T046 |
+| `pause.mouse_discard` | Queued Active motion cleared; inactive mouse discarded; released WASD has no backlog; resume has no view jump; fresh motion works once | PASSED T044–T046 |
+| `pause.hud_restart` | Visible Paused/resume instruction and health/time; hidden Restart; repeated coordinator/HUD restart intents ignored; resume removes overlay | PASSED T044–T046 |
+| `pause_profile.close_segment` | Main/coordinator pause closes at transition, flushes raw tail, releases buffers, rejects inactive capture | PASSED T044/T045/T047 |
+| `pause_profile.resume_origin` | Real new wall origin; old segment/attempt serial/generation/encounter preserved; production callback captures again | PASSED T044/T045/T047 |
+| `pause_profile.exclude_gap` | Exact [0,1]/[11,12] segments exclude ten-second pause; per-segment FPS/intervals/boundary stalls/raw samples/draw audits | PASSED T044/T045/T047 |
+| `pause_profile.preserve_attempt` | Three pauses preserve outcomes/conditions/time/ticks/generation; no retired or fabricated attempt | PASSED T044/T045/T047 |
+| `pause_profile.paused_endpoint` | Pause at 299.75 earns no survival/steps; only resumed simulation crosses 300; no ending or acceptance | PASSED T044/T045/T047 |
+| `pause_profile.nonqualification` | Otherwise-complete segmented evidence rejected, clean technical control eligible; successful observations/output retained; interruption persisted | PASSED T044/T045/T047 |
+| `pause_profile.retained_diagnostics` | Defeat/retirement/fresh generation retain raw artifacts, segments, earlier failure, outcomes/sidecar; stale samples rejected | PASSED T044/T045/T047 |
+| `pause_profile.post_endpoint_pause` | Later interruption preserves successful survival/sealed manifest; never reopens sampling or grants full attempt acceptance | PASSED T044/T045/T047 |
+
+Fixtures reuse Context/F and actual Main/coordinator/components through Phase 4
+helpers. Positive slow pursuit/high enemy health isolate timing. Context owns
+scenes, callbacks and synthetic-action cleanup. The three-argument feedback
+observer is local: shared F.observe deliberately supports only 0–2 arguments.
+Only automatic physics driving is disabled; real tree frames test autonomous
+callback absence. Profile integration injects the existing real Main-owned
+helper. Normal Play has no sampler. Binary-exact deadline inputs and deterministic
+capture timestamps are diagnostic fixtures, never owner survival/FPS evidence.
+No substitute pause, scheduling, damage or statistics algorithm is provided.
+
+### Implemented Batch 2 API and metadata
+
+`toggle_pause()` comes from the semantic contract; direct transitions are
+synchronous. Escape tests deliver viewport events then a real coordinator step
+to service input intents. Pause prevents that step's simulation; resume may
+execute its delivered active step. Exact delay tests use `toggle_pause()` before
+the next controlled delta. No tests assume an input callback name, pending-intent
+field, global tree pause or new HUD node path.
+
+The production implementation adopts the authored wiring seam. Helpers invoke
+`close_segment(generation, wall_seconds)` for explicit pause closure and
+`open_segment(generation, wall_seconds)` for resume. Metadata observations use
+existing `_metadata()` with these implemented fields:
+
+- `segments`: closed records with `t0`, `t1`, existing `summary` statistics and
+  `frame_stream` (`path`, `sample_count`), without copied raw timestamp arrays.
+- `interrupted`: explicit diagnostic/nonqualification provenance, separate from
+  spawn failures and survival/continuation/output success.
+- `active_capture_duration`: closed active wall duration, distinct from completed
+  simulation duration and the entire interrupted wall span.
+
+Existing `buffer_open`, `t0` and raw/count buffers observe the current segment.
+New origins reset interval/draw-audit continuity, preserve previous evidence and
+keep generation/attempt serial unchanged. Shutdown/retained metadata preserves
+diagnostics. Endpoint closure prevents later sampling even after pause/resume.
+All output stays inside ignored workspace `.cache/`.
+
+Each segment writes a distinct manifest and lossless raw stream. The application
+receipt and shutdown sidecar retain all closed segment descriptors; the launcher
+verifies every segment, including earlier streams. Metadata holds summaries and
+paths, without raw timestamp/count copies. Frame chunks remain bounded to 4096
+float64 entries; enemy-count opportunities retain their active-time cadence.
+`interrupted` persists for the whole attempt, including pause after 300 seconds.
+It disqualifies full uninterrupted acceptance while preserving successful
+survival/continuation/capture observations. Endpoint buffers never reopen.
+
+Two observation corrections preserve all behavioural assertions: mouse fixtures
+use viewport-local coordinates to avoid the headless window's stretch transform;
+persisted JSON comparisons normalize expected JSON numeric types and precision,
+then compare every field without dropping values or adding tolerance. Additional
+assertions cover duplicate held non-echo Escape, two presses before a tick, held
+inactive movement, stale segment APIs and otherwise-complete post-300 evidence.
+
+The tests cover automatable T044–T047 requirements. T048 rechecked registration
+and reran the complete suite, import, 37 script parses, normal/Profile startup
+and infrastructure fixtures, all passing. No production or test changes were
+needed. Run from the project root with the contained launcher:
+
+```powershell
+./tools/validate.ps1 -Mode All -InfrastructureFixtures -GodotBin 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
+```
+
+Headless checks do not establish mouse capture, physical controls or readability.
+For those observations the owner reports successful completion of all six manual
+groups: basic pause/HUD, freeze during contact, preserved scheduled-event delays,
+mouse/keyboard handling, repeated pause/resume, and Game Over/restart regression.
+This owner confirmation closes Phase 5's documented pause/resume independent
+acceptance (FR-009/012, SC-003); it is separate from automated fixture evidence.
+T042–T048 are complete. Segmented fixtures establish no new SC-006/007 owner
+evidence. Exact commands, counts and owner-reported results are in
+[the verification ledger](../docs/verification/core-gameplay.md).
+
+## Original Phase 3B coverage
+
+All prerequisites in the following table are implemented. The last column
+identifies their owning tasks; it does not indicate a remaining pending case.
+
+| Task / cases | Assertions against real behavior | Component tasks |
+|---|---|---|
+| T014 `movement.directions` | W/S/A/D, opposing axes, release, straight/diagonal displacement at yaw 0/90, fixed floor Y | T019–T022 scenes |
+| T014 `movement.mouse_follow` | right/up motion, same-step yaw, pitch-independent speed, depression bounds, synchronous follow, distance/FOV, above-floor camera | T019–T022 scenes |
+| T014 `movement.containment` | both radii, all four corners, fixed configured floor/interior coordinates | T019–T022 scenes |
+| T014 `movement.selection` | 16 rejected candidates, deterministic farthest-corner fallback, eligible zero success, strictly outside contact at exact/inside/outside fixtures, no new arena children | T019–T022 scenes |
+| T014 `movement.selection_failure` | false discriminator, absent position, nonempty actionable payload, input observations, resource nonmutation | T019–T022 scenes |
+| T014 `movement.pursuit` | overshoot/coincidence, XZ pursuit, equal/unequal radii, actual corner contact including inclusive feasibility equality | T019–T022 scenes |
+| T015 `combat.health`, `combat.invalid_damage` | independent fresh health, nonlethal/excess loss, synchronous signals, one death, invalid input rejection without mutation | T018 health |
+| T015 `combat.registry_death` | spawn order, synchronous removal, dead movement/contact exclusion, departed exclusion, deferred disposal, copied tuning | T018–T024, T028 dependencies |
+| T015 `combat.targeting` | nearest target, earliest-ID tie, XZ exact/inside/outside range, dead/departed reassessment | T018–T024, T028 dependencies |
+| T015 `combat.weapon_readiness` | initially ready/no-target preservation, before/at deadline, one hit after long gap, no regeneration | T018–T024, T028 dependencies |
+| T015 `combat.contact` | XZ inclusive boundary, immediate first hit, persistent overlap, separation/re-entry, independent cooldowns, long gap | T018–T024, T028 dependencies |
+| T015 `combat.feedback` | actual line/target material flash, target identity, absolute before/at expiry, restored material, no damage from presentation | T028 feedback and actors |
+| T016 `survival.fresh` | real Main wiring, full health/view, zero clock/ticks/IDs/population/failures, full spawn delay, no normal-Play sampler | T027 core wiring |
+| T016 `survival.cadence_cap`, `survival.default_custom_cap` | first three opportunities, three skips, no cap selection/failures, no death refill, next cadence, default 50 and configured 200 | T027 core wiring |
+| T016 `survival.deadlines`, `survival.subtick_long_step` | completion-time before/at/after for spawn/weapon/contact, positive sub-tick cadence, no bursts/crossed backlog | T027 core wiring |
+| T016 `survival.wall_stall` | real short wall wait does not award simulated time, next delivered delta only | T027 core wiring |
+| T016 `survival.order`, `survival.lethal` | actual input→yaw→movement→follow→pursuit→selection→new-target weapon→contact, weapon kill excludes contact, spawn-order lethal abort, one final commit, cleared feedback | T027–T028 wiring |
+| T016 `survival.hud`, `survival.startup_failure` | real labels at 0/65/fractional/6000 seconds, signal-wired health, invalid startup creates no encounter and shows diagnostic | T026–T027 wiring |
+| T016 `survival.selection_fault` | absent failure position never read, factory never invoked, two records count once, enriched fields, no retry, next normal cadence, invalidity latch | T025–T027 wiring |
+| T016 `survival.instantiation_fault`, `survival.partial_fault` | null factory/configuration failure, no partial publication, disposal, one consumed/counting failure | T025–T027 wiring |
+| T017 `profile.boundaries`, `profile.sparse`, `profile.distribution` | t0 exclusion/t1 inclusion, full-window and full-interval denominators, boundary gaps/stalls, zero/one/two callbacks, percentiles/minimum/max/stall counts, enemy statistics | T030 actual statistics helper |
+| T017 `profile.generations`, `profile.count_samples` | old attempt retention, stale frame/count/failure rejection, fresh buffers/counter, one-second completed samples with both timestamps | T029–T030 helpers |
+| T017 `profile.endpoint`, `profile.lethal_endpoint` | wall time never closes window, completed >=300 endpoint, final ticks/time, separate survival/continuation/capture, actual written output, actual coordinator lethal endpoint | T029–T031 wiring |
+| T017 `profile.bounded_late_failure`, `profile.continuation` | raw buffers released/not growing, late failure invalidity, unchanged tuning/vulnerability, time/view/movement and eligible attacks/spawns across 300 | T029–T031 wiring |
+
+The two new immediately executable harness cases are `runner.prerequisites`
+and `runner.fixtures`. They verify presence detection, strict unexecuted-case
+failure, explicit scope, scripted sample counters/zero coordinates, multi-record
+failure without a position, null/partial factories, cleanup and independent
+case metadata. Passing these checks proves the test inputs and runner behavior,
+not any missing gameplay algorithm.
+
+## Implemented construction and observation seam
+
+The approved contracts specify semantics. Production implements the following
+construction and observation seam, so the fixture adapter needed no changes.
+It remains wiring only; it contains no substitute gameplay/statistics algorithm.
+
+- Arena/player scenes use `configure(subordinate_definition)`; enemy uses
+  `configure(enemy_definition, spawn_id)` and exposes independent `health`.
+  Health uses `configure(maximum)`, `current_health`, `max_health` and a
+  `diagnostic(Dictionary)` signal for invalid amounts. Weapon/feedback use
+  `configure(weapon_definition)`. All approved step methods retain their meanings.
+- Camera yaw/depression are degrees. `queue_mouse(Vector2)` records input for
+  the coordinator; `apply_mouse` applies it. `pending_mouse` is observable.
+  Rig origin is the target-height pivot; camera node is `Yaw/Pitch/Camera3D`.
+- Main accepts `run_definition` **before entering the tree**, wires/starts one
+  encounter, and exposes `coordinator`. Fixture disables only its automatic
+  physics driver, supplies seeded spawner `rng`, and calls real `step(delta)`.
+  Components must not autonomously advance gameplay. Coordinator exposes model
+  state/time/IDs/failures and its explicit player/camera/arena/registry/spawner/
+  weapon/HUD/feedback/profile references. State observations use the semantic
+  names `Active` and `GameOver`; invalid startup has `simulation_enabled=false`,
+  no player/spawner, retained `configuration_diagnostics` and a usable error HUD.
+- The spawner's injected `selection_callable` and `enemy_factory` are narrow
+  dependency seams. Default callables use the real arena and real creation;
+  `run.create_enemy` supplies the normal factory for restoration. Fault fixtures
+  replace only these inputs. All cadence/cleanup/counter logic stays production.
+  Spawner emits `diagnostic(Dictionary)`. Context serializes declared faults,
+  matching exact case/source/constraint/count; no engine exception is expected.
+- Invalid damage diagnostics use source `Health`, constraint `positive integer
+  damage` (eight records). Spawn selection uses `fixture/arena`, `strictly outside
+  contact distance` (two records); factory faults use `EnemySpawner`, `fully
+  configured enemy before registry publication` (one record). Startup uses the
+  existing validator's `PlayerDefinition`, `positive integer` (one record).
+- HUD labels are `Health`, `Time`, `ConfigurationError`. Enemy visual material
+  is `Visual.material_override`. Feedback has a visible `Line`, `target_spawn_id`,
+  `expires_at`, `show_attack(t_end, attacker_position, target)` and `present(time)`.
+- Statistics `summarize(t0, t1, frame_seconds, enemy_samples)` returns fields
+  asserted in the statistics cases. Timestamps are monotonic seconds. The fixture
+  chooses empirical **nearest-rank** percentiles; this is a documented algorithm
+  choice, not an added performance threshold. No full interval yields null
+  minimum/percentiles and an explicit unavailable reason. Adjacent timestamps
+  are retained for boundary explanation only.
+- Capture uses `configure(absolute_workspace_output_directory)`,
+  `open_attempt(generation, t0)`, `record_frame(generation, wall_seconds)`,
+  `record_step(generation, committed_time, ticks, wall_seconds, count, alive)` and
+  `record_spawn_failure(generation, diagnostic)`. It exposes the model's buffers,
+  generation/counter/outcomes plus endpoint duration/ticks/path. Endpoint recording
+  must flush **real** evidence and release raw buffers. The integrated lethal test
+  injects this actual helper into the real coordinator. This controlled test
+  injection does not imply a normal-Play sampler or qualifying owner profile.
+
+Binary arithmetic constructs actual before/after deadline neighbours. The selected
+engine received the former decimal `0.9999999999999999` contact input as exactly
+1.0; added assertions now verify inputs really bracket their deadlines. The
+long-step scheduling fixture uses positive slow pursuit so extra actors cannot
+add unrelated contact hits during its eight-second step. All existing assertions
+are retained. Added observations check written endpoint outcomes, coordinator
+tuning snapshots after source edits, and actual continuation metadata with
+non-binary camera geometry. No manifest, case ID, seed or requirement mapping changed.
+
+Only geometrical/statistical comparisons allow floating representation tolerance.
+Eligibility/deadline fixtures use exact comparisons with representable adjacent
+values. Seeded RNG tests and scripted center/edge inputs contain no production
+selection algorithm. Test cleanup releases synthetic actions, disconnects
+callbacks and disposes owned scenes even after an assertion failure.
+
+## Owner acceptance and remaining feature verification
+
+Phase 3B T033 and Phase 4 T041 owner acceptance remain recorded as complete in
+the ledger. The owner now also reports all six Phase 5 groups passed, completing
+T048. This does not close Phase 6's integrated acceptance/provenance/performance
+review or establish the future 200-enemy/60-FPS benchmark. Existing owner
+survival/profile evidence is retained independently; no new five-minute session
+was run for T048.
+
+The [quickstart owner scenarios](../specs/001-core-gameplay-prototype/quickstart.md)
+now apply DX-001 Batch 1's approved acceptance methods. Objective FR/edge and
+SC-002/003 correctness may be established through reproducible automated
+real-component evidence, with actual clause/check mapping, conditions/tuning,
+revision, command, output and result. No new tests were implemented or executed
+by this amendment. T051's recorded 82 cases / 5,843 assertions remain historical
+passing evidence; T052 remains open pending sufficient combined evidence.
+
+Preserve every threshold, duration and cycle count: 65-active-second HUD display,
+ten-real-second contact and between-event pauses, ten-second defeated freeze,
+and three consecutive defeat/restart cycles in one application, including the
+quickstart's click/Enter/Space protocol. Frozen state and remaining deadlines
+can be proved deterministically; synthetic deltas/timestamps or 600 physics
+ticks do not establish a ten-real-second elapsed check. Require measured monotonic
+elapsed time and exercised input/state checks for that claim; audit gaps in
+DX-001 Batch 3, without relabeling existing fixtures as newly executed evidence.
+
+Owner review focuses on independent physical control usability, observable
+presentation, responsiveness and subjective game feel. SC-004 still requires
+the complete named journey independently performed by the actual owner without
+developer intervention. Automated evidence cannot replace that participation.
+Use Escape to pause/resume and Alt+F4 to close while the mouse is captured.
+SC-006/007 owner survival/profile obligations remain; SC-005 is future/unverified.
+T053–T056 are unstarted by DX-001. Invalid data requires correction and relaunch;
+no in-application retry is supplied. See the
+[DX-001 handoff](../docs/development/dx-001-autonomous-qa.md).

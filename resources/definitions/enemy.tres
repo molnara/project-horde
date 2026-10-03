@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+max_health = 30
+movement_speed = 3.0
+visual_radius = 0.4
+visual_height = 1.2
+contact_distance = 1.2
+contact_damage = 10
+contact_interval = 1.0
