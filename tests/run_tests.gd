@@ -38,7 +38,7 @@ func run() -> void:
 				failures.append("missing/invalid case method in " + path + ": " + str(entry))
 				continue
 			discovered.append({"id": entry.id, "script": path, "method": entry.method, "requires": entry.get("requires", [])})
-	# Reconcile every authored method, including the explicit, unregistered US2
+	# Reconcile every authored method, including the explicit, unregistered story
 	# inventory. Missing/duplicate/unknown cases remain failures before scoping.
 	failures.append_array(Manifest.reconcile(authored, discovered))
 	for entry in staged:

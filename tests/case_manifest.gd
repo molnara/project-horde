@@ -43,10 +43,18 @@ static func entries() -> Array[Dictionary]:
 		elif id in ["shutdown_fault", "write_fault"]:
 			expected = [{"source": "ProfileCapture", "constraint": "required output written successfully", "count": 1}]
 		result.append({"id": "restart_evidence." + id, "script": "res://tests/integration/test_restart_evidence.gd", "maps": ["T035", "FR-011", "SC-006", "SC-007", "evidence/" + id], "seed": 4702035, "expected": expected, "ready_after": ["T039", "T040"]})
+	# Existing defeat behavior is executable without US3 implementation. All real
+	# pause/resume and segmentation cases remain outside this required manifest.
+	result.append({"id": "pause.game_over_escape", "script": "res://tests/integration/test_pause_resume.gd", "maps": ["T042", "FR-010", "FR-012", "GameOver/Escape"], "seed": 4702042, "expected": []})
 	return result
 
 static func staged_entries() -> Array[Dictionary]:
-	return []
+	var result: Array[Dictionary] = []
+	for id in ["escape_edges", "freeze_combat", "inactive_callbacks", "spawn_delay", "weapon_delay", "contact_delays", "feedback_delay", "mouse_discard", "hud_restart"]:
+		result.append({"id": "pause." + id, "script": "res://tests/integration/test_pause_resume.gd", "maps": ["T042", "FR-009", "FR-012", "SC-003", "pause/" + id], "seed": 4702042, "expected": [], "ready_after": ["T044", "T045", "T046"]})
+	for id in ["close_segment", "resume_origin", "exclude_gap", "preserve_attempt", "paused_endpoint", "nonqualification", "retained_diagnostics", "post_endpoint_pause"]:
+		result.append({"id": "pause_profile." + id, "script": "res://tests/integration/test_pause_profile.gd", "maps": ["T043", "SC-003", "SC-006", "SC-007", "pause-profile/" + id], "seed": 4702043, "expected": [], "ready_after": ["T044", "T045", "T047"]})
+	return result
 
 static func missing_prerequisites(paths: Array) -> Array[String]:
 	var missing: Array[String] = []

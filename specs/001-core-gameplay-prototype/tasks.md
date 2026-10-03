@@ -117,8 +117,8 @@ Batch 2 evidence: contained All passed 64/64 cases with 4,703 assertions; all 16
 
 ### Tests for User Story 3
 
-- [ ] T042 [P] [US3] Write component/coordinator cases in `tests/integration/test_pause_resume.gd` for Active↔Paused discrete non-echo Escape, unchanged positions/view/health/completed time/step count/all deadlines/feedback, no spawn/attacks/damage, preserved remaining delays at resume/no catch-up, cleared inactive mouse input, HUD visibility, ignored restart while Paused and no GameOver resume (FR-012).
-- [ ] T043 [P] [US3] Write capture segmentation cases in `tests/integration/test_pause_profile.gd` for segment close/reopen on pause/resume without inactive wall-time intervals, preserved generations/outcomes, paused time never credited toward 300, and diagnostic segmented attempts never qualifying as uninterrupted owner survival/profile evidence (SC-003/006/007).
+- [X] T042 [P] [US3] Write component/coordinator cases in `tests/integration/test_pause_resume.gd` for Active↔Paused discrete non-echo Escape, unchanged positions/view/health/completed time/step count/all deadlines/feedback, no spawn/attacks/damage, preserved remaining delays at resume/no catch-up, cleared inactive mouse input, HUD visibility, ignored restart while Paused and no GameOver resume (FR-012).
+- [X] T043 [P] [US3] Write capture segmentation cases in `tests/integration/test_pause_profile.gd` for segment close/reopen on pause/resume without inactive wall-time intervals, preserved generations/outcomes, paused time never credited toward 300, and diagnostic segmented attempts never qualifying as uninterrupted owner survival/profile evidence (SC-003/006/007).
 
 ### Implementation for User Story 3
 

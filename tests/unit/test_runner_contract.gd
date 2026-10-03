@@ -15,9 +15,9 @@ func prerequisites(ctx) -> void:
 	ctx.check(Manifest.missing_prerequisites(["outside-workspace.gd"]) == ["outside-workspace.gd"], "non-project prerequisite rejected")
 	var entries := Manifest.entries()
 	var selected := Manifest.select_scope(entries, true)
-	ctx.check(selected.size() == 13 and entries.size() == 64, "explicit foundation scope preserves all registered required cases")
+	ctx.check(selected.size() == 13 and entries.size() == 65, "explicit foundation scope preserves all registered required cases")
 	var staged := Manifest.staged_entries()
-	ctx.check(staged.is_empty(), "no Phase 4 cases deferred after T036–T040")
+	ctx.check(staged.size() == 17 and staged.all(func(entry): return entry.id.begins_with("pause.") or entry.id.begins_with("pause_profile.")), "only seventeen implementation-dependent US3 cases deferred; no Phase 4 regression staged")
 	var phase4 := entries.filter(func(entry): return entry.id.begins_with("defeat.") or entry.id.begins_with("restart_evidence."))
 	ctx.check(phase4.size() == 16, "all sixteen authored Phase 4 cases registered")
 	for entry in phase4:
